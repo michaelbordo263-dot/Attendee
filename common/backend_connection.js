@@ -2,20 +2,7 @@
    🔧 CENTRAL API CONNECTION MODULE (GLOBAL VERSION)
 ========================================================= */
 
-/**/
-window.BASE_URL = "http://26.209.189.89:5000/api";
-
-
-/* Radmin 
-window.BASE_URL = "http://26.254.235.193:5000/api";*/
-
-/* Same device
-window.BASE_URL = "http://localhost:5000/api";
-*/
-// or
-/*
-window.BASE_URL = "http://127.0.0.1:5000/api";
-*/
+window.BASE_URL = "http://s9fl1d5oewnuc80uxtd5mwz3.148.230.102.204.sslip.io/api";
 
 /* ── CORE FETCH ── */
 async function apiFetch(url, method = "GET", body = null) {

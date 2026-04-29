@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.attendee.app" version="1.0.0"
+    xmlns="http://www.w3.org/ns/widgets"
+    xmlns:cdv="http://cordova.apache.org/ns/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <name>AttendeeApp</name>
+
+    <description>
+        Attendee Mobile Application
+    </description>
+
+    <author email="dev@cordova.apache.org" href="https://cordova.apache.org">
+        Apache Cordova Team
+    </author>
+
+    <!-- START PAGE -->
+    <content src="index.html" />
+
+    <!-- 🔥 ALLOW ALL CONNECTIONS -->
+    <access origin="*" />
+    <allow-navigation href="*" />
+
+    <!-- 🔥 ALLOW HTTP + HTTPS -->
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+
+    <!-- 🔥 ANDROID FIX -->
+    <platform name="android">
+        <edit-config file="app/src/main/AndroidManifest.xml"
+                     mode="merge"
+                     target="/manifest/application">
+            <application android:usesCleartextTraffic="true" />
+        </edit-config>
+    </platform>
+
+</widget>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Profile Modal</title>
+    <link rel="stylesheet" href="profile.css" />
+</head>
+<body>
+
+<!-- PROFILE MODAL OVERLAY -->
+<div id="profileOverlay" class="profile-overlay" role="dialog" aria-modal="true" aria-labelledby="profileTitle" style="display:none;">
+    <div class="profile-modal">
+
+        <!-- Close Button -->
+        <button class="modal-close" id="closeProfileModal" aria-label="Close profile">&times;</button>
+
+        <!-- Avatar -->
+        <div class="profile-avatar-wrap">
+            <div class="profile-avatar">
+                <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
+                    <!-- Body -->
+                    <circle cx="40" cy="40" r="40" fill="#e8f4f8"/>
+                    <!-- Head -->
+                    <circle cx="40" cy="30" r="14" fill="#f5cba7"/>
+                    <!-- Hair -->
+                    <path d="M26 28 Q28 14 40 14 Q52 14 54 28 Q50 20 40 20 Q30 20 26 28Z" fill="#2c3e50"/>
+                    <!-- Shoulders / Suit -->
+                    <path d="M18 72 Q20 52 40 52 Q60 52 62 72Z" fill="#2980b9"/>
+                    <!-- Shirt / Tie -->
+                    <path d="M37 52 L40 58 L43 52Z" fill="#e74c3c"/>
+                    <path d="M39 58 L40 65 L41 58Z" fill="#c0392b"/>
+                    <!-- Collar -->
+                    <path d="M33 52 L40 58 L47 52 L44 52 L40 55 L36 52Z" fill="white"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Title -->
+        <h2 class="profile-title" id="profileTitle">My Profile</h2>
+
+        <!-- Fields Grid -->
+        <div class="profile-grid">
+            <div class="profile-field">
+                <span class="field-label">First Name</span>
+                <span class="field-value" id="profile-first-name">—</span>
+            </div>
+            <div class="profile-field">
+                <span class="field-label">Last Name</span>
+                <span class="field-value" id="profile-last-name">—</span>
+            </div>
+            <div class="profile-field">
+                <span class="field-label">Employee ID</span>
+                <span class="field-value" id="profile-emp-id">—</span>
+            </div>
+            <div class="profile-field">
+                <span class="field-label">Role</span>
+                <span class="field-value" id="profile-role">—</span>
+            </div>
+        </div>
+
+        <!-- Change Password Button -->
+        <button class="change-password-btn" id="openChangePassword">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Change Password
+        </button>
+
+    </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div id="changePasswordOverlay" class="profile-overlay" style="display:none;">
+    <div class="profile-modal change-pw-modal">
+        <button class="modal-close" id="closeChangePassword" aria-label="Close">&times;</button>
+        <h2 class="profile-title" style="margin-top: 10px;">Change Password</h2>
+
+        <div class="pw-form">
+            <div class="pw-field">
+                <label for="currentPw">Current Password</label>
+                <input type="password" id="currentPw" placeholder="Enter current password" />
+            </div>
+            <div class="pw-field">
+                <label for="newPw">New Password</label>
+                <input type="password" id="newPw" placeholder="Enter new password" />
+            </div>
+            <div class="pw-field">
+                <label for="confirmPw">Confirm New Password</label>
+                <input type="password" id="confirmPw" placeholder="Repeat new password" />
+            </div>
+            <p class="pw-error" id="pwError"></p>
+            <button class="change-password-btn" id="submitNewPassword">Update Password</button>
+        </div>
+    </div>
+</div>
+
+<script src="profile.js"></script>
+</body>
+</html>

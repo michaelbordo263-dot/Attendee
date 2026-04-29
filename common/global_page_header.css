@@ -1,0 +1,39 @@
+/* Ensure the main content doesn't overlap with your fixed global header */
+.dashboard-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page-title {
+    color: #345e85;
+    border-bottom: 2px solid #345e85;
+    margin-bottom: 20px;
+}
+
+/* Specific Performance Cards */
+.user-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.user-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.progress-bar {
+    background: #edf2f7;
+    height: 8px;
+    border-radius: 10px;
+    margin: 15px 0;
+}
+
+.progress-fill {
+    background: #48bb78;
+    height: 100%;
+    border-radius: 10px;
+}

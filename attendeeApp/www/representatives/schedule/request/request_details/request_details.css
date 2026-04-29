@@ -1,0 +1,500 @@
+:root {
+    --header-blue: #355872;
+    --cds-header: #4b6e85;
+    --dcp-header: #5a7a8f;
+    --bg-grey: #D9D9D9; 
+}
+
+* { box-sizing: border-box; }
+
+body { 
+    margin: 0; 
+    font-family: 'Inter', sans-serif; 
+    background-color: var(--bg-grey); 
+    color: #333; 
+    min-height: 100vh;
+}
+
+.schedule-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 1. NAVY HEADER */
+.main-header {
+    background-color: var(--header-blue);
+    padding: 20px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    flex-shrink: 0; 
+}
+.main-header .title { margin: 0; font-size: 32px; font-weight: 400; }
+
+/* 2. WHITE SUB-NAV */
+.rep-sub-nav {
+    background: white;
+    padding: 14px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #E0E0E0;
+    flex-shrink: 0;
+}
+
+.rep-left-section { display: flex; align-items: center; gap: 15px; }
+
+.back-btn {
+    background-color: var(--header-blue); 
+    border: none; 
+    border-radius: 6px;
+    width: 45px; 
+    height: 35px; 
+    cursor: pointer; 
+    color: white; 
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.rep-meta { display: flex; flex-direction: column; }
+.name-row { display: flex; align-items: center; gap: 8px; }
+.name { font-weight: bold; font-size: 18px; color: #333; }
+.period-text { color: #007bff; font-size: 14px; font-weight: 500; }
+.location { font-size: 14px; color: #666; margin-top: -2px; }
+
+/* Container fix */
+.status-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 300px; /* Adjust based on your header space */
+}
+
+/* The Label Styling */
+.label-approved {
+    color: #22c55e; /* Success Green */
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Add this to your request_details.css */
+.final-status-badge {
+    padding: 10px 24px;
+    border-radius: 25px;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.final-status-badge.approved {
+    background-color: #e8f5e9; /* Soft green */
+    color: #2e7d32;           /* Dark green text */
+    border: 1px solid #a5d6a7;
+}
+
+.final-status-badge.rejected {
+    background-color: #ffebee; /* Soft red */
+    color: #c62828;           /* Dark red text */
+    border: 1px solid #ef9a9a;
+}
+
+.status-label { 
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.status-label.approved {
+    background-color: #e8f5e9; /* Light green background */
+    color: #2e7d32;           /* Dark green text */
+    border: 1px solid #a5d6a7;
+}
+
+.status-label.rejected {
+    background-color: #ffebee; /* Light red background */
+    color: #c62828;           /* Dark red text */
+    border: 1px solid #ef9a9a;
+}
+
+.approval-group { display: flex; gap: 10px; }
+
+.status-label-approved {
+    color: #2e7d32;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 1px;
+    padding: 8px 16px;
+    background: #e8f5e9;
+    border-radius: 4px;
+    border: 1px solid #c8e6c9;
+}
+
+.status-label-rejected {
+    color: #c62828;
+    font-weight: 800;
+    background: #ffebee;
+    padding: 8px 16px;
+    border-radius: 4px;
+}
+
+.btn-summary-outline { 
+    background: #355872; 
+    border: 1px solid #E0E0E0; 
+    color: white; 
+    padding: 7px 15px; 
+    border-radius: 6px; 
+    font-size: 14px; 
+    font-weight: bold;
+    cursor: pointer; 
+}
+
+.btn-accept { background: #c8e6c9; color: #2e7d32; border: none; padding: 8px 30px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+.btn-reject { background: #ffcdd2; color: #c62828; border: none; padding: 8px 30px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+/* 3. MAIN GRID & CARDS */
+.details-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1.5fr; 
+    gap: 20px; 
+    padding: 20px 50px; 
+    flex-grow: 1;
+}
+
+.grid-card { 
+    background: white;
+    border-radius: 12px; 
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+    border: 1px solid #E0E0E0; 
+    display: flex;
+    flex-direction: column;
+    height: 510px; /* Adjust this number to your preferred fixed height */
+}
+
+.card-header { 
+    padding: 15px 20px; 
+    color: white; 
+}
+
+.card-header h2 {
+    margin: 0; font-size: 1.1rem;
+    font-weight: 500; 
+}
+
+.cds-blue { 
+    background: var(--cds-header); 
+}
+
+.dcp-blue { 
+    background: var(--dcp-header); 
+}
+
+/* This makes the card body a flex container that doesn't grow */
+.card-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Keeps the card header fixed */
+    overflow-x: auto;
+    flex-grow: 1;
+}
+
+/* 1. The Container */
+/* 1. The Container holding the cards */
+.doctor-list-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    
+    /* 1. Remove left padding to align with the search bar */
+    /* 2. Keep right padding for the scrollbar space */
+    padding: 0 16px 16px 0; 
+    
+    /* Keeps the layout stable when scrollbars appear */
+    scrollbar-gutter: stable; 
+}
+
+/* 2. The Doctor Card (Item) */
+.doctor-item {
+    /* Ensure the card takes up the full width minus the right padding */
+    width: 100%; 
+    box-sizing: border-box;
+    margin: 0;
+    
+    /* Ensures the card starts exactly at the left edge of the container */
+    align-self: flex-start; 
+}
+
+/* 3. Ensure the Search/Filter row uses the same horizontal padding */
+.search-filter-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* Change padding from 12px 16px to 12px 0 */
+    padding: 12px 0; 
+    margin-bottom: 10px; /* Optional: adds space before the "Showing (94)" text */
+}
+
+/* 1. Set the overall width */
+.doctor-list-container::-webkit-scrollbar {
+    width: 13px; 
+}
+
+/* 2. THE THUMB: This was missing! This is the draggable pill shape */
+.doctor-list-container::-webkit-scrollbar-thumb {
+    background-color: #cbd5e0; /* Matches your UI grey */
+    border-radius: 3px;
+    border: 3px solid transparent; /* Creates the "floating" effect */
+    background-clip: content-box;
+}
+
+/* 3. THE BUTTONS: Refined for the triangle look */
+.doctor-list-container::-webkit-scrollbar-button:single-button {
+    display: block;
+    height: 12px;
+    width: 12px;
+    background-color: transparent; /* Remove the default box background */
+}
+
+/* 4. Up Arrow Triangle */
+.doctor-list-container::-webkit-scrollbar-button:single-button:vertical:decrement {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23a0aec0'><polygon points='50,0 0,100 100,100'/></svg>");
+    background-repeat: no-repeat;
+    background-size: 8px 8px;
+    background-position: center bottom;
+}
+
+/* 5. Down Arrow Triangle */
+.doctor-list-container::-webkit-scrollbar-button:single-button:vertical:increment {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23a0aec0'><polygon points='0,0 100,0 50,100'/></svg>");
+    background-repeat: no-repeat;
+    background-size: 8px 8px;
+    background-position: center top;
+}
+
+/* 4. DOCTOR LIST STYLING */
+.mini-search-row { display: flex; gap: 10px; margin-bottom: 0px; }
+.mini-search { flex: 1; border: 1px solid #ddd; border-radius: 4px; padding: 6px 12px; display: flex; align-items: center; gap: 10px; color: #999; }
+.mini-search input { border: none; outline: none; width: 100%; font-size: 0.9rem; }
+
+.filter-container { display: flex; gap: 10px; align-items: center; }
+.type-select {
+    padding: 20px 12px;
+    border: 1px solid #E0E0E0;
+    border-radius: 6px;
+    background-color: white;
+    color: #355872;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.list-filter {
+    min-width: 130px; 
+    padding: 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    color: #3e627a;
+    cursor: pointer;
+    background-color: white;
+}
+
+/* --- DOCTOR ITEM COMPONENT --- */
+.doctor-item {
+    width: 100%; 
+    box-sizing: border-box; 
+    margin: 0 auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background-color: #fff;
+}
+
+.doc-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.doc-content-left { display: flex; align-items: center; gap: 15px; }
+
+.doc-init {
+    width: 42px;
+    height: 42px;
+    background: #e3f2fd;
+    color: #1976d2;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.doc-info { display: flex; flex-direction: column; }
+.doc-name { font-weight: 700; font-size: 16px; color: #333; }
+.doc-specialty { font-size: 12px; color: #999; }
+
+.doc-details {
+    max-height: 0;
+    overflow: hidden;
+    width: 100%;
+    align-self: flex-start; 
+}
+
+/* --- CRITICAL FIXES FOR THE SQUEEZED LOOK --- */
+
+.doc-details .details-grid {
+    display: block !important; 
+    padding: 0 !important;
+    width: 100% !important;
+}
+
+/* This creates the 2-column layout inside the card */
+.doc-inner-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+/* Align text under the name, indenting past the RP icon */
+.doctor-item.active .doc-details {
+    max-height: 500px;
+    padding: 15px 20px 20px 77px !important; 
+    border-top: 1px solid #f0f0f0;
+    background-color: #fafafa;
+}
+
+.detail-item label {
+    display: block;
+    font-size: 10px;
+    color: #999;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.detail-item span {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+}
+
+.doctor-item.active .toggle-icon { transform: rotate(180deg); transition: transform 0.3s ease; }
+
+/* 5. DCP TABLE */
+.dcp-table { min-width: 600px; border-collapse: collapse; }
+
+.badge-type {
+    background: #e2e8f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #475569;
+    text-transform: uppercase;
+}
+
+.dcp-table th { text-align: left; padding: 12px; border-bottom: 1px solid #eee; color: #888; font-size: 0.8rem; text-transform: uppercase; }
+.dcp-table td { padding: 15px 12px; border-bottom: 1px solid #fafafa; font-size: 0.9rem; }
+.week-num { color: #007bff; font-weight: bold; }
+
+/* 6. BOTTOM ACTION */
+.bottom-action { text-align: center; padding: 30px 0 50px; }
+.btn-summary-large { background: var(--header-blue); color: white; border: none; padding: 14px 50px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+/* ===================== RESPONSIVE STYLES ===================== */
+
+@media (max-width: 1024px) {
+    .main-header { padding: 16px 24px; }
+    .main-header .title { font-size: 24px; }
+
+    .rep-sub-nav { padding: 12px 24px; flex-wrap: wrap; gap: 10px; }
+    .status-actions { min-width: unset; flex-wrap: wrap; justify-content: flex-end; }
+
+    .details-grid {
+        grid-template-columns: 1fr;
+        padding: 16px 24px;
+        gap: 16px;
+    }
+
+    .grid-card { height: auto; min-height: 400px; }
+}
+
+@media (max-width: 768px) {
+    .main-header { padding: 14px 16px; }
+    .main-header .title { font-size: 20px; }
+
+    .rep-sub-nav {
+        padding: 10px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .status-actions {
+        width: 100%;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .btn-summary-outline,
+    .btn-accept,
+    .btn-reject {
+        padding: 7px 14px;
+        font-size: 13px;
+    }
+
+    .final-status-badge {
+        font-size: 12px;
+        padding: 7px 16px;
+    }
+
+    .details-grid {
+        grid-template-columns: 1fr;
+        padding: 12px 16px;
+    }
+
+    .grid-card { height: auto; min-height: 350px; }
+
+    .dcp-table { font-size: 0.8rem; }
+    .dcp-table th, .dcp-table td { padding: 10px 8px; }
+
+    .name { font-size: 15px; }
+    .period-text { font-size: 13px; }
+
+    /* Modal responsive */
+    .modal-card {
+        width: 90vw;
+        height: auto;
+        min-height: 240px;
+    }
+    .btn-confirm, .btn-review, .btn-cancel-red, .btn-confirm-reject {
+        padding: 8px 24px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-header .title { font-size: 17px; }
+    .rep-sub-nav { padding: 10px 12px; }
+    .approval-group { flex-direction: column; width: 100%; }
+    .btn-accept, .btn-reject { width: 100%; text-align: center; }
+    .details-grid { padding: 10px 12px; }
+    .card-header h2 { font-size: 0.95rem; }
+    .doc-name { font-size: 14px; }
+    .doc-specialty { font-size: 11px; }
+}

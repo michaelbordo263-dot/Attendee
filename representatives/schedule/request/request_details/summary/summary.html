@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summary - Attendee System</title>
+    <link rel="stylesheet" href="../request_details.css"> 
+    <link rel="stylesheet" href="summary.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="schedule-wrapper">
+        <header class="main-header">
+            <h1 class="title">Summary</h1>
+            <div class="header-right">
+                <div class="user-profile"></div>
+            </div>
+        </header>
+
+        <div class="rep-sub-nav">
+            <div class="rep-left-section">
+                <button class="back-btn" onclick="history.back()"> &lt; </button> 
+                <div class="rep-meta">
+                    <span class="name" id="display-name">Loading...</span>
+                    <span class="location" id="display-location">...</span>
+                </div>
+            </div>
+            <div class="status-actions">
+                <div class="period-pill" id="display-period">Loading...</div>
+            </div>
+        </div>
+        
+        <main class="summary-body">
+            <div class="summary-grid-container">
+
+                <div class="summary-card stat-card total-doctors">
+                    <label>TOTAL DOCTORS</label>
+                    <div class="stat-value" id="stat-doctors">0<span class="total">/0</span></div>
+                    <span class="stat-sub">Coverage</span>
+                </div>
+                
+                <div class="summary-card stat-card total-visits">
+                    <label>TOTAL VISITS</label>
+                    <div class="stat-value" id="stat-visits">0</div>
+                    <span class="stat-sub" id="stat-period-label">Across Quarter</span>
+                </div>
+                
+                <div class="summary-card stat-card pharmacies">
+                    <label>PHARMACIES</label>
+                    <div class="stat-value" id="stat-pharmacies">0<span class="total">/0</span></div>
+                    <span class="stat-sub">Coverage</span>
+                </div>
+
+                <div class="summary-card content-column doctor-breakdown">
+                    <h3 class="section-title">Doctor/Pharmacy Breakdown</h3>
+                    <div class="doctor-accordion-container" id="accordion-container">
+                        <p class="group-label">LOADING...</p>
+                    </div>
+                </div>
+
+                <div class="summary-card content-column calendar" id="calendar-container">
+
+                    <!-- Empty state -->
+                    <div class="calendar-empty-state" id="calendar-empty">
+                        <i class="fa fa-calendar-alt" style="font-size:32px; margin-bottom:12px; opacity:0.3;"></i>
+                        <h3 class="section-title">Click a doctor to see schedule</h3>
+                    </div>
+
+                    <!-- Active calendar -->
+                    <div class="calendar-active-state hidden" id="calendar-active">
+                        <div class="calendar-nav-header">
+                            <button class="nav-btn prev-btn" onclick="changeMonth(-1)">&#8249;</button>
+                            <span class="active-month-year" id="current-month-display">Month 2026</span>
+                            <button class="nav-btn next-btn" onclick="changeMonth(1)">&#8250;</button>
+                        </div>
+                        <div class="weekday-labels">
+                            <div>S</div><div>M</div><div>T</div><div>W</div><div>TH</div><div>F</div><div>S</div>
+                        </div>
+                        <div class="calendar-grid" id="calendar-days-grid"></div>
+                    </div>
+
+                </div>
+
+            </div> 
+        </main>
+    </div>
+
+    <script src="../../../../../common/backend_connection.js"></script>
+    <script src="summary.js"></script>
+    
+</body>
+</html>

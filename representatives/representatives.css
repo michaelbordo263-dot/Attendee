@@ -1,0 +1,209 @@
+/* --- GLOBAL: No page scroll --- */
+html, body {
+    overflow: hidden;
+    height: 100%;
+    margin: 0;
+}
+
+/* --- TABLE CONTROLS --- */
+.table-controls {
+    display: flex;
+    flex-direction: column; 
+    gap: 12px; 
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.controls-top-row {
+    display: flex;
+    align-items: center;
+    gap: 15px; 
+}
+
+.search-wrapper { flex: 0 1 350px; }
+
+.search-input {
+    width: 100%;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 1.5px solid #E0E0E0;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.search-input:focus { border-color: #355872; }
+
+.location-dropdown {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 10px 40px 10px 15px;
+    border-radius: 10px;
+    border: 1.5px solid #E0E0E0;
+    background-color: #FFFFFF;
+    font-weight: 600;
+    color: #355872;
+    cursor: pointer;
+    outline: none;
+}
+
+.dropdown-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.dropdown-wrapper::after {
+    content: "▾";
+    position: absolute;
+    right: 14px;
+    color: #355872;
+    font-size: 13px;
+    pointer-events: none;
+}
+
+.rep-count {
+    font-size: 13px;
+    color: #888;
+    font-weight: 500;
+}
+
+/* --- SCROLLABLE LIST CONTAINER --- */
+div#repList.rep-list-container {
+    max-height: calc(100vh - 310px) !important;
+    overflow-y: auto !important;
+    padding-bottom: 40px;
+}
+
+/* Hide scrollbar but keep scrollable */
+.rep-list-container::-webkit-scrollbar { display: none; }
+.rep-list-container { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* --- FIX: Remove conflicting #repList scroll --- */
+#repList {
+    max-height: unset !important;
+    overflow-y: unset !important;
+    padding-right: unset !important;
+}
+
+/* --- Avatar --- */
+.rep-avatar {
+    width: 45px;
+    height: 45px;
+    background-color: #c2dfff;
+    color: #007bff;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+    margin-right: 15px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* --- Individual Card --- */
+.rep-card {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 12px 20px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.rep-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+}
+
+.rep-info { flex-grow: 1; }
+
+.rep-info h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.rep-info p {
+    margin: 4px 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* --- View Button --- */
+.view-btn {
+    background-color: #f0f4f8;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #4a90e2;
+    transition: background 0.3s;
+    flex-shrink: 0;
+}
+
+.view-btn:hover { background-color: #e2e8f0; }
+
+/* --- Legacy classes --- */
+.rep-info-group { display: flex; align-items: center; gap: 15px; }
+.rep-initials {
+    width: 44px; height: 44px;
+    background-color: #9CD5FF;
+    color: #355872;
+    font-weight: 800;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+}
+.rep-details { display: flex; flex-direction: column; }
+.rep-name { font-weight: 700; font-size: 16px; color: #000; }
+.rep-area { font-size: 13px; color: #666; font-weight: 500; }
+.rep-next-btn { color: #000; padding: 10px; transition: color 0.2s ease; }
+.rep-next-btn:hover { color: #355872; }
+
+@media (max-width: 768px) {
+    .controls-top-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-wrapper {
+        flex: 1;
+        width: 100%;
+    }
+
+    .location-dropdown {
+        width: 100%;
+    }
+
+    div#repList.rep-list-container {
+        max-height: calc(100vh - 420px) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .rep-card {
+        padding: 10px 14px;
+    }
+
+    .rep-avatar {
+        width: 38px;
+        height: 38px;
+        font-size: 0.85rem;
+    }
+
+    .rep-info h3 {
+        font-size: 0.95rem;
+    }
+
+    div#repList.rep-list-container {
+        max-height: calc(100vh - 460px) !important;
+    }
+}

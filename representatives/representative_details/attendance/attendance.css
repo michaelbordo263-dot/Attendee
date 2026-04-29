@@ -1,0 +1,781 @@
+/* MEDTRACK SYSTEM - SCHEDULE STYLES
+    Maintained by: Development Team
+    Structure: Base > Layout > Navigation > Calendar Grid > Modals > Responsive
+*/
+
+:root {
+    /* Color Palette */
+    --color-navy-primary: #355872;
+    --color-navy-hover: #456d82;
+    --color-navy-dark: #345464;
+    --color-bg-main: #D9D9D9;
+    --color-bg-card: #F7F8F0;
+    --color-bg-modal: #FDFDF5;
+    --color-border: #E0E0E0;
+    --color-text-main: #333333;
+    --color-text-muted: #666666;
+    --color-accent-blue: #007AFF;
+    
+    /* Layout Constants */
+    --padding-screen: 50px;
+    --radius-standard: 6px;
+    --radius-large: 10px;
+}
+
+/* --- 1. BASE & RESET --- */
+* { box-sizing: border-box; }
+
+body { 
+    margin: 0; 
+    font-family: 'Inter', sans-serif; 
+    background-color: var(--color-bg-main); 
+    height: 100vh;
+    overflow: hidden;
+    color: var(--color-text-main);
+}
+
+.schedule-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* --- 2. LAYOUT: HEADERS & BARS --- */
+
+/* Primary Navy Header */
+.main-header {
+    background-color: var(--color-navy-primary);
+    padding: 20px var(--padding-screen);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.main-header .title { 
+    margin: 0; 
+    font-size: 32px; 
+    font-weight: 400; 
+}
+
+/* Secondary White Sub-nav (Rep Info) */
+.rep-sub-nav {
+    background: white;
+    padding: 12px var(--padding-screen);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+.rep-left-section { 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+}
+
+.back-btn {
+    background-color: var(--color-navy-primary); 
+    border: none; 
+    border-radius: var(--radius-standard);
+    width: 45px; 
+    height: 35px; 
+    cursor: pointer; 
+    color: white; 
+    font-weight: bold;
+    transition: background 0.2s ease;
+}
+
+.back-btn:hover { background-color: var(--color-navy-hover); }
+
+.rep-meta {
+    display: flex;
+    align-items: center;
+}
+
+.user-info-stack {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.name-label {
+    display: block;
+    font-weight: bold;
+    font-size: 18px;
+    line-height: 1.2;
+    color: var(--color-text-main);
+}
+
+.area-label {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    font-weight: 400;
+    margin-top: 2px;
+}
+
+/* --- 3. NAVIGATION: TABS & CONTROLS --- */
+
+.status-tabs { 
+    display: flex; 
+    border: 1px solid var(--color-border); 
+    border-radius: var(--radius-standard); 
+}
+
+.tab-link { 
+    padding: 8px 25px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    color: #888; 
+    text-decoration: none; 
+}
+
+.tab-link.active { 
+    color: var(--color-accent-blue); 
+    border-bottom: 2px solid var(--color-accent-blue); 
+}
+
+.alert-dot { 
+    width: 6px; 
+    height: 6px; 
+    background: #FF0000; 
+    border-radius: 50%; 
+    display: inline-block; 
+    vertical-align: top; 
+}
+
+/* --- 4. CALENDAR CONTENT --- */
+.calendar-content { 
+    padding: 16px var(--padding-screen) 10px;
+    flex-grow: 1; 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 0;
+    position: relative;
+}
+
+/* 
+    CALENDAR CONTROLS — 3-column layout:
+    [spacer] | [< Month Year >] | [Search Doctor]
+    Spacer on the left mirrors search width so center group stays truly centered.
+*/
+.calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    margin-bottom: 30px;
+    flex-shrink: 0;
+}
+
+/* Left spacer — mirrors search input width to balance centering */
+.controls-right-spacer {
+    width: 200px;
+}
+
+/* Center group: prev button + Month Year label + next button */
+.month-nav-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.date-label {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.date-label .m { 
+    font-size: 22px; 
+    font-weight: 700; 
+    color: #000; 
+}
+
+.date-label .y { 
+    font-size: 22px; 
+    color: var(--color-navy-dark); 
+    font-weight: 400; 
+}
+
+/* Search input — right side, aligned with Request tab */
+.search-input-wrapper { 
+    background: #F1F1F1; 
+    padding: 0 15px; 
+    border-radius: 8px; 
+    display: flex; 
+    align-items: center; 
+    border: 1px solid #ddd;
+    height: 35px;
+    width: 300px;
+}
+.search-input-wrapper input { 
+    border: none; 
+    background: transparent; 
+    outline: none; 
+    width: 100%; 
+    font-size: 13px;
+}
+
+/* Nav pill buttons (prev/next) */
+.btn-pill { 
+    background: #C4C4C4; 
+    border: none; 
+    border-radius: 4px; 
+    width: 35px; 
+    height: 35px; 
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.btn-pill:hover {
+    background: #b0b0b0;
+}
+
+/* Calendar Grid Logic */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    /* Day names get auto height, date cells get 140px */
+    grid-template-rows: auto;
+    grid-auto-rows: 140px;
+    column-gap: 4px;
+    row-gap: 4px;
+    overflow-y: auto;
+}
+
+.calendar-grid::-webkit-scrollbar {
+    display: none;
+}
+
+.day-name {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #D9D9D9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+    color: #555;
+    height: 30px;
+    padding: 0;
+    width: 100%;
+    /* Override grid-auto-rows so day names don't get 140px height */
+    align-self: center;
+    grid-row: 1;
+    margin-bottom: 10px;
+}
+
+/* Each individual date card — always white */
+.date-item {
+    background-color: #FFFFFF;
+    min-height: 100px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.date-number {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+}
+
+.padding-day {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    cursor: default;
+    pointer-events: none;
+}
+
+.date-item:hover {
+    background-color: #f0f0f0;
+}
+
+.status-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.tag-present { background: #dcfce7; color: #166534; }
+.tag-mia { background: #fee2e2; color: #991b1b; }
+
+/* --- 5. MODAL SYSTEM --- */
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-overlay.active { display: flex; }
+
+/* THE WHITE CARD — matches mockup exactly */
+.modal-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 640px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+/* HEADER — dark navy, date + X */
+.modal-card-header {
+    background: #3D5A68;
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-date-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.1px;
+}
+
+.modal-close-btn {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 4px;
+    opacity: 0.85;
+    transition: opacity 0.15s;
+}
+.modal-close-btn:hover { opacity: 1; }
+
+/* BODY — the two-col content area */
+.modal-card-body {
+    padding: 24px;
+    background: #ffffff;
+}
+
+/* TWO-COL LAYOUT */
+.modal-two-col {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+}
+
+/* LEFT: rounded image/avatar box — matches mockup proportions */
+.modal-img-box {
+    flex-shrink: 0;
+    width: 300px;
+    height: 300px;
+    border-radius: 14px;
+    background: #dce7f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.modal-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 14px;
+}
+
+/* Circle initials inside the box */
+.modal-img-initials {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.initials-badge {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #a8c4d8;
+    color: #2c4a60;
+    font-size: 20px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 1px;
+}
+
+.initials-label {
+    font-size: 12px;
+    color: #5a7a8f;
+    font-weight: 500;
+    text-align: center;
+    max-width: 160px;
+}
+
+/* RIGHT: info column */
+.modal-info-col {
+    flex: 1;
+    padding-top: 4px;
+}
+
+/* Name + badge on the same row */
+.modal-name-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 2px;
+    flex-wrap: wrap;
+}
+
+.modal-rep-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e2d3d;
+}
+
+.modal-rep-area {
+    font-size: 13px;
+    color: #7a9ab0;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+.modal-info-divider {
+    height: 1px;
+    background: #e8edf2;
+    margin-bottom: 16px;
+}
+
+.modal-info-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.modal-info-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #8aabb9;
+    width: 70px;
+    flex-shrink: 0;
+}
+
+.modal-info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c4a60;
+}
+
+/* Status badges */
+.modal-status-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+}
+
+.badge-present { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+.badge-late    { background: #fef9c3; color: #854d0e; border-color: #fde68a; }
+.badge-absent  { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+.badge-nolog   { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+
+/* --- 6. UTILITY/* --- 6. UTILITY: FUTURE VIEW --- */
+.future-view .status-btn,
+.future-view .doc-identity span:last-child,
+.future-view .doctor-row > span:nth-last-child(2),
+.future-view .doctor-row > i, 
+.future-view .doctor-row > .arrow-icon {
+    display: none !important;
+}
+
+/* 
+    has-visit: keep white background, only show blue dot indicator.
+    No more greenish tint.
+*/
+.date-item.has-visit {
+    background-color: #FFFFFF;
+    border: none;
+}
+
+.date-item.has-visit::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background-color: #007AFF;
+    border-radius: 50%;
+}
+
+/* Hover state for doctor rows */
+.doctor-row:hover {
+    background: #EDF2F7;
+    border-color: var(--color-accent-blue);
+    transform: translateY(-1px);
+}
+
+/* Empty/padding slots */
+.date-item.empty {
+    visibility: hidden;
+    border: none;
+    background: transparent;
+}
+
+.date-item:hover:not(.empty) {
+    background-color: #F8F9FA;
+}
+
+/* --- 7. SEARCH HIGHLIGHT --- */
+.date-item.search-highlight {
+    outline: 2px solid #007AFF;
+    outline-offset: -2px;
+    background-color: #EBF4FF !important;
+}
+
+.date-item.search-dim {
+    opacity: 0.4;
+}
+
+/* --- 8. RESPONSIVE --- */
+
+/* Tablet: ~768px - 1024px */
+@media (max-width: 1024px) {
+    :root {
+        --padding-screen: 20px;
+    }
+
+    .main-header .title {
+        font-size: 24px;
+    }
+
+    .search-input-wrapper {
+        width: 200px;
+    }
+
+    .calendar-grid {
+        grid-auto-rows: 100px;
+    }
+
+    .modal-content {
+        width: 95%;
+    }
+}
+
+/* --- 9. FLOATING ADD BUTTON (FAB) --- */
+.fab-add-btn {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--color-navy-dark);
+    color: white;
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    z-index: 500;
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.fab-add-btn:hover {
+    background-color: var(--color-navy-hover);
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.fab-add-btn:active {
+    transform: scale(0.96);
+}
+
+@media (max-width: 767px) {
+    .fab-add-btn {
+        bottom: 20px;
+        right: 20px;
+        width: 52px;
+        height: 52px;
+        font-size: 28px;
+    }
+}
+
+/* Mobile: up to ~767px */
+@media (max-width: 767px) {
+
+    :root {
+        --padding-screen: 12px;
+    }
+
+    body {
+        overflow: auto;
+        height: auto;
+    }
+
+    .schedule-wrapper {
+        height: auto;
+        overflow: visible;
+    }
+
+    .main-header {
+        padding: 14px var(--padding-screen);
+    }
+
+    .main-header .title {
+        font-size: 20px;
+    }
+
+    .rep-sub-nav {
+        padding: 10px var(--padding-screen);
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .status-tabs {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tab-link {
+        flex: 1;
+        text-align: center;
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+    .calendar-content {
+        padding: 12px var(--padding-screen) 10px;
+        overflow: visible;
+        min-height: auto;
+    }
+
+    .calendar-controls {
+        margin-top: 10px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        position: relative;
+    }
+
+    .month-nav-group {
+        position: static;
+        transform: none;
+        order: 1;
+    }
+
+    .search-input-wrapper {
+        width: 100%;
+        order: 2;
+    }
+
+    .controls-right-spacer {
+        display: none;
+    }
+
+    .calendar-grid {
+        grid-auto-rows: 60px;
+        overflow-y: visible;
+    }
+
+    .date-item {
+        padding: 5px;
+        min-height: 60px;
+    }
+
+    .date-number {
+        font-size: 12px;
+    }
+
+    .day-name {
+        font-size: 0.65rem;
+    }
+
+    .modal-content {
+        width: 98%;
+        border-radius: 8px;
+    }
+
+    .modal-header {
+        padding: 12px 16px;
+    }
+
+    .modal-header h2 {
+        font-size: 16px;
+    }
+
+    .modal-body {
+        padding: 12px;
+        max-height: 60vh;
+    }
+
+    .doctor-row {
+        padding: 10px 12px;
+    }
+
+    .doc-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 15px;
+    }
+
+    .name-label {
+        font-size: 14px !important;
+    }
+
+    .area-label {
+        font-size: 12px;
+    }
+
+    .status-btn {
+        padding: 5px 12px;
+        font-size: 11px;
+        min-width: 80px;
+    }
+
+    .back-btn {
+        width: 36px;
+        height: 30px;
+        font-size: 12px;
+    }
+
+    .name-label {
+        font-size: 15px;
+    }
+}

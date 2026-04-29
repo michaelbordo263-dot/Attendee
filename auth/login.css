@@ -1,0 +1,116 @@
+:root {
+    --primary-navy: #355872;
+    --highlight-sky: #9CD5FF;
+    --soft-white: #F7F8F0;
+}
+
+body.login-page {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ffffff;
+    font-family: 'Inter', sans-serif;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 350px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.portal-header {
+    font-size: 38px;
+    font-weight: 900;
+    color: #000000;
+    line-height: 1;
+    margin-bottom: 40px;
+    letter-spacing: -2px;
+}
+
+.highlight {
+    color: var(--highlight-sky);
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary-navy);
+    margin-bottom: 6px;
+}
+
+.field-wrapper {
+    background-color: var(--soft-white);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+}
+
+.field-wrapper input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 14px 0;
+    font-size: 14px;
+    outline: none;
+    color: #333;
+}
+
+.field-icon {
+    font-size: 16px;
+    opacity: 0.5;
+}
+
+.eyebtn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    opacity: 0.35;
+    transition: opacity 0.2s;
+}
+
+.eyebtn:hover {
+    opacity: 0.8;
+}
+
+.forgot-link {
+    display: block;
+    font-size: 11px;
+    color: var(--primary-navy);
+    text-decoration: none;
+    font-weight: 700;
+    margin-bottom: 30px;
+    text-align: right;
+}
+
+.button-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.login-btn {
+    background-color: var(--primary-navy);
+    color: #ffffff;
+    border: none;
+    padding: 12px 40px;
+    border-radius: 25px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.login-btn:hover {
+    background-color: #2a4760;
+}

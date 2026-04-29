@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="../common/global.css">
+    <script src="../common/navigation.js"></script>
+    <style>
+        * { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+        *::-webkit-scrollbar { display: none !important; }
+    </style>
+</head>
+
+<body class="dashboard-page">
+<main class="main-content">
+
+    <div class="header-section">
+        <h1 class="page-title">Dashboard</h1>
+    </div>
+
+    <div class="scrollable-content">
+
+        <!-- STAT CARDS -->
+        <div class="stat-cards-row stat-cards-row--four">
+
+            <div class="stat-card" onclick="window.location.href='../representatives/representatives.html'">
+                <div>
+                    <div class="stat-label">Total Med Reps</div>
+                    <div class="stat-sub">Active</div>
+                </div>
+                <div class="stat-value" id="totalMedRepsValue">--</div>
+            </div>
+
+            <div class="stat-card" onclick="openScheduleModal()">
+                <div>
+                    <div class="stat-label">Schedule Request</div>
+                    <div class="stat-sub" id="scheduleSubLabel">--</div>
+                </div>
+                <div class="stat-value" id="totalSchedulesValue">0</div>
+            </div>
+
+            <div class="stat-card" onclick="openProductsModal()">
+                <div>
+                    <div class="stat-label">Products</div>
+                    <div class="stat-sub">Total</div>
+                </div>
+                <div class="stat-value" id="totalProductsValue">0</div>
+            </div>
+
+            <div class="stat-card stat-card--date">
+                <div class="stat-date-day" id="clock-day">--</div>
+                <div class="stat-date-month" id="clock-month">--</div>
+                <div class="stat-date-time" id="clock-time">--</div>
+            </div>
+
+        </div>
+
+        <!-- PANELS -->
+        <div class="panels-row">
+
+            <!-- PERFORMANCE (EMPTY - API ONLY) -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Med Rep Performance</span>
+                    <a href="#" class="panel-viewall" onclick="openPerformanceModal(); return false;">View all ↗</a>
+                </div>
+                <div class="panel-body">
+                    <!-- JS WILL RENDER HERE -->
+                </div>
+            </div>
+
+            <!-- UNUSUAL REPORT (EMPTY - API ONLY) -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Unusual Report</span>
+                    <a href="#" class="panel-viewall" onclick="openUnusualModal(); return false;">View all ↗</a>
+                </div>
+                <div class="panel-body" id="unusualPanelBody">
+                    <!-- JS WILL RENDER HERE -->
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</main>
+
+<!-- SCHEDULE MODAL -->
+<div class="modal-overlay" id="scheduleModal">
+    <div class="modal-box">
+
+        <div class="modal-header">
+            <h2>Schedule Request</h2>
+            <button class="modal-close" onclick="closeModal('scheduleModal')">✕</button>
+        </div>
+
+        <div class="schedule-controls">
+
+            <div class="schedule-search-row">
+
+                <div class="sched-search-wrap">
+                    <input class="schedule-search" type="text"
+                           placeholder="Search Representative"
+                           id="schedSearch"
+                           oninput="renderScheduleList(scheduleData)">
+                    <span class="sched-search-icon">🔍</span>
+                </div>
+
+                <div class="tab-group">
+                    <button class="tab-btn active" onclick="setSchedTab('Pending', this)">Pending</button>
+                    <button class="tab-btn" onclick="setSchedTab('Approved', this)">Approved</button>
+                    <button class="tab-btn" onclick="setSchedTab('Missing', this)">Missing</button>
+                </div>
+
+                <div class="sched-nav-group">
+
+                    <div class="quarter-nav">
+                        <button class="nav-btn" onclick="changeQuarter(-1)">‹</button>
+                        <div class="nav-label">
+                            <span class="nav-label-main" id="qLabel">--</span>
+                            <span class="nav-label-sub">Quarter</span>
+                        </div>
+                        <button class="nav-btn" onclick="changeQuarter(1)">›</button>
+                    </div>
+
+                    <div class="quarter-nav">
+                        <button class="nav-btn" onclick="changeYear(-1)">‹</button>
+                        <div class="nav-label">
+                            <span class="nav-label-main" id="yLabel">--</span>
+                            <span class="nav-label-sub">Year</span>
+                        </div>
+                        <button class="nav-btn" onclick="changeYear(1)">›</button>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="schedule-count" id="schedCount">0</div>
+        <div class="schedule-list" id="schedList"></div>
+
+    </div>
+</div>
+
+<!-- UNUSUAL MODAL -->
+<div class="modal-overlay" id="unusualModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Unusual Report</h2>
+            <button class="modal-close" onclick="closeModal('unusualModal')">✕</button>
+        </div>
+        <div class="unusual-list" id="unusualList"></div>
+    </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="unusualDetailModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Unusual Report</h2>
+            <button class="modal-close" onclick="backToUnusualList()">✕</button>
+        </div>
+
+        <div id="detailRepHeader"></div>
+        <div id="detailIssueBar"></div>
+        <div id="detailDoctorsList"></div>
+
+        <div class="detail-footer">
+            <button class="notify-btn">Notify</button>
+        </div>
+    </div>
+</div>
+
+<!-- PRODUCTS MODAL -->
+<div class="modal-overlay" id="productsModal">
+    <div class="modal-box modal-box--wide">
+
+        <div class="modal-header">
+            <h2>Products</h2>
+            <button class="modal-close" onclick="closeModal('productsModal')">✕</button>
+        </div>
+
+        <div class="products-controls">
+            <div class="products-search-row">
+                <div class="prod-search-wrap">
+                    <input class="schedule-search" type="text"
+                           placeholder="Search product..."
+                           id="prodSearch"
+                           oninput="renderProductsList()">
+                    <span class="prod-search-icon">🔍</span>
+                </div>
+                <button class="add-product-btn" onclick="openAddProductModal()">+ Add Product</button>
+            </div>
+            <div class="prod-count" id="prodCount">Showing 0 products</div>
+        </div>
+
+        <div class="products-grid-scroll">
+            <div class="products-grid" id="productsList"></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ADD PRODUCT MODAL -->
+<div class="modal-overlay" id="addProductModal">
+    <div class="modal-box modal-box--sm">
+
+        <div class="modal-header">
+            <h2>Add Product</h2>
+            <button class="modal-close" onclick="closeModal('addProductModal')">✕</button>
+        </div>
+
+        <div class="add-product-body">
+
+            <div class="img-upload-area" onclick="document.getElementById('productImageInput').click()">
+                <img id="imgPreview" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:10px;">
+                <div class="img-upload-placeholder" id="imgPlaceholder">
+                    <div class="img-upload-icon">📷</div>
+                    <div class="img-upload-text">Click to upload image</div>
+                    <div class="img-upload-sub">PNG, JPG up to 5MB</div>
+                </div>
+                <input type="file" id="productImageInput" accept="image/*" style="display:none;" onchange="previewImage(event)">
+            </div>
+
+            <div class="add-product-fields">
+                <div class="field-group">
+                    <label class="field-label">Generic Name</label>
+                    <input class="field-input" type="text" id="genericNameInput" placeholder="e.g. Apixaban">
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Brand Name</label>
+                    <input class="field-input" type="text" id="brandNameInput" placeholder="e.g. Apixpre">
+                </div>
+            </div>
+
+            <button class="save-product-btn" onclick="saveProduct()">Save Product</button>
+
+        </div>
+    </div>
+</div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>

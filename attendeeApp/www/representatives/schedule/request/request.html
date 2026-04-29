@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request - Attendee System</title>
+    <link rel="stylesheet" href="../../../common/global_page_header.css">
+    <link rel="stylesheet" href="request.css">
+</head>
+<body>
+
+    <div class="schedule-wrapper">
+        <header class="main-header">
+            <h1 class="title">Request</h1>
+        </header>
+
+        <div class="rep-sub-nav">
+            <div class="rep-left-section">
+                <button class="back-btn" onclick="window.location.href='../../representatives.html'"> < </button> 
+                <div class="rep-meta">
+                    <span class="name" id="repName">Loading...</span>
+                    <span class="location" id="repArea">Loading...</span>
+                </div>
+            </div>
+            <div class="status-tabs">
+                <div class="tab-link" id="navSchedule">Schedule</div>
+                <div class="tab-link active">Request <span class="alert-dot"></span></div>
+            </div>
+        </div>
+
+        <section class="request-container">
+            <div class="year-controls">
+                <button class="btn-pill" id="prevYear"> < </button>
+                <div class="year-label" id="yearLabel">2026</div>
+                <button class="btn-pill" id="nextYear"> > </button>
+            </div>
+
+            <div class="quarter-grid">
+                <div class="quarter-card status-none" id="q-card-1" onclick="handleCardClick(1)">
+                    <span class="red-dot"></span>
+                    <div class="card-content">
+                        <h2 class="q-title">Q1</h2>
+                        <p class="months">Jan · Feb · Mar</p>
+                        <span class="status-badge none">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="quarter-card status-none" id="q-card-2" onclick="handleCardClick(2)">
+                    <span class="red-dot"></span>
+                    <div class="card-content">
+                        <h2 class="q-title">Q2</h2>
+                        <p class="months">Apr · May · Jun</p>
+                        <span class="status-badge none">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="quarter-card status-none" id="q-card-3" onclick="handleCardClick(3)">
+                    <span class="red-dot"></span>
+                    <div class="card-content">
+                        <h2 class="q-title">Q3</h2>
+                        <p class="months">Jul · Aug · Sep</p>
+                        <span class="status-badge none">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="quarter-card status-none" id="q-card-4" onclick="handleCardClick(4)">
+                    <span class="red-dot"></span>
+                    <div class="card-content">
+                        <h2 class="q-title">Q4</h2>
+                        <p class="months">Oct · Nov · Dec</p>
+                        <span class="status-badge none">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="../../../common/global_data.js"></script>
+    <script type="module" src="request.js"></script>
+</body>
+</html>

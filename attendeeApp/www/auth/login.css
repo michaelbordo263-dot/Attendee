@@ -1,0 +1,96 @@
+:root {
+    --primary-navy: #355872;
+    --highlight-sky: #9CD5FF;
+    --soft-white: #F7F8F0;
+}
+
+body.login-page {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ffffff;
+    font-family: 'Inter', sans-serif;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 350px; /* Keeps the form small and centered */
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.portal-header {
+    font-size: 38px;
+    font-weight: 900;
+    color: #000000;
+    line-height: 1;
+    margin-bottom: 40px;
+    letter-spacing: -2px;
+}
+
+.highlight {
+    color: var(--highlight-sky);
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary-navy);
+    margin-bottom: 6px;
+}
+
+.field-wrapper {
+    background-color: var(--soft-white);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 0 15px; /* Side padding for the whole box */
+}
+
+.field-wrapper input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 14px 0;
+    font-size: 14px;
+    outline: none;
+    color: #333;
+}
+
+.field-icon {
+    font-size: 16px;
+    opacity: 0.5;
+    margin-left: 10px; /* Spacing between text and icon */
+}
+
+.forgot-link {
+    font-size: 12px;
+    color: blue;
+    text-decoration: underline;
+    display: inline-block;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+.button-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.login-btn {
+    background-color: var(--primary-navy);
+    color: white;
+    border: none;
+    padding: 12px 40px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}

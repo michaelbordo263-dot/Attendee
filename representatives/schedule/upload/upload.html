@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Document</title>
+
+    <link rel="stylesheet" href="../../../common/global.css">
+    <link rel="stylesheet" href="upload.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="schedule-wrapper">
+
+    <!-- ===================== Screen 1: Home ===================== -->
+    <div class="screen active" id="screen-home">
+        <header class="main-header">
+            <h1 class="title">Upload</h1>
+            <div class="profile-avatar"></div>
+        </header>
+
+        <div class="rep-sub-nav">
+            <div class="rep-left-section">
+                <button class="back-btn" id="goBack-home">&lt;</button>
+                <div class="rep-meta">
+                    <div class="user-info-stack">
+                        <span class="name-label" id="rep-name-home">Loading...</span>
+                        <span class="area-label" id="rep-location-home">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <div class="cards-area">
+
+                <button class="option-card" onclick="goTo('screen-masterlist')">
+                    <div class="option-card-icon">📄</div>
+                    <span class="option-card-label">Upload Masterlist</span>
+                </button>
+
+                <button class="option-card" onclick="goTo('screen-callplan')">
+                    <div class="option-card-icon">📅</div>
+                    <span class="option-card-label">Upload Daily Call Plan</span>
+                </button>
+
+            </div>
+        </main>
+    </div>
+
+
+    <!-- ===================== Screen 2: Masterlist ===================== -->
+    <div class="screen" id="screen-masterlist">
+        <header class="main-header">
+            <h1 class="title">Upload Masterlist</h1>
+            <div class="profile-avatar"></div>
+        </header>
+
+        <div class="rep-sub-nav">
+            <div class="rep-left-section">
+                <button class="back-btn" onclick="goTo('screen-home')">&lt;</button>
+                <div class="rep-meta">
+                    <div class="user-info-stack">
+                        <span class="name-label" id="rep-name-masterlist">Loading...</span>
+                        <span class="area-label" id="rep-location-masterlist">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <div class="callplan-layout">
+                <!-- LEFT: Upload -->
+                <div class="callplan-left">
+                    <label class="drop-zone" for="file-masterlist">
+                        <div class="upload-icon">⬆️</div>
+                        <span class="drop-label">Drop your CSV file here</span>
+                        <span class="drop-sublabel">or click to browse files</span>
+                    </label>
+
+                    <input type="file"
+                           accept=".csv"
+                           class="file-input"
+                           id="file-masterlist"
+                           onchange="showFile(this, 'masterlist-info')">
+
+                    <div class="uploaded-info" id="masterlist-info"></div>
+                </div>
+
+                <!-- RIGHT: LOGS -->
+                <div class="warnings-panel">
+                    <h2 class="warnings-title" style="color: var(--color-navy-primary);">Upload Logs</h2>
+
+                    <p class="warnings-count" id="logCount">No activities yet</p>
+
+                    <div class="warnings-list" id="masterlistLogList">
+                        <p style="text-align: center; color: #888; margin-top: 20px;">Upload a file to see logs</p>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+
+    <!-- ===================== Screen 3: Call Plan ===================== -->
+    <div class="screen" id="screen-callplan">
+        <header class="main-header">
+            <h1 class="title">Upload Daily Call Plan</h1>
+            <div class="profile-avatar"></div>
+        </header>
+
+        <div class="rep-sub-nav">
+            <div class="rep-left-section">
+                <button class="back-btn" onclick="goTo('screen-home')">&lt;</button>
+                <div class="rep-meta">
+                    <div class="user-info-stack">
+                        <span class="name-label" id="rep-name-callplan">Loading...</span>
+                        <span class="area-label" id="rep-location-callplan">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main class="main-content">
+
+            <!-- Split layout: drop zone left, warnings right -->
+            <div class="callplan-layout">
+
+                <!-- LEFT: Upload controls -->
+                <div class="callplan-left">
+
+                    <!-- Quarter status buttons + Upload button row -->
+                    <div class="callplan-topbar">
+                        <div class="quarter-btn-group">
+                            <span class="quarter-group-label">Select Quarter</span>
+                            <div class="quarter-btn-row">
+                                <button class="quarter-status-btn" id="quarter-btn-1" onclick="selectQuarter(1)">Q1</button>
+                                <button class="quarter-status-btn" id="quarter-btn-2" onclick="selectQuarter(2)">Q2</button>
+                                <button class="quarter-status-btn" id="quarter-btn-3" onclick="selectQuarter(3)">Q3</button>
+                                <button class="quarter-status-btn" id="quarter-btn-4" onclick="selectQuarter(4)">Q4</button>
+                            </div>
+                        </div>
+
+                        <button class="upload-mode-btn btn-with" id="dcpUploadWithBtn" onclick="uploadCallPlan()" disabled>
+                            Upload DCP File
+                        </button>
+                    </div>
+
+                    <label class="drop-zone locked-zone" id="dcpDropZone" for="file-callplan">
+                        <!-- Default empty state -->
+                        <div class="drop-zone-empty" id="dcpEmptyState">
+                            <div class="upload-icon">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M11 16V7.85l-2.6 2.6L7 9l5-5 5 5-1.4 1.45L13 7.85V16h-2zm-5 4q-.825 0-1.412-.587T4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413T18 20H6z"/>
+                                </svg>
+                            </div>
+                            <span class="drop-label">Drop your DCP file here</span>
+                            <span class="drop-sublabel">or click to browse files</span>
+                        </div>
+
+                        <!-- File selected state -->
+                        <div class="drop-zone-file" id="dcpFilePreview" style="display:none;">
+                            <div class="dz-file-icon">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/>
+                                </svg>
+                            </div>
+                            <span class="dz-file-name" id="dcpFileName">filename.csv</span>
+                            <span class="dz-file-meta" id="dcpFileMeta">CSV file</span>
+                            <button class="dz-remove-btn" onclick="removeDCPFile(event)" title="Remove file">✕ Remove</button>
+                        </div>
+                    </label>
+
+                    <input type="file" accept=".csv" class="file-input" id="file-callplan"
+                           onchange="onDCPFileSelected(this)">
+                </div>
+
+                <!-- RIGHT: WARNINGS -->
+                <div class="warnings-panel" id="warningsPanel">
+                    <h2 class="warnings-title">Warnings</h2>
+                    <div class="warnings-filter">
+                        <select id="warningFilter" onchange="filterWarnings()">
+                            <option value="all">All Warnings</option>
+                            <option value="frequency">Frequency Warning</option>
+                            <option value="masterlist">No Masterlist Match</option>
+                        </select>
+                        <span class="filter-arrow">▼</span>
+                    </div>
+                    <p class="warnings-count" id="warningsCount">Showing 0 results</p>
+                    <div class="warnings-list" id="warningsList">
+                        <p>No warnings yet</p>
+                    </div>
+                    <!-- Floating action buttons — shown only when there are warnings -->
+                    <div class="warning-action-btns" id="warningActionBtns" style="display:none;">
+                        <button class="cancel-upload-btn" onclick="cancelDCPUpload()">
+                            ✕ Cancel
+                        </button>
+                        <button class="upload-anyway-btn" id="uploadAnywayBtn" onclick="confirmUploadAnyway()">
+                            ⚠️ Upload Anyway
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Confirmation Modal -->
+                <div class="confirm-overlay" id="confirmOverlay">
+                    <div class="confirm-box">
+                        <div class="confirm-icon">⚠️</div>
+                        <h3 class="confirm-title">Upload With Warnings?</h3>
+                        <p class="confirm-message">There are warnings with this file. Some records may be skipped or have issues. Are you sure you want to proceed?</p>
+                        <div class="confirm-actions">
+                            <button class="confirm-cancel-btn" onclick="closeConfirm()">Cancel</button>
+                            <button class="confirm-proceed-btn" onclick="proceedUploadAnyway()">Yes, Upload Anyway</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+
+
+        </main>
+    </div>
+
+</div>
+
+
+<!-- ===================== SCRIPTS ===================== -->
+<script src="../../../common/backend_connection.js"></script>
+<script src="upload.js"></script>
+
+</body>
+</html>

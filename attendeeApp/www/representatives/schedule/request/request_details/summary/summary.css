@@ -1,0 +1,417 @@
+/* ==========================================================================
+   1. GLOBAL & LAYOUT
+   ========================================================================== */
+:root {
+    --bg-grey: #D9D9D9;
+    --border-grey: #E0E0E0;
+    --text-muted: #999;
+    --dark-blue: #2D4A5E;
+}
+
+.summary-body {
+    padding: 20px 50px;
+    background-color: var(--bg-grey);
+}
+
+.summary-grid-container {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 20px;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--border-grey);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    padding: 25px;
+}
+
+.hidden { display: none !important; }
+
+/* --- Period Pill --- */
+.rep-sub-nav {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columns to match the cards below */
+    gap: 20px;
+    align-items: center;
+    padding: 14px 50px;
+    box-sizing: border-box;
+    width: 100%;
+    background: white;
+    border-bottom: 1px solid var(--border-grey);
+}
+
+.rep-left-section { grid-column: span 2; }
+
+.status-actions {
+    grid-column: span 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.period-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #26B6C4;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 18px;
+    border-radius: 20px;
+    white-space: nowrap;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* --- Grid Spanning Logic --- */
+.total-doctors, .total-visits, .pharmacies { grid-column: span 2; }
+
+.doctor-breakdown, .calendar {
+    grid-column: span 3;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.doctor-breakdown .doctor-accordion-container { /* scrollbar hidden */
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+    padding-top: 5px;
+}
+
+/* ==========================================================================
+   2. STATS CARDS (Top Row)
+   ========================================================================== */
+.stat-card label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #333;
+}
+
+.stat-value .total {
+    color: #CCC;
+    font-size: 18px;
+}
+
+.stat-sub {
+    font-size: 12px;
+    color: #666;
+}
+
+/* ==========================================================================
+   3. DOCTOR BREAKDOWN (Accordion & Chips)
+   ========================================================================== */
+.section-title {
+    text-align: center;
+    font-size: 16px;
+    color: #355872;
+    margin-bottom: 25px;
+}
+
+.group-label {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #718096;
+}
+
+/* --- Accordion Items --- */
+.accordion-item {
+    background: #fff;
+    border: 1px solid #eef2f5;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    overflow: hidden;
+}
+
+.accordion-header {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    cursor: pointer;
+    background: #f8fafb;
+}
+
+.accordion-header:hover { background-color: #F0F6FA; }
+
+.accordion-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.accordion-info .name-label {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--dark-blue);
+}
+
+.accordion-info .area-label {
+    font-size: 11px;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.accordion-item.active .accordion-header {
+    background-color: #EBF4F8;
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease-in-out,
+                padding 0.4s ease;
+    background-color: #FFF;
+    padding: 0 15px;
+}
+
+.accordion-item.active .accordion-content {
+    max-height: 500px;
+    opacity: 1;
+    padding: 0px 15px 20px 15px;
+}
+
+.accordion-header .fa-chevron-down {
+    transition: transform 0.3s ease;
+    font-size: 12px;
+    margin-top: 5px;
+    color: #999;
+}
+
+.accordion-item.active .fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+/* --- Month Rows & Chips --- */
+/* quarter-tag moved into accordion header */
+.accordion-period {
+    font-size: 11px;
+    color: #8BAEC4;
+    font-weight: 500;
+    margin-left: 8px;
+    white-space: nowrap;
+}
+
+.visit-row {
+    display: flex;
+    font-size: 14px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #F0F0F0;
+    gap: 10px;
+}
+
+.visit-row .month {
+    min-width: 55px;
+    font-weight: 500;
+    color: #444;
+    font-size: 13px;
+}
+
+.dates-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-grow: 1;
+}
+
+.dates-sublabel {
+    font-size: 10px;
+    color: #aaa;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.date-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.chip {
+    background: #F4F7F9;
+    border: 1px solid #DCE6ED;
+    color: #555;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.freq-label {
+    font-size: 12px;
+    color: #888;
+    white-space: nowrap;
+}
+
+.total-footer {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 12px;
+    margin-top: 8px;
+    border-top: 1px solid #EEE;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.bold-total {
+    font-size: 13px;
+    font-weight: 800;
+    color: #2D3748;
+}
+
+/* ==========================================================================
+   4. CALENDAR SECTION
+   ========================================================================== */
+.calendar {
+    position: relative;
+}
+
+/* Empty state */
+.calendar-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #BDCAD3;
+    font-size: 14px;
+    text-align: center;
+}
+
+.calendar-empty-state h3 {
+    color: #BDCAD3;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* Active calendar wrapper */
+.calendar-active-state {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 4px 8px;
+}
+
+/* Nav header */
+.calendar-nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding: 0 4px;
+}
+
+.active-month-year {
+    font-weight: 700;
+    font-size: 20px;
+    color: #2c3e50;
+    text-align: center;
+    letter-spacing: 0.3px;
+}
+
+.nav-btn {
+    background: #F4F8FB;
+    border: 1px solid #DDE6EE;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    color: #4A6FA5;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+    font-weight: 600;
+}
+
+.nav-btn:hover {
+    background: #E2EEF6;
+    border-color: #B0C9DC;
+}
+
+.nav-hidden {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Weekday labels */
+.weekday-labels {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    margin-bottom: 6px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #EEE;
+}
+
+.weekday-labels div {
+    font-size: 12px;
+    font-weight: 700;
+    color: #aab8c2;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+/* Calendar grid — fills remaining height */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    justify-items: center;
+    align-items: center;
+    flex-grow: 1;
+    /* Distribute rows evenly across remaining space */
+    grid-auto-rows: 1fr;
+}
+
+/* Individual date cell — sized relative to column width */
+.date {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #4a5568;
+    border-radius: 50%;
+    font-weight: 400;
+    transition: background 0.12s;
+}
+
+.date:not(.empty-date):not(.scheduled):hover {
+    background: #F0F5F9;
+}
+
+.empty-date {
+    pointer-events: none;
+}
+
+/* Scheduled (visited) date highlight */
+.date.scheduled {
+    color: white;
+    font-weight: 700;
+    font-size: 17px;
+    background-color: var(--dark-blue);
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(45, 74, 94, 0.30);
+}

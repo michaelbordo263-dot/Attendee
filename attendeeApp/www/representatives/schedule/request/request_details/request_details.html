@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Details</title>
+    <link rel="stylesheet" href="request_details.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="components/modal.css">
+</head>
+<body>
+
+    <div class="schedule-wrapper">
+        <header class="main-header">
+            <h1 class="title" id="qTitle">Loading Request...</h1>
+        </header>
+
+        <div class="rep-sub-nav">
+            <div class="rep-left-section">
+                <button class="back-btn" onclick="history.back()"> < </button> 
+                <div class="rep-meta">
+                    <div class="name-row">
+                        <span class="name" id="repName">---</span>
+                        <span class="period-text" id="qSub">· -- · ----</span>
+                    </div>
+                    <span class="location" id="repArea">---</span>
+                </div>
+            </div>
+
+            <div class="status-actions">
+                <button class="btn-summary-outline">View Summary</button>
+                
+                <div class="approval-group" id="pendingActions">
+                    <button id="rejectBtn" class="btn-reject">Reject</button>
+                    <button id="acceptBtn" class="btn-accept">Accept</button>
+                </div>  
+            </div>
+        </div>
+
+        <main class="details-grid">
+            <section class="grid-card">
+                <div class="card-header cds-blue">
+                    <h2>Doctor List (CDS)</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mini-search-row search-filter-row">
+                        <div class="mini-search">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="docSearch" placeholder="Search name or specialty...">
+                        </div>
+                        <select class="list-filter" id="typeFilter">
+                            <option value="all">All Types</option>
+                            <option value="doctor">Doctor</option>
+                            <option value="pharmacy">Pharmacy</option>
+                        </select>
+                    </div>
+
+                    <div id="filterStatus" style="padding: 5px 20px 10px; font-size: 14px; color: #666; font-weight: 500;">
+                        Showing (0) Results
+                    </div>
+                    
+                    <div class="doctor-list-container" id="cdsContainer">
+                        <p style="padding: 20px; color: #999; text-align: center;">Fetching doctors...</p>
+                    </div> 
+                </div>
+            </section>
+
+            <section class="grid-card">
+                <div class="card-header dcp-blue">
+                    <h2>Daily Call Plans (DCP)</h2>
+                </div>
+                <div class="card-body">
+                    <div style="overflow-y: auto; flex-grow: 1;">
+                        <table class="dcp-table">
+                            <thead>
+                                <tr>
+                                    <th>DATE</th>
+                                    <th>AREA</th>
+                                    <th>DOCTOR</th>
+                                    <th>SPECS</th>
+                                    <th>PROVINCE</th>
+                                </tr>
+                            </thead>    
+                            <tbody id="dcpBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE_URL = "http://26.209.189.89:5000"; 
+    </script>
+    <script src="request_details.js"></script>
+</body>
+</html>

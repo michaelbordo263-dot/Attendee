@@ -1,0 +1,99 @@
+/* 1. UNIVERSAL RESET - Fixes the top/left gaps */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-navy: #355872;      /* MedicalDarkBlue */
+    --medical-light-blue: #80cbc4; 
+    --highlight-sky: #9CD5FF;     
+    --form-card-bg: #FFFFFF;      
+    --page-bg: #EAEAEA;           
+    --gray-input-bg: #f8f8f2;     
+    --text-pure-black: #000000;   
+}
+
+body {
+    background-color: var(--page-bg);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+}
+
+/* 2. SHARED HEADER STYLE (Consistent on all tabs) */
+.top-nav-bar {
+    background-color: var(--primary-navy);
+    width: 100%;
+    height: 90px; /* Large enough to house the 44px circle with breathing room */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed; 
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    padding: 0 40px;
+    box-sizing: border-box;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Container for the navigation buttons */
+.nav-container {
+    display: flex;
+    gap: 4px; /* Increased slightly for the larger scale */
+    background: rgba(255, 255, 255, 0.1); 
+    padding: 5px; /* Matches the padding(3.dp) + some room for the larger buttons */
+    border-radius: 50px;
+    align-items: center;
+}
+
+/* Individual links */
+.nav-item {
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800; /* ExtraBold */
+    /* Increased padding to make the buttons physically larger */
+    padding: 10px 24px; 
+    text-decoration: none;
+    font-size: 13px; /* Slightly larger font to match the larger bar */
+    letter-spacing: 0.5px;
+    border-radius: 50px;
+    transition: 0.3s ease;
+    display: inline-block;
+}
+
+.nav-item.active {
+    background-color: var(--medical-light-blue);
+    color: var(--primary-navy);
+}
+
+/* 3. PROFILE CIRCLE */
+.profile-section {
+    position: absolute;
+    right: 40px;
+}
+
+.profile-circle {
+    width: 44px; /* size(44.dp) from Kotlin */
+    height: 44px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+/* 4. UNIVERSAL CONTENT SPACING */
+.main-content {
+    /* Pushes content down so the 90px header doesn't cover titles */
+    padding-top: 130px; 
+    padding-left: 40px;
+    padding-right: 40px;
+}
+
+/* --- global.css --- */
+.page-title {
+    font-size: 30px;        /* ADJUST THIS for text size */
+    font-weight: 900;       /* Keep this for that "ExtraBold" look */
+    color: var(--primary-navy); 
+    margin-top: -10px;       /* Space between header and title */
+    margin-bottom: 30px;    /* Space between title and your content/table */
+}

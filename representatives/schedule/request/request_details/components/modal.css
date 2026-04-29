@@ -1,0 +1,212 @@
+.modal-overlay {
+    display: none; 
+    position: fixed;
+    z-index: 9999; 
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4); 
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-card {
+    background-color: #3e627a; 
+    width: 450px;       /* Fixed width */
+    height: 270px;      /* Fixed height to keep them identical */
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column; /* Stack header and body */
+}
+
+.modal-header {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: flex-start; 
+    align-items: center;
+    color: white;
+    gap: 10px;
+    cursor: default; /* Arrow is the only clickable part now */
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.modal-header {
+    cursor: pointer; /* Makes it look like a button */
+    transition: background 0.2s;
+}
+
+.modal-header:hover {
+    background-color: #335368; /* Slightly darker blue on hover */
+}
+
+.header-icon {
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 5px; /* Makes the "hit area" a bit larger and easier to click */
+    transition: transform 0.2s, color 0.2s;
+}
+
+.header-icon:hover {
+    color: #bbf7d0; /* Subtle green or light blue tint on hover */
+    transform: scale(1.2); /* Makes it pop slightly */
+}
+
+.modal-header:hover .header-icon {
+    transform: translateY(2px); /* Subtle bounce effect */
+}
+
+.modal-body {
+    flex-grow: 1;      /* Fill the remaining height of the card */
+    padding: 20px;
+    background-color: #f1f5f9; 
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content-box {
+    flex-grow: 1;      /* Ensures the white box matches the card size */
+    background-color: #ffffff;
+    border: 2px solid #3b82f6; 
+    border-radius: 10px;
+    padding: 25px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Keeps buttons at the bottom */
+}
+
+.modal-content-box p {
+    color: #334155;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn-review {
+    background-color: #b8b8b8; 
+    color: #444;
+    border: none;
+    padding: 8px 50px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-confirm {
+    background-color: #dcfce7; 
+    color: #166534; 
+    border: 1px solid #22c55e;
+    padding: 8px 50px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-confirm:hover {
+    background-color: #bbf7d0;
+}
+
+/* Reject Button Part */
+.remarks-input {
+    width: 100%;
+    flex-grow: 1;      /* Let the input take up available space */
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 1rem;
+    color: #3e627a;
+    text-align: left;
+    padding-top: 10px;
+    background: transparent;
+}
+
+.btn-cancel-red {
+    background-color: #fca5a5; 
+    color: #991b1b; 
+    border: 1px solid #ef4444;
+    padding: 8px 50px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-confirm-reject {
+    background-color: #dcfce7; 
+    color: #166534; 
+    border: 1px solid #22c55e;
+    padding: 8px 50px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* --- New Approved State Styles --- */
+
+/* This container replaces the buttons in the DCP table cell */
+.approved-row-layout {
+    display: flex;
+    justify-content: flex-end; /* Matches the 'Reject' button alignment */
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+}
+
+.label-approved {
+    color: #22c55e;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    margin-right: auto; 
+}
+
+.btn-summary-final {
+    background-color: #3e627a;
+    color: white;
+    padding: 6px 18px;
+    border-radius: 20px;
+    border: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-summary-final:hover {
+    background-color: #335368;
+}
+
+
+/* The Reject Label in the table (matches your existing label-approved style) */
+.label-rejected {
+    color: #ef4444; /* Red color for Rejection */
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    margin-right: auto; 
+}
+
+/* This class ensures the status label and the button stay on one line in the table */
+.status-action-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+

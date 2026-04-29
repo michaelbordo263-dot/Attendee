@@ -1,0 +1,194 @@
+/* RESET & BASE */
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #D9D9D9; 
+    height: 100vh;
+    overflow: hidden;
+}
+
+.schedule-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* HEADER STYLES */
+.main-header {
+    background-color: #355872;
+    padding: 20px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    flex-shrink: 0; 
+}
+.title { margin: 0; font-size: 32px; font-weight: 400; }
+
+.rep-sub-nav {
+    background: white;
+    padding: 12px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #E0E0E0;
+    flex-shrink: 0;
+}
+.rep-left-section { display: flex; align-items: center; gap: 15px; }
+
+.back-btn {
+    background-color: #355872; 
+    border: none; 
+    border-radius: 6px;
+    width: 45px; 
+    height: 35px; 
+    cursor: pointer; 
+    color: white; 
+    font-weight: bold;
+}
+
+.rep-meta .name { display: block; font-weight: bold; font-size: 18px; color: #333; }
+.rep-meta .location { color: #666; font-size: 14px; }
+
+/* TABS */
+.status-tabs { display: flex; border: 1px solid #E0E0E0; border-radius: 6px; overflow: hidden; }
+.tab-link { 
+    padding: 8px 25px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    color: #888; 
+    background: white;
+    text-decoration: none;
+}
+.tab-link.active { color: #007AFF; border-bottom: 2px solid #007AFF; }
+.alert-dot { width: 6px; height: 6px; background: red; border-radius: 50%; display: inline-block; vertical-align: top; }
+
+/* MAIN CONTAINER */
+.request-container {
+    padding: 20px 50px; 
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* YEAR NAVIGATION */
+.year-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 5px;
+    margin-bottom: 20px;
+    
+}
+
+.year-label {
+    font-size: 25px;
+    font-weight: 700;
+    color: #345464;
+}
+
+.btn-pill {
+    background: #C4C4C4; 
+    border: none; 
+    border-radius: 4px;
+    width: 35px; 
+    height: 35px; 
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-pill:disabled {
+    background: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* QUARTER GRID & CARDS */
+.quarter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 15px;
+    flex-grow: 1;
+    padding-bottom: 20px;
+}
+
+.quarter-card {
+    background-color: #F7F8F0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    justify-content: center;
+    text-align: center; 
+    position: relative;
+    border: 1px solid #E0E0E0;
+    padding: 20px;
+    transition: all 0.2s ease;
+    cursor: default;
+    min-height: 180px; 
+}
+
+.quarter-card.clickable {
+    cursor: pointer;
+}
+
+.quarter-card.disabled {
+    pointer-events: none; 
+    opacity: 0.7;        
+    user-select: none;    
+}
+
+.q-title { 
+    margin: 0; 
+    font-size: 36px; 
+    color: #355872; 
+    line-height: 1; 
+}
+
+.months { 
+    margin: 8px 0 16px 0; 
+    font-size: 14px; 
+    color: #888; 
+}
+
+/* STATUS BADGE COLORS */
+.status-badge {
+    padding: 6px 16px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+/* State: Approved */
+.quarter-card.approved { border-left: 6px solid #2E7D32; }
+.status-badge.approved { background-color: #E8F5E9; color: #2E7D32; }
+
+/* State: Pending */
+.quarter-card.pending { border-left: 6px solid #EF6C00; }
+.status-badge.pending { background-color: #FFF3E0; color: #EF6C00; }
+
+/* State: None (No Request) */
+.quarter-card.status-none { opacity: 0.7; background-color: #ECECEC; cursor: default; }
+.status-badge.none { background-color: #F5F5F5; color: #9E9E9E; }
+
+/* RED NOTIFICATION DOT (Pending only) */
+.red-dot {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    height: 12px;
+    width: 12px;
+    background-color: #d32f2f;
+    border-radius: 50%;
+    display: none; 
+}
+
+/* HOVER EFFECTS */
+.quarter-card:hover:not(.status-none) {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}

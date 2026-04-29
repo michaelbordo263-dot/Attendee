@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Details – Attendee</title>
+    <link rel="stylesheet" href="performance_details.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="hdr">
+        <h1>Performance Details</h1>
+    </div>
+
+    <div class="rep-bar">
+        <button class="bk-btn" onclick="goBack()">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <div class="rep-bar-info">
+            <div class="rep-name" id="repName">Loading...</div>
+            <div class="rep-loc" id="repLoc">Loading...</div>
+        </div>
+        <div class="quarter-badge" id="quarterBadge">Q-- · --- 2026</div>
+        <button class="export-btn" id="exportBtn" onclick="exportXlsx()">
+        <i class="fa-solid fa-file-arrow-down"></i>
+        Export Report
+        </button>
+    </div>
+
+    <!-- page-body fills remaining height; score-card is fixed, mvd-card grows & scrolls internally -->
+    <div class="page-body">
+
+        <div class="score-card">
+            <div class="score-card-title">Performance Score</div>
+            <div class="circle-wrap">
+                <svg class="circle-svg" viewBox="0 0 160 160">
+                    <circle class="circle-bg" cx="80" cy="80" r="66" />
+                    <circle class="circle-fill" cx="80" cy="80" r="66" id="ring"
+                        stroke-dasharray="414.69" stroke-dashoffset="414.69" />
+                </svg>
+                <div class="circle-label">
+                    <span class="circle-pct" id="pctLabel">0%</span>
+                    <span class="circle-sub">Overall</span>
+                </div>
+            </div>
+            <div class="stat-chips">
+                <div class="chip">
+                    <div class="chip-val" id="cvOnTime">—</div>
+                    <div class="chip-label">On-Time Attendance</div>
+                </div>
+                <div class="chip">
+                    <div class="chip-val" id="cvAttendance">—</div>
+                    <div class="chip-label">Attendance</div>
+                </div>
+                <div class="chip">
+                    <div class="chip-val" id="cvVisits">—</div>
+                    <div class="chip-label">Visits Done</div>
+                </div>
+                <div class="chip chip-missing">
+                    <div class="chip-val" id="cvMissing">—</div>
+                    <div class="chip-label">Missing</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mvd-card">
+            <div class="mvd-header">
+                <div class="mvd-title">Signature Leader</div>
+            </div>
+            <!-- Only this div scrolls -->
+            <div id="mvdList"></div>
+        </div>
+
+    </div><!-- end .page-body -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="../../common/backend_connection.js"></script>
+    <script src="performance_details.js"></script>
+</body>
+</html>

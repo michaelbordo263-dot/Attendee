@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Representatives | Attendee</title>
+    <link rel="stylesheet" href="../common/global.css">
+    <link rel="stylesheet" href="representatives.css">
+    <script src="../common/navigation.js" defer></script>
+</head>
+<body>
+    <main class="main-content">
+        <h1 class="page-title">Medical Representatives</h1>
+        
+        <div class="table-controls">
+            <div class="controls-top-row">
+                <div class="search-wrapper">
+                    <input type="text" id="searchInput" placeholder="Search Representative" class="search-input">
+                </div>
+                <div class="dropdown-wrapper">
+                    <select id="locationFilter" class="location-dropdown">
+                        <option value="all">All Locations</option>
+                        <option value="Pasig Ortigas">Pasig Ortigas</option>
+                        <option value="Manila South">Manila South</option>
+                        <option value="Manila North">Manila North</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="controls-bottom-row">
+                <span id="repCount" class="rep-count">Loading representatives...</span>
+            </div>
+        </div>
+
+        <div class="rep-list-container" id="repList"></div>
+    </main>
+
+    <script src="../common/backend_connection.js"></script>
+    <script type="module" src="representatives.js"></script>
+    
+</body>
+</html>

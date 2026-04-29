@@ -1,0 +1,21 @@
+<div id="acceptModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Accept Request</h3>
+            <span class="header-icon" onclick="switchModal('reject')">▼</span>
+        </div>
+        
+        <div class="modal-body">
+            <div class="modal-content-box">
+                <p>Are you sure you want to accept 
+                    <strong class="dynamic-rep-name">Medical Representative's</strong> Request?
+                </p>
+                
+                <div class="modal-actions">
+                    <button class="btn-review" onclick="closeModal()">Review</button>
+                    <button class="btn-confirm" onclick="updateGlobalStatus('Approved')">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

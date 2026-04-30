@@ -127,6 +127,8 @@ window.changeYear = (dir) => {
 };
 window.openProductsModal = () => openModal('productsModal');
 window.openUnusualModal = () => openModal('unusualModal');
+window.openProductsModal = () => openModal('productsModal'); // This is a modal, keeping as is
+window.openUnusualModal = () => openModal('unusualModal'); // This is a modal, keeping as is
 window.openAddProductModal = () => {
     // Reset all fields before opening
     const generic      = document.getElementById('genericNameInput');
@@ -144,6 +146,7 @@ window.openAddProductModal = () => {
     openModal('addProductModal');
 };
 window.openPerformanceModal = () => openModal('performanceModal');
+window.openPerformanceModal = () => window.location.href = '../performance/performance.html';
 
 window.previewImage = (event) => {
     const file = event.target.files[0];
@@ -285,7 +288,10 @@ async function loadDashboardStats() {
 async function loadPerformance() {
     const data = await apiFetch(`${BASE_URL}/dashboard/performance`);
 
-    const container = document.querySelector('.panel .panel-body');
+    const perfPanel = Array.from(document.querySelectorAll('.panel')).find(p => 
+        p.querySelector('.panel-title')?.textContent.toLowerCase().includes('performance')
+    );
+    const container = perfPanel ? perfPanel.querySelector('.panel-body') : document.querySelector('.panel .panel-body');
     if (!container) return;
 
     container.innerHTML = (Array.isArray(data) ? data : []).map(rep => {
@@ -642,6 +648,15 @@ function renderUnusualList(data) {
 
 // ── INIT ───────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    // Redirect "View all" link in the Med Rep Performance panel to the dedicated Performance tab
+    const perfPanel = Array.from(document.querySelectorAll('.panel')).find(p => 
+        p.querySelector('.panel-title')?.textContent.toLowerCase().includes('performance')
+    );
+    if (perfPanel) {
+        const viewAllLink = perfPanel.querySelector('.panel-viewall');
+        if (viewAllLink) viewAllLink.setAttribute('href', '../performance/performance.html');
+    }
+
     loadDashboardStats();
     loadPerformance();
     loadSchedulesFromAPI();

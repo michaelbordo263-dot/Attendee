@@ -32,8 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- 1.5 BACK BUTTON LOGIC ---
     const backBtn = document.getElementById('goBack') || document.querySelector('.back-btn');
     if (backBtn) {
-        // Ensure any inline handlers are cleared
-        backBtn.onclick = null; 
+        backBtn.onclick = null;
         backBtn.addEventListener('click', (e) => {
             e.preventDefault();
             if (!selectedRepId) {
@@ -49,6 +48,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // --- TIMEZONE HELPER ---
+    // Converts timetz string like "02:39:45+08" to local display time e.g. "10:39 AM"
+    function formatLocalTime(timetz) {
+        if (!timetz || timetz === '--:--') return '--:--';
+
+        // Match time and offset, e.g. "02:39:45+08" or "14:30:00+08:00"
+        const match = String(timetz).match(/^(\d{2}):(\d{2})(?::\d{2})?([+-]\d{2})(?::(\d{2}))?/);
+        if (!match) return timetz;
+
+        let hours = parseInt(match[1]);
+        let minutes = parseInt(match[2]);
+        const offsetHours = parseInt(match[3]); // e.g. +8
+
+        // Add the UTC offset to get Philippine local time
+        hours = (hours + offsetHours + 24) % 24;
+
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const displayHour = hours % 12 === 0 ? 12 : hours % 12;
+        const displayMin = String(minutes).padStart(2, '0');
+
+        return `${displayHour}:${displayMin} ${period}`;
+    }
+
     // --- 2. LOAD DATA FROM BACKEND ---
     async function loadAttendance() {
         if (!selectedRepId) {
@@ -58,9 +80,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const BASE_URL = "http://26.209.189.89:5000";
-            // Pass quarter/year to the API if supported, or filter the returned list
             const response = await fetch(`${BASE_URL}/api/dcp/schedule/${selectedRepId}?quarter=${currentQuarter}&year=${currentYear}`);
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -69,15 +90,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log("DEBUG: Raw Schedule Data (DCP) from API:", result);
             const rawData = result.data || result;
 
-            globalScheduleData = (Array.isArray(rawData) ? rawData : []).filter(item => 
+            globalScheduleData = (Array.isArray(rawData) ? rawData : []).filter(item =>
                 (item.status || item.dcp_status || '').toLowerCase() === 'approved'
             );
             console.log("DEBUG: Filtered globalScheduleData (Approved only):", globalScheduleData);
 
-            // Changed from /api/attendance/logs to /api/attendance to resolve the 404 error
             const logsRes = await fetch(`${BASE_URL}/api/attendance?id=${selectedRepId}&year=${currentYear}&quarter=${currentQuarter}`);
             const logsData = logsRes.ok ? await logsRes.json() : null;
-            
+
             console.log("DEBUG: Attendance Logs raw response:", logsData);
             globalAttendanceLogs = Array.isArray(logsData) ? logsData : (logsData?.data || []);
 
@@ -97,7 +117,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         } catch (err) {
             console.error("Attendance Load Error:", err);
-            // If API fails, show empty grid rather than crashing
             renderCalendar(currentMonthIndex, currentYear);
         }
     }
@@ -107,14 +126,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const prevBtn = document.getElementById('prevMonth');
         const nextBtn = document.getElementById('nextMonth');
 
-        // Navigation is locked to months that actually have scheduled visits
         if (prevBtn) prevBtn.disabled = (currentMonthIndex <= minMonthIndex);
         if (nextBtn) nextBtn.disabled = (currentMonthIndex >= maxMonthIndex);
 
         renderCalendar(currentMonthIndex, currentYear);
     }
 
-    // --- 4. DATE NORMALIZATION (Matching schedule.js logic) ---
+    // --- 4. DATE NORMALIZATION ---
     function getNormalizedItemDate(item) {
         let raw = item.dcp_date || item.attendance_date || item.date || item.Date || item.DCP_DATE;
         if (!raw) return null;
@@ -123,7 +141,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const parts = datePart.split('-');
         if (parts.length !== 3) return datePart;
 
-        // Ensure YYYY-MM-DD format
         return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
     }
 
@@ -131,7 +148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderCalendar(month, year) {
         if (!calendarGrid) return;
 
-        // Keep day headers (SUN, MON, etc.)
         const dayHeaders = Array.from(calendarGrid.querySelectorAll('.day-name'));
         calendarGrid.innerHTML = '';
         dayHeaders.forEach(h => calendarGrid.appendChild(h));
@@ -144,28 +160,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        // Add empty boxes for days before the 1st of the month
         for (let i = 0; i < firstDay; i++) {
             const empty = document.createElement('div');
             empty.className = 'date-item empty';
             calendarGrid.appendChild(empty);
         }
 
-        // Generate day boxes
         for (let d = 1; d <= daysInMonth; d++) {
             const dateDiv = document.createElement('div');
             dateDiv.className = 'date-item';
 
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-            // Check if there were plans vs an actual log for this day
             const dayPlans = globalScheduleData.filter(item => getNormalizedItemDate(item) === dateStr);
             const log = globalAttendanceLogs.find(item => getNormalizedItemDate(item) === dateStr);
 
             dateDiv.innerHTML = `<span class="date-number">${d}</span>`;
 
             if (dayPlans.length > 0) {
-                // Add the class that triggers the blue dot indicator (::after) from CSS
                 dateDiv.classList.add('has-visit');
             }
 
@@ -180,7 +192,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const modalBody = document.getElementById('modalBody');
         const modalTitle = document.getElementById('modalDateTitle');
 
-        // Header: "April 3, 2026 — Friday"
         const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
         const dayOfWeek = dayNames[new Date(year, month, day).getDay()];
         if (modalTitle) modalTitle.textContent = `${monthNames[month]} ${day}, ${year} — ${dayOfWeek}`;
@@ -208,7 +219,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Check for daily picture
         const hasPicture = log?.daily_picture && log.daily_picture !== 'null' && log.daily_picture !== '';
 
-        // Two-col layout always
+        // --- GOOGLE MAPS URL LOGIC ---
+        // Uses encodeURIComponent to safely pass coordinates or address strings to the URL
+        const mapBase = "https://www.google.com/maps/search/?api=1&query=";
+        const taggedLocQuery = log?.tagged_location ? encodeURIComponent(log.tagged_location) : "";
+        const fallbackLocQuery = log?.location ? encodeURIComponent(log.location) : "";
+
         modalBody.innerHTML = `
             <div class="modal-two-col">
 
@@ -229,23 +245,37 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     <div class="modal-rep-area">${selectedRepArea}</div>
                     <div class="modal-info-divider"></div>
+
                     <div class="modal-info-row">
                         <span class="modal-info-label">Time In</span>
-                        <span class="modal-info-value">${log?.time_in || '--:--'}</span>
+                        <span class="modal-info-value">${log?.time_in ? formatLocalTime(log.time_in) : '--:--'}</span>
                     </div>
                     <div class="modal-info-row">
                         <span class="modal-info-label">Time Out</span>
-                        <span class="modal-info-value">${log?.time_out || '--:--'}</span>
+                        <span class="modal-info-value">${log?.time_out ? formatLocalTime(log.time_out) : '--:--'}</span>
                     </div>
+
                     <div class="modal-info-row">
                         <span class="modal-info-label">Tagged Location</span>
-                        <span class="modal-info-value" style="font-size:12px;">📍 ${log?.tagged_location || 'N/A'}</span>
+                        <span class="modal-info-value" style="font-size:12px;">
+                            ${log?.tagged_location ? `
+                                <a href="${mapBase}${taggedLocQuery}" target="_blank" style="color: #007bff; text-decoration: none;">
+                                    📍 ${log.tagged_location}
+                                </a>
+                            ` : 'N/A'}
+                        </span>
                     </div>
+
                     ${log?.location ? `
                     <div class="modal-info-row">
                         <span class="modal-info-label">Location</span>
-                        <span class="modal-info-value" style="font-size:12px;">📍 ${log.location}</span>
+                        <span class="modal-info-value" style="font-size:12px;">
+                            <a href="${mapBase}${fallbackLocQuery}" target="_blank" style="color: #007bff; text-decoration: none;">
+                                📍 ${log.location}
+                            </a>
+                        </span>
                     </div>` : ''}
+
                 </div>
 
             </div>`;

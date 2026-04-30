@@ -55,17 +55,20 @@ function injectProfileModals() {
                 <button class="profile-modal-close" id="closeChangePassword">&times;</button>
                 <h2 class="profile-title">Change Password</h2>
                 <div class="pw-form">
-                    <div class="pw-field">
+                    <div class="pw-field" style="position:relative;">
                         <label>Current Password</label>
                         <input type="password" id="currentPw" placeholder="Enter current password">
+                        <span class="pw-toggle" style="position:absolute; right:10px; top:30px; cursor:pointer; opacity:0.35;">👁️</span>
                     </div>
-                    <div class="pw-field">
+                    <div class="pw-field" style="position:relative;">
                         <label>New Password</label>
                         <input type="password" id="newPw" placeholder="Enter new password">
+                        <span class="pw-toggle" style="position:absolute; right:10px; top:30px; cursor:pointer; opacity:0.35;">👁️</span>
                     </div>
-                    <div class="pw-field">
+                    <div class="pw-field" style="position:relative;">
                         <label>Confirm New Password</label>
                         <input type="password" id="confirmPw" placeholder="Repeat new password">
+                        <span class="pw-toggle" style="position:absolute; right:10px; top:30px; cursor:pointer; opacity:0.35;">👁️</span>
                     </div>
                     <p class="pw-error" id="pwError"></p>
                     <button class="btn-change-pw" id="submitNewPassword" style="width:100%;">Update Password</button>
@@ -193,28 +196,33 @@ function displayUserData(user) {
 
 /* ── CHANGE PASSWORD ── */
 async function handlePasswordChange() {
-    const currentPw = document.getElementById('currentPw').value.trim();
-    const newPw     = document.getElementById('newPw').value.trim();
-    const confirmPw = document.getElementById('confirmPw').value.trim();
-    const errorEl   = document.getElementById('pwError');
-    if (!errorEl) return;
-    errorEl.textContent = '';
-    if (!currentPw || !newPw || !confirmPw) { errorEl.textContent = 'Please fill in all fields.'; return; }
-    if (newPw !== confirmPw) { errorEl.textContent = 'New passwords do not match.'; return; }
+    // Passwords should not be trimmed as spaces can be intentional
+    const currentPw = document.getElementById('currentPw').value;
+    const newPw     = document.getElementById('newPw').value;
+    const confirmPw = document.getElementById('confirmPw').value;
+
+    if (!currentPw || !newPw || !confirmPw) {
+        alert("Please fill in all fields.");
+        return;
+    }
+    if (newPw !== confirmPw) {
+        alert("Passwords do not match!");
+        return;
+    }
+
     const empId = localStorage.getItem('current_emp_id');
     try {
         const result = await API.changePassword(empId, currentPw, newPw);
-        if (result && !result.error) {
-            errorEl.style.color = '#27ae60';
-            errorEl.textContent = 'Password updated successfully!';
-            setTimeout(closeChangePasswordModal, 1500);
+        
+        // Check specifically for success. apiFetch returns [] on hard failure, so we check for an object with a message or no error.
+        if (result && !result.error && !Array.isArray(result)) {
+            alert("Password updated successfully! Please log in again with your new credentials.");
+            handleLogout(); // Force logout like the reload in login.js
         } else {
-            errorEl.textContent = result.error || 'Failed to update password.';
-            errorEl.style.color = '#e74c3c';
+            alert(result?.error || result?.message || "Failed to update password. Please check your current password.");
         }
     } catch {
-        errorEl.textContent = 'Server is not reachable.';
-        errorEl.style.color = '#e74c3c';
+        alert("Connection failed. Ensure the server is reachable.");
     }
 }
 
@@ -225,6 +233,16 @@ function initProfileListeners() {
     document.getElementById('closeChangePassword')?.addEventListener('click', closeChangePasswordModal);
     document.getElementById('submitNewPassword')?.addEventListener('click', handlePasswordChange);
     document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
+
+    // Password Visibility Toggle Logic (matching login.js style)
+    document.querySelectorAll('.pw-toggle').forEach(toggle => {
+        toggle.addEventListener('click', () => {
+            const input = toggle.parentElement.querySelector('input');
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            toggle.style.opacity = isPassword ? '1' : '0.35';
+        });
+    });
 
     const profileOverlay = document.getElementById('profileOverlay');
     profileOverlay?.addEventListener('click', (e) => { if (e.target === profileOverlay) closeProfileModal(); });

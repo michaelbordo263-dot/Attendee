@@ -400,7 +400,7 @@ html, body {
 }
 
 .tab-btn {
-    padding: 7px 12px;
+    padding: 7px 16px;
     border-radius: 8px;
     border: none;
     font-size: 13px;
@@ -413,12 +413,6 @@ html, body {
 .tab-btn.active {
     background: #1e2d3d;
     color: #fff;
-}
-
-/* Rejected badge */
-.status-badge--rejected {
-    background: #fee2e2;
-    color: #991b1b;
 }
 
 .quarter-nav {
@@ -1915,92 +1909,3 @@ html, body {
     transition: background 0.15s;
 }
 .sched-float-close:hover { background: #5a7a9a; }
-/* ── REJECTION REMARKS MODAL ── */
-.rrm-card {
-    width: 420px;
-    height: auto;
-    min-height: 260px;
-}
-
-.rrm-header {
-    background: #3e627a;
-    justify-content: flex-start;
-}
-
-.rrm-header-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.rrm-icon {
-    background: rgba(239,68,68,0.25);
-    color: #fca5a5;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    flex-shrink: 0;
-}
-
-.rrm-content-box {
-    border-color: #fca5a5 !important;
-    text-align: left !important;
-}
-
-.rrm-top {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #f1f5f9;
-}
-
-.rrm-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #3e627a;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 700;
-    flex-shrink: 0;
-}
-
-.rrm-rep-label {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.rrm-remarks-box {
-    background: #fff8f8;
-    border: 1px solid #fecaca;
-    border-radius: 8px;
-    padding: 14px 16px;
-    min-height: 60px;
-    color: #7f1d1d;
-    font-size: 14px;
-    line-height: 1.6;
-    word-break: break-word;
-    font-style: italic;
-}
-
-.rrm-close-btn {
-    width: 100%;
-    background: #3e627a !important;
-    color: white !important;
-    border-color: #3e627a !important;
-}
-
-.rrm-close-btn:hover {
-    background: #335368 !important;
-}

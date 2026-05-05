@@ -579,7 +579,6 @@ function renderScheduleList(data) {
         'Pending':  'status-badge--pending',
         'Approved': 'status-badge--approved',
         'Missing':  'status-badge--missing',
-        'Rejected': 'status-badge--rejected',
     };
 
     // The API already filters by status (schedTab), so only apply the search filter here.
@@ -617,13 +616,10 @@ function renderScheduleList(data) {
             if (isSuperAdmin) {
                 clickHandler = `openRequestDetailModal('${encodeURIComponent(repId)}', ${schedQuarter}, ${schedYear})`;
             } else {
+                // Disable clicking for non-super_admins on the Pending tab
                 clickHandler = 'return false;';
                 cursorStyle = 'cursor: default;';
             }
-        } else if (schedTab === 'Rejected') {
-            const safeRemarks = (r.remarks || 'No remarks provided.').replace(/'/g, "\\'");
-            const safeName = (r.name || '').replace(/'/g, "\\'");
-            clickHandler = `openRejectionRemarksModal('${safeName}', '${safeRemarks}')`;
         } else {
             clickHandler = `window.location.href='../representatives/schedule/schedule.html?id=${encodeURIComponent(repId)}&quarter=${schedQuarter}&year=${schedYear}'`;
         }
@@ -1616,20 +1612,3 @@ async function updateRdGlobalStatus(newStatus, remarks, repId, quarter, year) {
         alert("A connection error occurred while updating status.");
     }
 }
-// ── REJECTION REMARKS MODAL ─────────────────────────────
-window.openRejectionRemarksModal = function(repName, remarks) {
-    const modal = document.getElementById('rejectionRemarksModal');
-    if (!modal) return;
-    const nameEl    = modal.querySelector('.rrm-rep-name');
-    const remarksEl = modal.querySelector('.rrm-remarks-text');
-    const avatarEl  = modal.querySelector('.rrm-avatar');
-    if (nameEl)    nameEl.textContent    = repName;
-    if (remarksEl) remarksEl.textContent = remarks || 'No remarks provided.';
-    if (avatarEl)  avatarEl.textContent  = getInitials(repName);
-    modal.style.display = 'flex';
-};
-
-window.closeRejectionRemarksModal = function() {
-    const modal = document.getElementById('rejectionRemarksModal');
-    if (modal) modal.style.display = 'none';
-};

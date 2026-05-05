@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const response = await fetch(window.BASE_URL);
         if (!response.ok) console.warn("Backend is reachable but returned an error.");
     } catch (err) {
-        console.error("Backend unreachable. Ensure your Flask server is running at http://127.0.0.1:5000");
         alert("Cannot connect to the server. Please ensure the Python backend is running.");
     }
 

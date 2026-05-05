@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- 0. PRE-FLIGHT CHECK ---
     try {
-        const response = await fetch('http://127.0.0.1:5000/api/health');
+        const response = await fetch(window.BASE_URL);
         if (!response.ok) console.warn("Backend is reachable but returned an error.");
     } catch (err) {
         console.error("Backend unreachable. Ensure your Flask server is running at http://127.0.0.1:5000");

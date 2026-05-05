@@ -178,6 +178,10 @@ body {
     flex-direction: column;
 }
 
+.dcp-drop-wrap {
+    position: relative;
+}
+
 .drop-zone {
     background: #F7F8F0;
     border-radius: 16px;
@@ -193,6 +197,69 @@ body {
     width: 100%;
     transition: background 0.15s, border-color 0.15s;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.year-btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.year-btn-row {
+    display: flex;
+    gap: 0;
+    align-items: center;
+    background: white;
+    border: 1.5px solid var(--color-border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+}
+
+.year-display {
+    font-weight: 700;
+    font-size: 14px;
+    min-width: 60px;
+    text-align: center;
+    color: var(--color-text-main);
+    padding: 0 12px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.year-nav-btn {
+    width: 52px;
+    height: 52px;
+    border: none;
+    background: white;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    color: var(--color-text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+    border-left: 1px solid var(--color-border);
+}
+
+.year-nav-btn:first-child {
+    border-left: none;
+    border-right: 1px solid var(--color-border);
+    order: -1;
+}
+
+.year-nav-btn:hover {
+    background: #f0f4f7;
+    color: var(--color-navy-primary);
+}
+
+.year-nav-btn:active {
+    background: #e6eef6;
 }
 
 .drop-zone:hover {
@@ -245,21 +312,7 @@ body {
 }
 
 /* --- RESPONSIVE --- */
-@media (max-width: 767px) {
-    :root { --padding-screen: 16px; }
 
-    .main-header .title { font-size: 20px; }
-    .name-label { font-size: 15px; }
-    .main-content { padding: 20px var(--padding-screen); }
-
-    .cards-area {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-
-    .option-card { min-height: 140px; }
-    .drop-zone { min-height: 300px; }
-}
 
 /* --- DAILY CALL PLAN: SPLIT LAYOUT --- */
 .callplan-layout {
@@ -603,23 +656,20 @@ body {
 .warning-card.hidden { display: none; }
 
 /* --- RESPONSIVE --- */
-@media (max-width: 900px) {
-    .callplan-layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto;
-    }
 
-    .warnings-panel {
-        max-height: 360px;
-    }
-}
-/* --- CALLPLAN TOPBAR (quarter + upload buttons, inside left column) --- */
+/* --- CALLPLAN TOPBAR (quarter + year selector, inside left column) --- */
 .callplan-topbar {
     display: flex;
+    justify-content: flex-start;
     align-items: flex-end;
-    gap: 10px;
+    gap: 16px;
     flex-shrink: 0;
-    margin-bottom: 12px;
+    margin-bottom: 18px;
+}
+
+/* Push the year group (and everything after) to the far right */
+.callplan-topbar .year-btn-group {
+    margin-left: auto;
 }
 
 .quarter-compact {
@@ -628,9 +678,9 @@ body {
 }
 
 .upload-mode-btn {
-    flex: 1;
-    height: 52px;
-    padding: 0 16px;
+    height: 54px;
+    min-width: 200px;
+    padding: 0 32px;
     border-radius: 10px;
     border: none;
     font-size: 14px;
@@ -643,6 +693,7 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     border: 1px solid var(--color-border);
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .upload-mode-btn:hover:not(:disabled) {
@@ -658,11 +709,7 @@ body {
 .btn-highlight.without { color: #c0392b; }
 .btn-highlight.with    { color: #27ae60; }
 
-@media (max-width: 767px) {
-    .callplan-topbar { flex-wrap: wrap; }
-    .quarter-compact { width: 100%; }
-    .upload-mode-btn { flex: 1 1 40%; }
-}
+
 
 
 .quarter-selector {
@@ -1028,6 +1075,18 @@ body {
     opacity: 0.9;
 }
 
+/* No recorded data for the selected year and quarter */
+.quarter-status-btn.q-none {
+    background: #eceff4;
+    border-color: #c8c9cc;
+    color: #5f6a7d;
+    cursor: pointer;
+}
+
+.quarter-status-btn.q-none:hover {
+    background: #e2e7ee;
+}
+
 /* Rejected — red, clickable */
 .quarter-status-btn.q-rejected {
     background: #e74c3c;
@@ -1094,7 +1153,262 @@ body {
     background: #f7fafc;
 }
 
-@media (max-width: 767px) {
-    .quarter-btn-row { gap: 6px; }
-    .quarter-status-btn { width: 50px; height: 46px; font-size: 13px; }
+
+/* ============================================================
+   COMPREHENSIVE RESPONSIVE — TABLET & MOBILE
+   ============================================================ */
+
+/* --- TABLET (≤ 900px) --- */
+@media (max-width: 900px) {
+    :root { --padding-screen: 24px; }
+
+    /* Stack left column + warnings panel vertically */
+    .callplan-layout {
+        flex-direction: column !important;
+        overflow-y: auto;
+        gap: 16px;
+    }
+
+    /* Warnings panel: auto width, limited height with scroll */
+    .warnings-panel {
+        width: 100% !important;
+        max-height: 320px;
+        flex-shrink: 0;
+    }
+
+    /* Drop zone shorter on tablet */
+    .drop-zone { min-height: 220px; }
+
+    /* Topbar: wrap onto two lines if needed */
+    .callplan-topbar {
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    /* Year stays right but wraps naturally */
+    .callplan-topbar .year-btn-group {
+        margin-left: 0;
+    }
+
+    /* Upload button fills remaining row space */
+    .upload-mode-btn {
+        margin-left: auto;
+        min-width: unset;
+    }
+}
+
+/* --- MOBILE (≤ 600px) --- */
+@media (max-width: 600px) {
+    :root { --padding-screen: 14px; }
+
+    /* Header */
+    .main-header { padding: 14px var(--padding-screen); }
+    .main-header .title { font-size: 18px; }
+
+    /* Sub-nav */
+    .rep-sub-nav { padding: 10px var(--padding-screen); }
+    .name-label { font-size: 15px; }
+    .area-label { font-size: 12px; }
+    .back-btn { width: 36px; height: 32px; font-size: 13px; }
+
+    /* Main content */
+    .main-content {
+        padding: 14px var(--padding-screen);
+        gap: 12px;
+        overflow-y: auto;
+    }
+
+    /* Home screen option cards: single column */
+    .cards-area {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .option-card { min-height: 110px; gap: 12px; }
+    .option-card-icon { width: 48px; height: 48px; border-radius: 10px; }
+    .option-card-label { font-size: 15px; }
+
+    /* Callplan layout */
+    .callplan-layout {
+        flex-direction: column !important;
+        gap: 12px;
+        overflow-y: auto;
+        flex-grow: 1;
+        min-height: 0;
+    }
+
+    .callplan-left { gap: 10px; }
+
+    /* Topbar: stack quarter row, then year+upload on second row */
+    .callplan-topbar {
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 8px;
+        align-items: flex-end;
+    }
+
+    /* Quarter group takes full width on its own line */
+    .quarter-btn-group {
+        width: 100%;
+    }
+
+    .quarter-btn-row {
+        gap: 6px;
+        flex-wrap: nowrap;
+    }
+
+    /* Quarter buttons stretch evenly across full width */
+    .quarter-status-btn {
+        flex: 1;
+        width: auto;
+        height: 46px;
+        font-size: 13px;
+        border-radius: 8px;
+    }
+
+    /* Year and Upload side by side on second row */
+    .callplan-topbar .year-btn-group {
+        margin-left: 0;
+        flex-shrink: 0;
+    }
+
+    .year-btn-row {
+        border-radius: 8px;
+    }
+
+    .year-display {
+        min-width: 52px;
+        height: 44px;
+        font-size: 13px;
+        padding: 0 8px;
+    }
+
+    .year-nav-btn {
+        width: 40px;
+        height: 44px;
+        font-size: 15px;
+    }
+
+    /* Upload button fills remaining space on second row */
+    .upload-mode-btn {
+        flex: 1;
+        height: 44px;
+        min-width: unset;
+        padding: 0 16px;
+        font-size: 13px;
+        border-radius: 8px;
+        margin-left: 0;
+        text-align: center;
+    }
+
+    /* Drop zone compact */
+    .drop-zone {
+        min-height: 160px;
+        border-radius: 12px;
+        gap: 12px;
+    }
+
+    .upload-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+    }
+
+    .upload-icon svg { width: 26px; height: 26px; }
+    .drop-label { font-size: 15px; }
+    .drop-sublabel { font-size: 12px; }
+
+    /* Warnings panel */
+    .warnings-panel {
+        width: 100% !important;
+        max-height: 260px;
+        border-radius: 12px;
+        padding: 16px 14px;
+        gap: 10px;
+    }
+
+    .warnings-title { font-size: 18px; }
+    .warnings-filter select { font-size: 13px; padding: 9px 32px 9px 12px; }
+    .warnings-count { font-size: 12px; }
+
+    /* Warning cards */
+    .warning-card { padding: 10px 12px; border-radius: 8px; }
+    .warning-name { font-size: 14px; }
+    .warning-detail { font-size: 11px; }
+
+    /* Action buttons */
+    .warning-action-btns {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .cancel-upload-btn,
+    .upload-anyway-btn {
+        flex: 1;
+        font-size: 13px;
+        padding: 10px 8px;
+    }
+
+    /* Confirm modal */
+    .confirm-box {
+        width: 90vw;
+        padding: 20px 16px;
+        border-radius: 14px;
+    }
+
+    .confirm-title { font-size: 17px; }
+    .confirm-message { font-size: 13px; }
+    .confirm-cancel-btn,
+    .confirm-proceed-btn { padding: 10px; font-size: 13px; }
+
+    /* Masterlist screen */
+    .callplan-left > .drop-zone { min-height: 180px; }
+}
+
+/* --- MASTERLIST DROP ZONE WRAPPER + RELOAD BUTTON --- */
+.masterlist-drop-wrap {
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.masterlist-drop-wrap > .drop-zone {
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.masterlist-reload-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 10;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    transition: background 0.15s, transform 0.2s, box-shadow 0.15s;
+}
+
+.masterlist-reload-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--color-navy-primary);
+}
+
+.masterlist-reload-btn:hover {
+    background: #f0f4f7;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+}
+
+.masterlist-reload-btn:active {
+    transform: rotate(180deg);
+    background: #e6eef6;
 }

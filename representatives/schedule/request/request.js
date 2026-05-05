@@ -129,15 +129,19 @@ async function updateHeaderDetails() {
 async function fetchAllQuarterStatuses() {
     if (!selectedRepId) return;
 
+    // Show loading state on all 4 cards
     [1, 2, 3, 4].forEach(q => setCardLoading(q));
 
     try {
+        // Fetch statuses for the selected year
         const data = await API.fetchQuarterStatus(selectedRepId, currentYear);
 
+        // data.quarters_with_pending follows our priority logic: pending > approved > rejected > none
         if (!data || !data.quarters_with_pending) throw new Error("Failed to fetch status");
         const statusMap = data.quarters_with_pending;
 
         [1, 2, 3, 4].forEach(q => {
+            // Update each card based on the q1, q2, q3, q4 keys from the backend
             updateCardUI(q, statusMap[`q${q}`]);
         });
 
@@ -156,7 +160,7 @@ function setCardLoading(qNumber) {
 
     const badge = card.querySelector('.status-badge');
 
-    card.classList.remove('status-none', 'pending', 'approved');
+    card.classList.remove('status-none', 'pending', 'approved', 'rejected');
     card.style.pointerEvents = 'none';
     card.style.opacity = '0.6';
 
@@ -180,10 +184,11 @@ function updateCardUI(qNumber, status) {
 
     const normalizedStatus = status ? status.toLowerCase() : 'none';
 
+    // Enable interaction and set correct visual style based on status
     if (normalizedStatus === 'pending') {
         card.classList.add('pending');
         if (badge) { badge.classList.add('pending'); badge.textContent = 'Pending'; }
-        if (dot) dot.style.display = 'block';
+        if (dot) dot.style.display = 'block'; // Show red notification dot for pending items
 
         card.style.pointerEvents = 'auto';
         card.style.opacity = '1';
@@ -208,6 +213,7 @@ function updateCardUI(qNumber, status) {
         card.style.cursor = 'pointer';
 
     } else {
+        // 'none' status: data exists in DB but doesn't fit a quarter, or no data at all
         card.classList.add('status-none');
         if (badge) { badge.classList.add('none'); badge.textContent = 'No Request Yet'; }
         if (dot) dot.style.display = 'none';
@@ -254,6 +260,7 @@ if (nextBtn) {
 window.handleCardClick = function(qNumber) {
     const safeId = encodeURIComponent(String(selectedRepId).trim());
 
+    // Pass q, year, and id to the details page
     window.location.href =
         `request_details/request_details.html?q=${qNumber}&year=${currentYear}&id=${safeId}`;
 };

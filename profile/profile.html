@@ -5,10 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Profile Modal</title>
     <link rel="stylesheet" href="profile.css" />
+    <style>
+        /* Hidden by default so the JS can manage display: flex */
+        .profile-overlay { display: none; }
+        
+        /* Error text styling */
+        .pw-error {
+            color: #ff4d4d;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            min-height: 1.2rem;
+        }
+    </style>
 </head>
 <body>
 
-<div id="profileOverlay" class="profile-overlay" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+<!-- Trigger Button -->
+<div style="padding: 20px; text-align: center;">
+    <button id="viewProfileBtn" class="btn-change-pw" style="padding: 10px 20px; cursor: pointer;">
+        View My Profile
+    </button>
+</div>
+
+<!-- Profile Modal Overlay -->
+<div id="profileOverlay" class="profile-overlay" role="dialog" aria-modal="true" aria-labelledby="user-fullname">
     <div class="profile-modal">
         <button class="profile-modal-close" id="closeProfileModal" aria-label="Close profile">&times;</button>
 
@@ -22,16 +42,24 @@
             </div>
         </div>
 
-        <h2 class="profile-title" id="user-fullname">Administrator</h2>
+        <!-- Displays Full Name -->
+        <h2 class="profile-title" id="user-fullname">Loading...</h2>
 
         <div class="profile-info-grid">
             <div class="info-item">
                 <span class="info-label">Employee ID</span>
+                <!-- Map to 'employee_id' in your DB -->
+                <div class="info-value" id="user-employee-id">---</div>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Current Role</span>
+                <!-- Displays the 'roles' field -->
                 <div class="info-value" id="user-role-display">---</div>
             </div>
             <div class="info-item">
-                <span class="info-label">Username</span>
-                <div class="info-value" id="user-username">---</div>
+                <span class="info-label">Territory / Area</span>
+                <!-- Displays the 'area' field -->
+                <div class="info-value" id="user-area">---</div>
             </div>
         </div>
 
@@ -56,23 +84,27 @@
     </div>
 </div>
 
+<!-- Change Password Overlay -->
 <div id="changePasswordOverlay" class="profile-overlay">
     <div class="profile-modal change-pw-modal">
         <button class="profile-modal-close" id="closeChangePassword" aria-label="Close">&times;</button>
-        <h2 class="profile-title" style="margin-top: 10px;">Change Password</h2>
+        <h2 class="profile-title" style="margin-top: 10px;">Update Security</h2>
 
         <div class="pw-form">
-            <div class="pw-field">
+            <div class="pw-field" style="position:relative;">
                 <label for="currentPw">Current Password</label>
                 <input type="password" id="currentPw" placeholder="Enter current password" />
+                <span class="pw-toggle" style="position:absolute; right:10px; top:35px; cursor:pointer; opacity:0.35;">👁️</span>
             </div>
-            <div class="pw-field">
+            <div class="pw-field" style="position:relative;">
                 <label for="newPw">New Password</label>
                 <input type="password" id="newPw" placeholder="Enter new password" />
+                <span class="pw-toggle" style="position:absolute; right:10px; top:35px; cursor:pointer; opacity:0.35;">👁️</span>
             </div>
-            <div class="pw-field">
+            <div class="pw-field" style="position:relative;">
                 <label for="confirmPw">Confirm New Password</label>
                 <input type="password" id="confirmPw" placeholder="Repeat new password" />
+                <span class="pw-toggle" style="position:absolute; right:10px; top:35px; cursor:pointer; opacity:0.35;">👁️</span>
             </div>
             <p class="pw-error" id="pwError"></p>
             <button class="btn-change-pw" id="submitNewPassword" style="width:100%;">Update Password</button>
@@ -80,6 +112,41 @@
     </div>
 </div>
 
-<script src="profile.js"></script>
+<!-- Load Scripts -->
+<script src="../api/api.js"></script>
+<script src="profile_19.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Initialize listeners for modal opening/closing
+        if (typeof initProfileListeners === 'function') {
+            initProfileListeners();
+        }
+
+        // 2. Manual trigger for the "View My Profile" button
+        const viewBtn = document.getElementById('viewProfileBtn');
+        if (viewBtn) {
+            viewBtn.addEventListener('click', () => {
+                if (typeof openProfileModal === 'function') {
+                    openProfileModal(); 
+                }
+            });
+        }
+
+        // 3. Password Visibility Toggle Logic
+        document.querySelectorAll('.pw-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const input = this.parentElement.querySelector('input');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.style.opacity = '1';
+                } else {
+                    input.type = 'password';
+                    this.style.opacity = '0.35';
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>

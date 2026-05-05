@@ -97,3 +97,42 @@ body {
     margin-top: -10px;       /* Space between header and title */
     margin-bottom: 30px;    /* Space between title and your content/table */
 }
+
+/* --- Sleek Notification Toast (Updated for MedRep Theme) --- */
+.toast-container {
+    position: fixed;
+    top: 100px; /* Adjusted to appear below your 90px top-nav-bar */
+    right: 40px; /* Aligned with your profile-section right padding */
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toast-msg {
+    min-width: 320px;
+    background: var(--form-card-bg); /* Clean white background */
+    color: var(--text-pure-black);
+    padding: 18px 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); /* Soft shadow */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'Inter', sans-serif;
+    border-left: 6px solid var(--medical-light-blue); /* Your signature teal */
+    animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.toast-msg.error {
+    border-left-color: #e74c3c; /* Red for high-visibility errors */
+}
+
+@keyframes slideIn {
+    from { transform: translateX(110%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+    to { transform: translateX(20px); opacity: 0; }
+}

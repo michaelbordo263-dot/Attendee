@@ -7,11 +7,25 @@
         
         <div class="modal-body">
             <div class="modal-content-box">
-                <textarea class="remarks-input" placeholder="Enter remarks here.."></textarea>
+                <!-- id added so modal.js can reliably find it via getElementById -->
+                <textarea id="rejectRemarks" class="remarks-input" placeholder="Enter remarks here.."></textarea>
                 
                 <div class="modal-actions">
-                    <button class="btn-cancel-red" onclick="closeRejectModal()">Cancel</button>
-                    <button class="btn-confirm-reject">Confirm</button>
+                    <button type="button" class="btn-cancel-red" onclick="window.closeRejectModal()">Cancel</button>
+                    <button type="button" class="btn-confirm-reject" onclick="
+                        (function() {
+                            const modal = document.getElementById('rejectModal');
+                            const input = document.getElementById('rejectRemarks') || modal.querySelector('.remarks-input');
+                            const remarks = input ? input.value.trim() : '';
+                            if (!remarks) {
+                                if (input) input.style.borderColor = 'red';
+                                showToast('Please provide a reason for rejection.', 'error');
+                                return;
+                            }
+                            input.style.borderColor = '';
+                            updateGlobalStatus('Rejected', remarks);
+                        })()
+                    ">Confirm</button>
                 </div>
             </div>
         </div>

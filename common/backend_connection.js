@@ -1,24 +1,45 @@
 /* =========================================================
-   🔧 CENTRAL API CONNECTION MODULE (GLOBAL VERSION)
+    🔧 CENTRAL API CONNECTION MODULE (GLOBAL VERSION)
 ========================================================= */
+
+// Changed to 127.0.0.1 to avoid common 'localhost' CORS preflight issues
+/*
+window.BASE_URL = "http://127.0.0.1:5000/api";
+*/
+
+/*
+window.BASE_URL = "http://26.254.235.193:5000/api";
+*/
 
 /*Coolify Connection*/
 window.BASE_URL = "http://s9fl1d5oewnuc80uxtd5mwz3.148.230.102.204.sslip.io/api";
 
-/*
-window.BASE_URL = "http://26.209.189.89:5000/api";
-*/
 
-/* Radmin 
-window.BASE_URL = "http://26.254.235.193:5000/api";*/
+/* ── UI NOTIFICATIONS ── */
+function showNotification(message, type = 'success') {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
 
-/* Same device
-window.BASE_URL = "http://localhost:5000/api";
-*/
-// or
-/*
-window.BASE_URL = "http://127.0.0.1:5000/api";
-*/
+    const toast = document.createElement('div');
+    toast.className = `toast-msg ${type === 'error' ? 'error' : ''}`;
+    toast.innerHTML = `
+        <div style="display:flex; align-items:center; gap:12px;">
+            <span style="font-weight:700; font-size:14px;">${message}</span>
+        </div>
+        <span style="margin-left:20px; cursor:pointer; font-weight:900; opacity:0.4" onclick="this.parentElement.remove()">✕</span>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.4s ease forwards';
+        setTimeout(() => toast.remove(), 400);
+    }, 4500);
+}
 
 /* ── CORE FETCH ── */
 async function apiFetch(url, method = "GET", body = null) {
@@ -37,10 +58,13 @@ async function apiFetch(url, method = "GET", body = null) {
 
         const res = await fetch(url, options);
 
-        // Global Auth Handler: If server returns Unauthorized, force logout
-        if (res.status === 401) {
+        // Global Auth Handler
+        if (res.status === 401 && !url.includes('change-password')) {
+            showNotification("Session expired. Redirecting...", "error");
             localStorage.clear();
-            window.location.href = '../auth/login.html';
+            setTimeout(() => {
+                window.location.href = '../auth/login.html';
+            }, 1500);
             return [];
         }
 
@@ -61,17 +85,19 @@ async function apiFetch(url, method = "GET", body = null) {
 
     } catch (err) {
         console.error("❌ FETCH ERROR →", url, err);
+        showNotification("Network error. Please check your connection.", "error");
         return [];
     }
 }
 
 /* =========================================================
-   🌍 GLOBAL API (CLEAN + CENTRALIZED)
+    🌍 GLOBAL API (CLEAN + CENTRALIZED)
 ========================================================= */
 
 window.API = {
     BASE_URL: window.BASE_URL,
     apiFetch,
+    showNotification,
 
     /* ── DASHBOARD ── */
     fetchDashboard: (q, year) =>
@@ -103,8 +129,8 @@ window.API = {
     fetchScheduleByRep: (repId) =>
         apiFetch(`${BASE_URL}/dcp/schedule/${repId}`),
 
-    fetchDCPByRep: (repId) =>
-        apiFetch(`${BASE_URL}/cds_dcp/fetch_quarter_status/${repId}`),
+    fetchDCPByRep: (repId, year) =>
+        apiFetch(`${BASE_URL}/cds_dcp/fetch_quarter_status/${repId}?year=${year || new Date().getFullYear()}`),
 
     /* ── REQUESTS ── */
     fetchRequestYears: (repId) =>
@@ -117,7 +143,7 @@ window.API = {
         apiFetch(`${BASE_URL}/requests/details?id=${repId}&quarter=${quarter}&year=${year}`),
 
     updateGlobalStatus: (payload) =>
-        apiFetch(`${BASE_URL}/dcp/global-status`, "POST", payload),
+        apiFetch(`${BASE_URL}/requests/update-status`, "POST", payload),
 
     fetchQuarterStatus: (repId, year) =>
         apiFetch(`${BASE_URL}/requests/status/${repId}?year=${year}`),
@@ -139,8 +165,28 @@ window.API = {
     updateAccount: (empId, payload) =>
         apiFetch(`${BASE_URL}/accounts/${empId}`, "PUT", payload),
 
-    changePassword: (empId, currentPw, newPw) =>
-        apiFetch(`${BASE_URL}/accounts/${empId}/change-password`, "POST", { current_password: currentPw, new_password: newPw }),
+    /**
+     * 🔹 FIXED: Uses UUID (user_id) instead of Employee ID.
+     * Supabase Auth Admin API requires the UUID to update credentials[cite: 7].
+     */
+    changePassword: (empId, currentPw, newPw) => {
+        const userId = localStorage.getItem('user_id');
+        
+        if (!userId) {
+            console.error("❌ Error: user_id (UUID) not found in localStorage.");
+            showNotification("Session error. Please try logging in again.", "error");
+            return { error: "Session identification missing" };
+        }
+
+        return apiFetch(`${BASE_URL}/accounts/${userId}/change-password`, "POST", { 
+            new_password: newPw 
+        });
+    },
+
+    /* ── RESET ACCOUNT STATUS (FORCE CHANGE) ── */
+    resetAccountStatus: (user_id) => {
+        return apiFetch(`${BASE_URL}/accounts/${user_id}/reset-password`, "POST");
+    },
 
     fetchDoctorDetails: (id) =>
         apiFetch(`${BASE_URL}/doctor_details/${id}`),
@@ -158,7 +204,6 @@ window.API = {
             body: formData
         }),
 
-    // Syncs unmatched DCP rows into the CDS masterlist
     syncUnmatchedToCDS: (body) =>
         fetch(`${BASE_URL}/cds_dcp/sync_unmatched_to_cds`, {
             method: "POST",
@@ -174,11 +219,24 @@ window.API = {
         }),
 
     /* ── AUTH ── */
-    loginUser: (employee_id, password) =>
-        apiFetch(`${BASE_URL}/auth/login`, "POST", {
+    /**
+     * 🔹 FIXED: Captures the user_id (UUID) and saves it to localStorage.
+     * This ensures the changePassword function has the UUID it needs[cite: 13, 14].
+     */
+    loginUser: async (employee_id, password) => {
+        const result = await apiFetch(`${BASE_URL}/auth/login`, "POST", {
             employee_id,
             password
-        }),
+        });
+
+        if (result && result.user && result.user.id) {
+            localStorage.setItem('user_id', result.user.id);
+            localStorage.setItem('current_emp_id', result.user.employee_id);
+            localStorage.setItem('user_profile', JSON.stringify(result.user));
+        }
+        
+        return result;
+    },
 
     updateFirstPassword: (userId, newPassword) =>
         apiFetch(`${BASE_URL}/auth/update-first-password`, "POST", {

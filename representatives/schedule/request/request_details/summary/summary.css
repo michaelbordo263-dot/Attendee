@@ -11,6 +11,21 @@
 .summary-body {
     padding: 20px 50px;
     background-color: var(--bg-grey);
+    overflow-y: auto;
+    flex-grow: 1;
+    -ms-overflow-style: none;  /* IE/Edge */
+    scrollbar-width: none;     /* Firefox */
+}
+
+.schedule-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.summary-body::-webkit-scrollbar {
+    display: none;
 }
 
 .summary-grid-container {

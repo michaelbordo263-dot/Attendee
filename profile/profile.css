@@ -153,6 +153,23 @@
     font-family: 'Inter', sans-serif;
 }
 .pw-error {
-    font-size: 13px; color: #e74c3c;
-    text-align: center; min-height: 18px;
+    font-size: 13px;
+    text-align: center;
+    min-height: 20px;
+    padding: 8px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+/* Red style for errors */
+.pw-error.active {
+    color: #e74c3c;
+    background: #fdf2f2;
+}
+
+/* Green style for success[cite: 18] */
+.pw-error.success {
+    color: #27ae60;
+    background: #f2fdf5;
 }

@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return; 
     }
 
-    initializeRequestUI(quarter);
+    initializeRequestUI(quarter, year);
     await fetchRequestDetails(empId, quarter, year);
 
     // --- 1.5 BACK BUTTON LOGIC ---
@@ -34,56 +34,67 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('acceptBtn')?.addEventListener('click', openAcceptModal);
     document.getElementById('rejectBtn')?.addEventListener('click', openRejectModal);
+
+    // --- UPDATED VIEW SUMMARY LOGIC ---
     document.querySelector('.btn-summary-outline')?.addEventListener('click', () => {
-        window.location.href = `summary/summary.html?user_id=${empId}`;
+        const qString = `Q${quarter}`; // Converts 1 to "Q1", 2 to "Q2", etc.
+        window.location.href = `summary/summary.html?user_id=${empId}&quarter=${qString}&year=${year}`;
     });
 
-    await loadModal('components/accept_modal.html');
-    await loadModal('components/reject_modal.html');
 });
 
 async function fetchRequestDetails(empId, q, year) {
     currentRepId = empId; 
     const pendingActions = document.getElementById('pendingActions');
-    const wrapper = document.getElementById('statusActionsWrapper');
 
     try {
+        // Fetch details from backend which now uses the Fiscal Range logic
         const data = await API.fetchRequestDetails(empId, q, year);
         console.log("📥 DEBUG: Raw Backend Data Received ->", data);
 
-        // Derive global status from DCP rows (API has no top-level status field)
+        // dcp_list is now filtered by the backend's calculated fiscal start/end dates
         const dcpRows = data.dcp_list || [];
+        
+        // Check if all rows share the same final status
         const allApproved = dcpRows.length > 0 && dcpRows.every(row =>
             (row.status || "").toLowerCase() === "approved"
         );
-        const globalStatus = allApproved ? "approved" : "pending";
+        const allRejected = dcpRows.length > 0 && dcpRows.every(row =>
+            (row.status || "").toLowerCase() === "rejected"
+        );
+
+        const globalStatus = allApproved ? "approved" : allRejected ? "rejected" : "pending";
         console.log("📊 DEBUG: Derived Global Status ->", globalStatus);
 
-        // Show badge and hide buttons if Approved
-        if (globalStatus === "approved") {
+        // Hide action buttons and show badge for final statuses
+        if (globalStatus === "approved" || globalStatus === "rejected") {
             if (pendingActions) pendingActions.style.display = "none";
             const statusActions = document.querySelector('.status-actions');
             if (statusActions && !statusActions.querySelector('.final-status-badge')) {
                 const badge = document.createElement('span');
-                badge.className = 'final-status-badge approved';
-                badge.textContent = '✓ Approved';
+                badge.className = `final-status-badge ${globalStatus}`;
+                badge.textContent = globalStatus === "approved" ? "✓ Approved" : "✕ Rejected";
                 statusActions.appendChild(badge);
             }
         }
 
-        // Fill in the headers
-        console.log("👤 DEBUG: Medrep Metadata ->", data.medrep);
+        // Fill in Headers
         document.getElementById('repName').textContent = data.medrep?.name || "---";
         document.getElementById('repArea').textContent = data.medrep?.area || "---";
 
-        allCdsRecords = data.cds_list || [];
-        console.log("📋 DEBUG: CDS List count ->", allCdsRecords.length);
+        // Display current period in logs for debugging
+        if(data.fiscal_range) {
+             console.log(`📅 DEBUG: Processing Range ${data.fiscal_range.start} to ${data.fiscal_range.end}`);
+        }
 
+        allCdsRecords = data.cds_list || [];
         applyCdsFilters();
-        renderDcpTable(data.dcp_list);
+        renderDcpTable(dcpRows);
 
     } catch (err) {
         console.error("Fetch Error:", err);
+        const container = document.getElementById('cdsContainer');
+        if (container) container.innerHTML = `<p style="text-align:center; color:red;">Failed to load request details.</p>`;
     }
 }
 
@@ -99,22 +110,20 @@ function applyCdsFilters() {
         const isPharm = (item.type || item.RecordType || item.record_type || '').toLowerCase() === 'pharmacy';
         const nameToSearch = isPharm ? (item.Pharmacy_Name || item.pharmacy_name || item.name || '') : (item.name || '');
 
-        // DEEP SEARCH: Checks Name, Specialty and Address
+        // Search logic includes Area for Doctors and City_Address_Province for Pharmacies
         const matchesSearch = 
             nameToSearch.toLowerCase().includes(searchTerm) || 
             (item.specialty?.toLowerCase().includes(searchTerm)) ||
-            (item.City_Address_Province || item.city_address_province || item.city || '').toLowerCase().includes(searchTerm);
+            (item.Area?.toLowerCase().includes(searchTerm)) || 
+            (item.City_Address_Province || item.city || '').toLowerCase().includes(searchTerm);
             
         return matchesType && matchesSearch;
     });
 
-    // DYNAMIC TEXT LOGIC
     let labelText = `Showing (${filtered.length}) `;
-    
     if (searchTerm !== "") {
-        labelText += "Results"; // Simplify to "Results" when searching
+        labelText += "Results"; 
     } else {
-        // Use specific categories if search is empty
         if (typeValue === 'all') labelText += "Doctor & Pharmacy";
         else if (typeValue === 'doctor') labelText += "Doctors";
         else if (typeValue === 'pharmacy') labelText += "Pharmacies";
@@ -129,8 +138,16 @@ function applyCdsFilters() {
 
     container.innerHTML = filtered.map(doc => {
         const isPharmacy = (doc.type || doc.RecordType || doc.record_type || '').toLowerCase() === 'pharmacy';
-        const displayName = isPharmacy ? (doc.Pharmacy_Name || doc.pharmacy_name || doc.name || 'Unknown') : (doc.name || 'Unknown');
-        const displaySub = isPharmacy ? (doc.City_Address_Province || doc.city_address_province || doc.city || '-') : (doc.specialty || '-');
+        const displayName = doc.name || 'Unknown';
+        
+        /**
+         * APPLIED CHANGE:
+         * For Pharmacies, we check both City_Address_Province and the fallback 'city' key 
+         * provided by the backend to ensure the location displays correctly.
+         */
+        const displaySub = isPharmacy 
+            ? (doc.City_Address_Province || doc.city || '-') 
+            : (doc.Area && doc.Area !== 'N/A' ? doc.Area : (doc.specialty && doc.specialty !== 'N/A' ? doc.specialty : '-'));
 
         return `
         <div class="doctor-item">
@@ -149,7 +166,7 @@ function applyCdsFilters() {
                     <div class="detail-item"><label>CODE</label><span>${doc.id || 'N/A'}</span></div>
                     <div class="detail-item"><label>HOSPITAL</label><span>${doc.hospital || 'N/A'}</span></div>
                     <div class="detail-item"><label>TYPE</label><span>${doc.type || 'N/A'}</span></div>
-                    <div class="detail-item"><label>ADDRESS</label><span>${doc.City_Address_Province || doc.city_address_province || doc.city || 'N/A'}</span></div>
+                    <div class="detail-item"><label>ADDRESS</label><span>${doc.City_Address_Province || doc.city || 'N/A'}</span></div>
                 </div>
             </div>
         </div>
@@ -159,7 +176,7 @@ function applyCdsFilters() {
 function renderDcpTable(list) {
     const dcpBody = document.getElementById('dcpBody');
     if (!list || list.length === 0) {
-        dcpBody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>No schedule found.</td></tr>";
+        dcpBody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>No schedule found for this fiscal period.</td></tr>";
         return;
     }
     const sortedList = list.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -189,12 +206,12 @@ function toggleDetails(headerElement) {
     if (!isActive) card.classList.add('active');
 }
 
-function initializeRequestUI(quarter) {
+function initializeRequestUI(quarter, year) {
     const quarters = {
-        1: { title: "Q1 Request (Jan - Mar)", sub: "Q1 · January – March 2026" },
-        2: { title: "Q2 Request (Apr - Jun)", sub: "Q2 · April – June 2026" },
-        3: { title: "Q3 Request (Jul - Sep)", sub: "Q3 · July – September 2026" },
-        4: { title: "Q4 Request (Oct - Dec)", sub: "Q4 · October – December 2026" }
+        1: { title: "Q1 Request (Jan - Mar)", sub: `Q1 · January – March ${year}` },
+        2: { title: "Q2 Request (Apr - Jun)", sub: `Q2 · April – June ${year}` },
+        3: { title: "Q3 Request (Jul - Sep)", sub: `Q3 · July – September ${year}` },
+        4: { title: "Q4 Request (Oct - Dec)", sub: `Q4 · October – December ${year}` }
     };
     const config = quarters[quarter] || quarters[1];
     document.getElementById('qTitle').textContent = config.title;
@@ -214,11 +231,9 @@ async function loadModal(path) {
 function openRejectModal() {
     const modal = document.getElementById('rejectModal');
     if (modal) {
-        // Update the text right before showing the modal
         const name = document.getElementById('repName').textContent;
         const target = modal.querySelector('.dynamic-rep-name');
         if (target) target.textContent = `${name}'s`;
-
         modal.style.display = 'flex';
     }
 }   
@@ -226,11 +241,9 @@ function openRejectModal() {
 function openAcceptModal() {
     const modal = document.getElementById('acceptModal');
     if (modal) {
-        // Update the text right before showing the modal
         const name = document.getElementById('repName').textContent;
         const target = modal.querySelector('.dynamic-rep-name');
         if (target) target.textContent = `${name}'s`;
-        
         modal.style.display = 'flex';
     }
 }

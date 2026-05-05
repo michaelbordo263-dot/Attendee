@@ -42,12 +42,12 @@
                         <option value="inactive">Inactive</option>
                     </select>
                 </div>
-                <!-- New Role Filter Dropdown -->
                 <div class="dropdown-wrapper">
                     <select id="roleFilter" class="location-dropdown" onchange="fil()">
                         <option value="all">All Roles</option>
                         <option value="medrep">MedRep</option>
                         <option value="admin">Admin</option>
+                        <option value="super_admin">Super Admin</option>
                     </select>
                 </div>
                 <button class="add-account-btn" onclick="addAccount()">+ Add account</button>
@@ -85,10 +85,9 @@
 
                         <div class="field-group">
                             <label>Employee ID</label>
-                            <input type="text" id="empId" required placeholder="EMP-000">
+                            <input type="text" id="empId" required placeholder="EMP 0000">
                         </div>
 
-                        <!-- Status field remains a dropdown -->
                         <div class="field-group">
                             <label>Status</label>
                             <select id="statusInput">
@@ -97,28 +96,34 @@
                             </select>
                         </div>
                         
-                        <!-- District and Area / Assignment side-by-side -->
                         <div class="field-group">
                             <label>District</label>
                             <input type="text" id="districtInput" required placeholder="Enter district">
                         </div>
                         <div class="field-group">
                             <label>Area / Assignment</label>
-                            <input type="text" id="areaInput" required placeholder="e.g. North, South, Matigas City">
+                            <input type="text" id="areaInput" required placeholder="e.g. North, South">
                         </div>
 
-                        <!-- New Constant Time field -->
                         <div class="field-group full-width">
                             <label>Constant Time</label>
                             <input type="time" id="timeInput">
                         </div>
+                        
+                        <!-- Reset Password Trigger -->
+                        <div class="field-group full-width" id="resetBtnContainer" style="display: none; margin-bottom: 10px;">
+                            <button type="button" id="resetPasswordBtn" onclick="triggerForceReset()" 
+                                style="width: 100%; background-color: #ffffff; border: 1px solid #3e627a; color: #3e627a; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 16px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                                Reset Password
+                            </button>
+                        </div>
 
-                        <!-- New Roles field (visibility controlled by JS based on currentUserRole) -->
                         <div class="field-group full-width" id="roleGroup">
                             <label>Role</label>
                             <select id="roleInput" required>
                                 <option value="medrep">MedRep</option>
                                 <option value="admin">Admin</option>
+                                <option value="super_admin">Super Admin</option>
                             </select>
                         </div>
                     </div>

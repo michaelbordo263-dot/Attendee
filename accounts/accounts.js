@@ -2,8 +2,18 @@ let accounts = [];
 const userProfile = JSON.parse(localStorage.getItem('user_profile') || '{}');
 const currentUserRole = userProfile.roles || 'admin'; 
 
-let currentRoleFilter = 'all';
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Clean up the Role Filter dropdown for admin users
+    const roleFilter = document.getElementById('roleFilter');
+    if (roleFilter && currentUserRole === 'admin') {
+        const roleFilterWrapper = roleFilter.closest('.dropdown-wrapper');
+        if (roleFilterWrapper) {
+            roleFilterWrapper.style.display = 'none';
+        }
+        roleFilter.value = 'medrep';
+    }
+
+    // 2. Then load the accounts as usual
     loadAccounts();
 });
 
@@ -22,13 +32,14 @@ function showToast(msg) {
 
 function generateNextEmpId(allAccounts) {
     const empNumbers = allAccounts
-        .map(a => a.employee_id || '')
-        .filter(id => id.startsWith('EMP'))
-        .map(id => parseInt(id.replace('EMP', ''), 10))
-        .filter(num => !isNaN(num));
-
+        .map(a => {
+            const idStr = String(a.employee_id || '');
+            const match = idStr.match(/\d+/);
+            return match ? parseInt(match[0], 10) : null;
+        })
+        .filter(num => num !== null);
     const maxNum = empNumbers.length > 0 ? Math.max(...empNumbers) : 0;
-    return `EMP${String(maxNum + 1).padStart(4, '0')}`;
+    return `EMP ${String(maxNum + 1).padStart(4, '0')}`;
 }
 
 /* ── LOAD ACCOUNTS ── */
@@ -44,94 +55,145 @@ async function loadAccounts() {
         }
 
         window.nextGeneratedId = generateNextEmpId(raw);
-
-        const roleFilterDropdown = document.getElementById('roleFilter');
-        if (roleFilterDropdown) {
-            if (currentUserRole === 'admin') {
-                roleFilterDropdown.value = 'medrep';
-                roleFilterDropdown.disabled = true;
-            } else {
-                roleFilterDropdown.value = 'all';
-                roleFilterDropdown.disabled = false;
-            }
-            currentRoleFilter = roleFilterDropdown.value;
-        }
         renderStats();
         fil();
     } catch (error) {
         console.error('Error fetching accounts:', error);
         accounts = [];
-        window.nextGeneratedId = 'EMP0001';
-        showToast('Account list is empty or server is offline');
+        showToast('Server connection failed');
     }
 }
 
 /* ── OPEN EDIT ── */
-window.openEdit = function(id) {
-    const acc = accounts.find(a => String(a.id) === String(id));
+window.openEdit = function(uuid) {
+    const acc = accounts.find(a => String(a.id) === String(uuid));
     if (!acc) return;
 
     document.getElementById('modalTitle').textContent = 'Edit Account';
     document.getElementById('submitBtn').textContent = 'Save Changes';
 
-    document.getElementById('accId').value = acc.id;
-    document.getElementById('empId').value = acc.employee_id;
-    document.getElementById('fName').value = acc.first_name;
-    document.getElementById('lName').value = acc.last_name;
-    document.getElementById('areaInput').value = acc.area;
+    const idField = document.getElementById('accId');
+    if (idField) idField.value = acc.id; 
+
+    document.getElementById('empId').value = acc.employee_id || '';
+    document.getElementById('fName').value = acc.first_name || '';
+    document.getElementById('lName').value = acc.last_name || '';
+    document.getElementById('areaInput').value = acc.area || '';
     document.getElementById('districtInput').value = acc.district || '';
     document.getElementById('statusInput').value = acc.status || 'active';
+    
+    const resetBtnContainer = document.getElementById('resetBtnContainer');
+    const resetBtn = document.getElementById('resetPasswordBtn');
 
-    // Lock all fields except status
-    ['fName', 'lName', 'empId', 'areaInput', 'districtInput', 'timeInput'].forEach(fieldId => {
-        const el = document.getElementById(fieldId);
-        if (!el) return;
-        el.setAttribute('readonly', true);
-        el.removeAttribute('required');
-    });
-    document.getElementById('statusInput').disabled = false;
+    if (resetBtnContainer) {
+        resetBtnContainer.style.display = 'block';
+        resetBtn.disabled = false;
+        resetBtn.style.opacity = '1';
+        resetBtn.textContent = 'Reset Password';
+    }
 
-    // Role dropdown — always visible and enabled
+    if(document.getElementById('timeInput')) {
+        document.getElementById('timeInput').value = acc.constant_time || '';
+    }
+
+    // --- ROLE LOGIC FOR EDIT MODE ---
     const roleGroup = document.getElementById('roleGroup');
     const roleInput = document.getElementById('roleInput');
-    roleGroup.style.display = 'flex';
-    roleInput.value = acc.roles || 'medrep';
-    roleInput.disabled = false;
-    roleInput.removeAttribute('readonly');
+    
+    if (roleInput) {
+        // Set the value to the account's actual role
+        roleInput.value = acc.roles || 'medrep';
 
+        if (currentUserRole === 'super_admin') {
+            // Super Admin: Can view the role but not change it
+            if (roleGroup) roleGroup.style.display = 'block';
+            roleInput.disabled = true;
+            roleInput.style.opacity = '0.7';
+            
+            // Ensure all options are visible for viewing
+            const options = roleInput.querySelectorAll('option');
+            options.forEach(opt => opt.style.display = 'block');
+        } else {
+            // Admin: Hide the role field completely
+            if (roleGroup) roleGroup.style.display = 'none';
+            roleInput.disabled = true;
+            roleInput.style.opacity = '0.7';
+        }
+    }
+
+    const editableFields = ['fName', 'lName', 'areaInput', 'districtInput', 'timeInput'];
+    if (currentUserRole === 'super_admin') {
+        editableFields.forEach(fieldId => {
+            const el = document.getElementById(fieldId);
+            if (el) el.removeAttribute('readonly');
+        });
+        document.getElementById('empId')?.setAttribute('readonly', true);
+        document.getElementById('statusInput').disabled = false;
+    } else {
+        ['fName', 'lName', 'empId', 'areaInput', 'districtInput', 'timeInput'].forEach(fieldId => {
+            const el = document.getElementById(fieldId);
+            if (el) el.setAttribute('readonly', true);
+        });
+        document.getElementById('statusInput').disabled = true;
+    }
+    
     document.getElementById('accountModal').classList.add('active');
 };
 
-/* ── ADD ── */
+/* ── ADD ACCOUNT ── */
 window.addAccount = function() {
     document.getElementById('modalTitle').textContent = 'Add Account';
     document.getElementById('submitBtn').textContent = 'Add';
     document.getElementById('accountForm').reset();
-    document.getElementById('accId').value = '';
+    
+    const idField = document.getElementById('accId');
+    if (idField) idField.value = '';
+
+    const resetBtnContainer = document.getElementById('resetBtnContainer');
+    if (resetBtnContainer) resetBtnContainer.style.display = 'none';
 
     const empIdField = document.getElementById('empId');
-    empIdField.value = window.nextGeneratedId || 'EMP0001';
+    empIdField.value = window.nextGeneratedId || 'EMP 0001';
     empIdField.setAttribute('readonly', true);
 
     ['fName', 'lName', 'areaInput', 'districtInput', 'timeInput'].forEach(fieldId => {
         const el = document.getElementById(fieldId);
-        if (!el) return;
-        el.removeAttribute('readonly');
-        el.setAttribute('required', true);
+        if (el) el.removeAttribute('readonly');
     });
 
-    const status = document.getElementById('statusInput');
-    status.value = 'active';
-    status.disabled = true;
-
-    // Role dropdown — always visible and enabled
-    const roleGroup = document.getElementById('roleGroup');
+    // --- ROLE LOGIC FOR ADMIN VS SUPER ADMIN ---
     const roleInput = document.getElementById('roleInput');
-    roleGroup.style.display = 'flex';
-    roleInput.value = 'medrep';
-    roleInput.disabled = false;
-    roleInput.removeAttribute('readonly');
+    const roleGroup = document.getElementById('roleGroup');
+    if (roleInput) {
+        const adminOption = roleInput.querySelector('option[value="admin"]');
+        const superAdminOption = roleInput.querySelector('option[value="super_admin"]');
 
+        if (currentUserRole === 'admin') {
+            // 1. Hide the entire role field for Admin users
+            if (roleGroup) roleGroup.style.display = 'none';
+            roleInput.value = 'medrep';
+            roleInput.disabled = true;
+            roleInput.style.opacity = '0.7';
+
+            // 2. Hide Admin and Super Admin options so they aren't even in the list
+            if (adminOption) adminOption.style.display = 'none';
+            if (superAdminOption) superAdminOption.style.display = 'none';
+        } 
+        else if (currentUserRole === 'super_admin') {
+            // 1. Show the role field for Super Admin
+            if (roleGroup) roleGroup.style.display = 'block';
+            roleInput.disabled = false;
+            roleInput.style.opacity = '1';
+            roleInput.value = 'medrep'; // Default but changeable
+
+            // 2. Ensure options are visible again (resets any previous Admin session)
+            if (adminOption) adminOption.style.display = 'block';
+            if (superAdminOption) superAdminOption.style.display = 'block';
+        }
+    }
+
+    document.getElementById('statusInput').value = 'active';
+    document.getElementById('statusInput').disabled = true;
     document.getElementById('accountModal').classList.add('active');
 };
 
@@ -139,94 +201,117 @@ window.closeAccountModal = function() {
     document.getElementById('accountModal').classList.remove('active');
 };
 
-/* ── SAVE ── */
+/* ── FORCE PASSWORD RESET ACTION ── */
+window.triggerForceReset = async function() {
+    const internalUUID = document.getElementById('accId').value;
+    if (!internalUUID) return;
+
+    if (!confirm("Are you sure you want to reset this account? This will force the user to change their password on their next login.")) {
+        return;
+    }
+
+    const resetBtn = document.getElementById('resetPasswordBtn');
+    
+    try {
+        const result = await API.resetAccountStatus(internalUUID);
+        console.log("Reset Result:", result);
+
+        if (result && (result.success || !result.error)) {
+            alert(result.message || "Success! The user will be required to change their password upon next login.");
+            resetBtn.disabled = true;
+            resetBtn.style.opacity = '0.5';
+            resetBtn.textContent = 'Reset Triggered';
+        } else {
+            alert(result?.error || "Error: Failed to reset account.");
+        }
+    } catch (err) {
+        showToast("Server Connection Error");
+    }
+};
+
+/* ── SAVE ACCOUNT (WITH CONFIRMATION) ── */
 window.saveAccount = async function(e) {
     e.preventDefault();
 
-    const id = document.getElementById('accId').value;
-    const employee_id = document.getElementById('empId').value;
+    const internalUUID = document.getElementById('accId').value;
+    
+    // Confirmation Logic
+    const isEditing = !!internalUUID;
+    const msg = isEditing 
+        ? "Are you sure you want to update this account's information?" 
+        : "Are you sure you want to create this new account?";
 
-    const statusEl = document.getElementById('statusInput');
-    statusEl.disabled = false;
-
-    // Always read role from the dropdown — it's always visible now
-    const roleInput = document.getElementById('roleInput');
-    const roles = roleInput ? roleInput.value : 'medrep';
+    if (!confirm(msg)) {
+        return; // User clicked Cancel
+    }
 
     const payload = {
-        employee_id,
+        employee_id: document.getElementById('empId').value,
         first_name: document.getElementById('fName').value,
         last_name: document.getElementById('lName').value,
         area: document.getElementById('areaInput').value,
         district: document.getElementById('districtInput').value,
         constant_time: document.getElementById('timeInput')?.value || null,
         status: document.getElementById('statusInput').value,
-        roles: roles
+        roles: document.getElementById('roleInput')?.value || 'medrep'
     };
 
     try {
         let result;
-        if (id) {
-            result = await API.updateAccount(employee_id, payload);
+        if (internalUUID && internalUUID.trim() !== "") {
+            result = await API.updateAccount(internalUUID, payload);
         } else {
             result = await API.createAccount(payload);
         }
 
         if (result && !result.error) {
-            showToast(id ? 'Account updated!' : 'Account added!');
+            showToast('Account successfully saved!');
             closeAccountModal();
-            loadAccounts();
+            setTimeout(() => { loadAccounts(); }, 500);
         } else {
-            alert(result?.error || "Failed to save");
+            alert(result?.error || "Error: Failed to save changes.");
         }
     } catch (err) {
-        console.error(err);
-        showToast("Server error");
+        showToast("Server Connection Error");
     }
 };
 
-/* ── STATS ── */
+/* ── STATS & RENDERING ── */
 function renderStats() {
     document.getElementById('ct').textContent = accounts.length;
     document.getElementById('ca').textContent = accounts.filter(a => a.status === 'active').length;
     document.getElementById('ci').textContent = accounts.filter(a => a.status === 'inactive').length;
 }
 
-/* ── FILTER ── */
 window.fil = function() {
     const query = (document.getElementById('srch')?.value || '').toLowerCase();
-    const statusFilter = (document.getElementById('statusFilter')?.value || 'all');
-    const roleFilter = (document.getElementById('roleFilter')?.value || 'all');
+    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+    const roleFilter = document.getElementById('roleFilter')?.value || 'all';
 
     const filtered = accounts.filter(a => {
         const name = `${a.first_name} ${a.last_name}`.toLowerCase();
-        const accountRole = (a.roles || '').toLowerCase();
-
         const matchesSearch = (name.includes(query) || (a.employee_id || '').toLowerCase().includes(query));
-        const matchesStatus = (statusFilter === 'all' || (a.status || '').toLowerCase() === statusFilter);
-        const matchesRole = (roleFilter === 'all' || accountRole === roleFilter);
-
+        const matchesStatus = (statusFilter === 'all' || a.status === statusFilter);
+        const matchesRole = (roleFilter === 'all' || (a.roles || '').toLowerCase() === roleFilter);
         return matchesSearch && matchesStatus && matchesRole;
     });
 
-    document.getElementById('shw').textContent =
-        `Showing ${filtered.length} account${filtered.length !== 1 ? 's' : ''}`;
-
-    document.getElementById('list').innerHTML = filtered.map(a => `
-        <div class="arow" onclick="${(a.roles || '').toLowerCase() === 'medrep' ? `location.href='../representatives/schedule/schedule.html?id=${a.id}'` : ''}">
-            <span class="sdot" style="background:${a.status === 'active' ? '#22c55e' : '#ef4444'}"></span>
+    document.getElementById('list').innerHTML = filtered.map(a => {
+        const color = a.status === 'active' ? '#22c55e' : '#ef4444';
+        return `
+        <div class="arow">
+            <span class="sdot" style="background:${color}"></span>
             <div class="ava">${initials(a.first_name, a.last_name)}</div>
             <div class="ri">
                 <div class="rn">${a.first_name} ${a.last_name}</div>
-                <div class="rm">
-                    <span>${a.employee_id}</span> | 
-                    <span style="text-transform: uppercase; font-weight: bold; color: #3e627a;">${a.roles || 'medrep'}</span> |
-                    <span>${a.area}</span> |
-                    <span>${a.district}</span> |
-                    <span style="color: #64748b;">🕒 ${a.constant_time || '--:--'}</span>
-                </div>
+                <div class="rm">${a.employee_id} | <span style="text-transform: uppercase;">${a.roles}</span> | ${a.area}</div>
             </div>
-            <button class="ebtn" onclick="event.stopPropagation(); openEdit('${a.id}')">Edit</button>
-        </div>
-    `).join('');
+            <button class="ebtn" onclick="openEdit('${a.id}')">Edit</button>
+        </div>`;
+    }).join('');
+
+    const showCount = document.getElementById('shw');
+    if (showCount) {
+        showCount.textContent = `Showing ${filtered.length} account${filtered.length !== 1 ? 's' : ''}`;
+    }
 };

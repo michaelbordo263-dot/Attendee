@@ -1,4 +1,57 @@
 // ── STATE ──────────────────────────────────────────
+
+// ── TOAST NOTIFICATION ──────────────────────────────
+function showToast(message, type = 'success') {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.style.cssText = `
+            position: fixed; bottom: 32px; right: 32px;
+            display: flex; flex-direction: column; gap: 10px;
+            z-index: 99999; pointer-events: none;
+        `;
+        document.body.appendChild(container);
+    }
+
+    const colors = {
+        success: { bg: '#e8f5e9', border: '#4caf50', icon: '✓', text: '#2e7d32' },
+        error:   { bg: '#fdecea', border: '#f44336', icon: '✕', text: '#c62828' },
+        warning: { bg: '#fff8e1', border: '#ffc107', icon: '⚠', text: '#a07010' },
+    };
+    const c = colors[type] || colors.success;
+
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        display: flex; align-items: center; gap: 12px;
+        background: ${c.bg}; border: 1.5px solid ${c.border};
+        border-radius: 12px; padding: 14px 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        font-size: 14px; font-weight: 600; color: ${c.text};
+        min-width: 260px; max-width: 380px;
+        opacity: 0; transform: translateY(12px);
+        transition: opacity 0.25s, transform 0.25s;
+        pointer-events: auto;
+    `;
+    toast.innerHTML = `
+        <span style="font-size:18px; flex-shrink:0;">${c.icon}</span>
+        <span style="flex:1;">${message}</span>
+    `;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    });
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(12px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}
+// ─────────────────────────────────────────────────────
+
 const _now = new Date();
 let schedTab     = 'Pending';
 let schedQuarter = Math.ceil((_now.getMonth() + 1) / 3); // current quarter
@@ -179,9 +232,11 @@ window.saveProduct = async () => {
 
     const saveBtn = document.querySelector('.save-product-btn');
 
-    if (!generic || !brand) {
+    if (!generic || !brand || !file) {
         isSavingProduct = false;
-        return alert("Please enter both Generic and Brand names.");
+        if (!generic || !brand) showToast("Please fill in both Generic and Brand names.", "warning");
+        else showToast("Please upload a product image.", "warning");
+        return;
     }
 
     console.log("DEBUG: Payload data gathered:", { generic, brand, hasFile: !!file });
@@ -190,9 +245,7 @@ window.saveProduct = async () => {
     const formData = new FormData();
     formData.append('product_generic_name', generic);
     formData.append('product_brand_name', brand);
-    if (file) {
-        formData.append('product_image', file);
-    }
+    formData.append('product_image', file);
 
     try {
         if (saveBtn) { 
@@ -210,7 +263,7 @@ window.saveProduct = async () => {
         console.log("DEBUG: Response Status:", res.status);
 
         if (res.ok) {
-            alert("Product saved successfully!");
+            showToast("Product saved successfully!");
             // 1. Clear inputs
             document.getElementById('genericNameInput').value = '';
             document.getElementById('brandNameInput').value = '';
@@ -240,11 +293,11 @@ window.saveProduct = async () => {
                 const json = JSON.parse(responseText);
                 errorMsg = json.error || json.message || responseText;
             } catch (e) {}
-            alert("Server Error: " + errorMsg.slice(0, 150));
+            showToast("Server error: " + errorMsg.slice(0, 100), "error");
         }
     } catch (err) {
         console.error("Save Product Error:", err);
-        alert("Connection Error: Could not reach the server. Make sure the backend is running.");
+        showToast("Connection error. Make sure the backend is running.", "error");
     } finally {
         isSavingProduct = false;
         if (saveBtn) {
@@ -252,7 +305,70 @@ window.saveProduct = async () => {
             saveBtn.textContent = "Save Product";
         }
     }
+
 };
+
+window.openUnusualModal = () => {
+    const modal = document.getElementById('unusualModal');
+    const listContainer = document.getElementById('unusualList');
+    if (!modal || !listContainer) return;
+
+    const withMisses = unusualReports.filter(rep =>
+        (rep.total_missed || 0) > 0 && Array.isArray(rep.details) && rep.details.length > 0
+    );
+    const allClear = unusualReports.filter(rep => (rep.total_missed || 0) === 0);
+
+    if (unusualReports.length === 0) {
+        listContainer.innerHTML = `
+            <div style="padding: 40px; text-align: center; color: #aab0be;">
+                <p>No approved schedules found for Q${schedQuarter}.</p>
+            </div>`;
+    } else {
+        let html = '';
+
+        if (withMisses.length > 0) {
+            html += withMisses.map(rep => {
+                const initials = getInitials(rep.name);
+                return `
+                    <div class="unusual-row" onclick='openUnusualDetail(${JSON.stringify(rep)})'
+                         style="cursor: pointer; display: flex; align-items: center; padding: 16px; border-bottom: 1px solid #f1f5f9; gap: 16px;">
+                        <div class="perf-avatar">${initials}</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 700; color: #2c4e68;">${rep.name}</div>
+                            <div style="font-size: 11px; margin-top: 4px;">
+                                <span class="report-badge badge--red">${rep.total_missed} unresolved misses</span>
+                            </div>
+                        </div>
+                        <div style="color: #cbd5e1;">&#10217;</div>
+                    </div>`;
+            }).join('');
+        }
+
+        if (allClear.length > 0) {
+            html += `<div style="padding: 8px 16px; font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; background: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">ALL CLEAR</div>`;
+            html += allClear.map(rep => {
+                const initials = getInitials(rep.name);
+                return `
+                    <div class="unusual-row" onclick='openUnusualDetail(${JSON.stringify(rep)})'
+                         style="cursor: pointer; display: flex; align-items: center; padding: 16px; border-bottom: 1px solid #f1f5f9; gap: 16px; opacity: 0.6;">
+                        <div class="perf-avatar" style="background:#e2e8f0; color:#64748b;">${initials}</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 700; color: #2c4e68;">${rep.name}</div>
+                            <div style="font-size: 11px; margin-top: 4px;">
+                                <span class="report-badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">No misses</span>
+                            </div>
+                        </div>
+                        <div style="color: #cbd5e1;">&#10217;</div>
+                    </div>`;
+            }).join('');
+        }
+
+        listContainer.innerHTML = html;
+    }
+    openModal('unusualModal');
+};
+
+
 
 
 // ── SUMMARY ────────────────────────────────────────
@@ -463,6 +579,7 @@ function renderScheduleList(data) {
         'Pending':  'status-badge--pending',
         'Approved': 'status-badge--approved',
         'Missing':  'status-badge--missing',
+        'Rejected': 'status-badge--rejected',
     };
 
     // The API already filters by status (schedTab), so only apply the search filter here.
@@ -500,10 +617,13 @@ function renderScheduleList(data) {
             if (isSuperAdmin) {
                 clickHandler = `openRequestDetailModal('${encodeURIComponent(repId)}', ${schedQuarter}, ${schedYear})`;
             } else {
-                // Disable clicking for non-super_admins on the Pending tab
                 clickHandler = 'return false;';
                 cursorStyle = 'cursor: default;';
             }
+        } else if (schedTab === 'Rejected') {
+            const safeRemarks = (r.remarks || 'No remarks provided.').replace(/'/g, "\\'");
+            const safeName = (r.name || '').replace(/'/g, "\\'");
+            clickHandler = `openRejectionRemarksModal('${safeName}', '${safeRemarks}')`;
         } else {
             clickHandler = `window.location.href='../representatives/schedule/schedule.html?id=${encodeURIComponent(repId)}&quarter=${schedQuarter}&year=${schedYear}'`;
         }
@@ -545,104 +665,213 @@ async function loadUnusualReports() {
 }
 
 
+// ── UPDATED UNUSUAL UI RENDERER ──────────────────
 function updateUnusualUI() {
     const panel = document.getElementById('unusualPanelBody');
-
     if (!panel) return;
 
-    // ── FIX: SAFE FILTERING (NO OVER-RESTRICTION) ──
-    const displayData = unusualReports.filter(r => {
-        const type = (r.type || '').toLowerCase();
+    // Backend now returns ALL approved medreps
+    // Split: those with misses vs those who are all clear
+    const withMisses  = unusualReports.filter(r => (r.total_missed || 0) > 0);
+    const allClear    = unusualReports.filter(r => (r.total_missed || 0) === 0);
 
-        // Only keep valid unusual types
-        return type === 'missed' || type === 'no_request';
-    });
-
-    console.log("✅ FILTERED UNUSUAL DATA:", displayData);
-
-    renderUnusualList(displayData);
-
-    // ── EMPTY STATE ───────────────────────────────
-    if (displayData.length === 0) {
+    if (unusualReports.length === 0) {
         panel.innerHTML = `
-            <div style="padding:20px;text-align:center;color:#888;">
-                No unusual reports for Q${schedQuarter}
+            <div style="padding:40px; text-align:center; color:#888;">
+                <p>No approved schedules found for Q${schedQuarter}</p>
             </div>`;
         return;
     }
 
-    // ── DASHBOARD PREVIEW (TOP 4 ONLY) ────────────
-    panel.innerHTML = displayData.slice(0, 4).map((r, index) => {
+    let html = '';
 
-        const initials = getInitials(r.name);
-        const isLast = index === Math.min(displayData.length, 4) - 1;
+    // Section 1: Medreps with actual misses (shown with red badge)
+    if (withMisses.length > 0) {
+        html += withMisses.map((r, index) => {
+            const initials = getInitials(r.name);
+            const isLast = index === withMisses.length - 1 && allClear.length === 0;
+            return `
+                <div class="report-item" onclick='openUnusualDetail(${JSON.stringify(r)})' style="cursor:pointer;">
+                    <div class="perf-avatar">${initials}</div>
+                    <div class="report-info">
+                        <span class="perf-name">${r.name}</span>
+                        <span class="report-badge badge--red">${r.total_missed} unresolved misses</span>
+                    </div>
+                    <div style="color: #cbd5e1; margin-left: auto;">&#10217;</div>
+                </div>
+                ${!isLast ? '<div class="report-divider"></div>' : ''}
+            `;
+        }).join('');
+    }
 
-        const type = (r.type || '').toLowerCase();
-        const isMissed = type === 'missed';
+    // Section 2: Medreps with no misses yet (all visits done or all future)
+    if (allClear.length > 0) {
+        html += `<div style="padding: 8px 16px; font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; background: #f8fafc; border-top: 1px solid #f1f5f9;">ALL CLEAR</div>`;
+        html += allClear.map((r, index) => {
+            const initials = getInitials(r.name);
+            const isLast = index === allClear.length - 1;
+            return `
+                <div class="report-item" onclick='openUnusualDetail(${JSON.stringify(r)})' style="cursor:pointer; opacity: 0.6;">
+                    <div class="perf-avatar" style="background:#e2e8f0; color:#64748b;">${initials}</div>
+                    <div class="report-info">
+                        <span class="perf-name">${r.name}</span>
+                        <span class="report-badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">No misses</span>
+                    </div>
+                    <div style="color: #cbd5e1; margin-left: auto;">&#10217;</div>
+                </div>
+                ${!isLast ? '<div class="report-divider"></div>' : ''}
+            `;
+        }).join('');
+    }
 
-        const badgeClass = isMissed ? 'badge--red' : 'badge--yellow';
+    panel.innerHTML = html;
+}
 
-        const badgeText = isMissed
-            ? `${r.count || 0} unresolved misses`
-            : `No Q${schedQuarter} Request`;
+// 1. GLOBAL DATA STORE
+let currentUnusualData = []; 
 
-        const description = isMissed
-            ? `Missed visits detected for this quarter.`
-            : `No schedule request submitted for Q${schedQuarter} ${schedYear}.`;
+function renderUnusualReports(data) {
+    const container = document.getElementById('unusualReportsContainer'); 
+    if (!container) return;
 
+    // 2. CLEAN & FILTER DATA — backend sends total_missed, not count/type
+    currentUnusualData = data.filter(rep => (rep.total_missed || 0) > 0);
+
+    if (currentUnusualData.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">No alerts.</div>';
+        return;
+    }
+
+    // 3. RENDER WITH DATA-ATTRIBUTES
+    // Notice: NO onclick="" here. We handle clicks separately.
+    container.innerHTML = currentUnusualData.map((rep, index) => {
+        const initials = rep.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        
         return `
-            <div class="report-item">
-                <div class="perf-avatar">${initials}</div>
-                <div class="report-info">
-                    <span class="perf-name">${r.name}</span>
-                    <span class="report-desc">${description}</span>
-                    <span class="report-badge ${badgeClass}">${badgeText}</span>
+            <div class="unusual-card" 
+                 data-rep-index="${index}" 
+                 style="cursor: pointer !important; display: flex; align-items: center; gap: 16px; padding: 16px; border-bottom: 1px solid #f1f5f9; position: relative; z-index: 1000;">
+                
+                <div style="pointer-events: none; width: 44px; height: 44px; background: #e0f2fe; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #0369a1; flex-shrink: 0;">
+                    ${initials}
+                </div>
+                
+                <div style="pointer-events: none; flex-grow: 1;">
+                    <div style="font-weight: 700; color: #1e293b; font-size: 15px; margin-bottom: 4px;">${rep.name}</div>
+                    <div style="background: #fee2e2; color: #991b1b; font-size: 12px; padding: 2px 10px; border-radius: 12px; display: inline-block; font-weight: 600; border: 1px solid #fecaca;">
+                        ${rep.total_missed} unresolved misses
+                    </div>
                 </div>
             </div>
-            ${!isLast ? '<div class="report-divider"></div>' : ''}
         `;
     }).join('');
+
+    // 4. THE "DELEGATED" CLICK DETECTOR
+    // We attach the click to the CONTAINER. Even if the card is weird, the container will catch the click.
+    container.onclick = function(event) {
+        const card = event.target.closest('.unusual-card');
+        if (!card) return;
+
+        const index = card.getAttribute('data-rep-index');
+        const rep = currentUnusualData[index];
+        
+        if (rep) {
+            console.log("Success! Clicking:", rep.name);
+            openUnusualDetail(rep);
+        }
+    };
+}
+
+function openUnusualDetail(rep) {
+    const modal = document.getElementById('unusualDetailModal');
+    const listContainer = document.getElementById('detailDoctorsList');
+    const headerContainer = document.getElementById('detailRepHeader');
+    
+    // 1. STICKY MEDREP HEADER
+    // Ginawa nating sticky para habang nag-sscroll sa body, nakapako ito sa taas.
+    const initials = rep.name.split(' ').map(n => n[0]).join('').toUpperCase();
+    headerContainer.style = `
+        position: sticky; 
+        top: 0; 
+        background: #ffffff; 
+        z-index: 100; 
+        border-bottom: 2px solid #f8fafc;
+        padding: 20px 24px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    `;
+    
+    headerContainer.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 52px; height: 52px; background: #e2e8f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #475569; font-size: 20px;">
+                ${initials}
+            </div>
+            <div>
+                <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">${rep.name}</h3>
+                <span style="font-size: 12px; color: #64748b; font-weight: 500;">Medical Representative</span>
+            </div>
+            <div style="margin-left: auto; text-align: right;">
+                <div style="font-size: 11px; font-weight: 700; color: #ef4444; background: #fee2e2; padding: 4px 12px; border-radius: 20px;">
+                    ${rep.total_missed} Total Alerts
+                </div>
+            </div>
+        </div>
+    `;
+
+    // 2. GROUPING BY NAME (Michael Angelo / Mercury Drug)
+    // Dito natin pagsasamahin yung mga magkakaparehong pangalan
+    const groupedData = (rep.details || []).reduce((acc, current) => {
+        const name = current.display_name;
+        if (!acc[name]) {
+            acc[name] = [];
+        }
+        acc[name].push(current);
+        return acc;
+    }, {});
+
+    // 3. SCROLLABLE BODY
+    listContainer.style = "padding: 20px 24px; overflow-y: auto;";
+    
+    if (Object.keys(groupedData).length > 0) {
+        listContainer.innerHTML = Object.entries(groupedData).map(([name, visits]) => {
+            return `
+                <div style="margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                    <div style="background: #f8fafc; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="color: #334155; font-size: 14px;">${name}</strong>
+                        <span style="background: #ffffff; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; color: #64748b; border: 1px solid #e2e8f0;">
+                            ${visits.length} VISITS
+                        </span>
+                    </div>
+                    <div style="padding: 12px 16px;">
+                        ${visits.map(v => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f5f9;">
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-size: 12px; color: #475569; font-weight: 500;">${v.date_missed}</span>
+                                    <span style="font-size: 10px; color: #94a3b8;">${v.location}</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                                    <span style="font-size: 10px; font-weight: 800; color: #ef4444;">MISSED</span>
+                                    <span style="font-size: 10px; color: #94a3b8;">Q${v.quarter || 'N/A'}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } else {
+        listContainer.innerHTML = `
+            <div style="text-align: center; padding: 40px 0; color: #94a3b8;">
+                <p>Walang nakitang detalye.</p>
+            </div>
+        `;
+    }
+    
+    modal.classList.add('active');
 }
 
 
-function renderUnusualList(data) {
-    const el = document.getElementById('unusualList');
-    if (!el) return;
-
-    if (!data || data.length === 0) {
-        el.innerHTML = `
-            <div style="padding:40px;text-align:center;color:#aab0be;">
-                No unusual reports found.
-            </div>`;
-        return;
-    }
-
-    el.innerHTML = data.map(r => {
-
-        const type = (r.type || '').toLowerCase();
-        const isMissed = type === 'missed';
-
-        const badgeClass = isMissed ? 'badge--red' : 'badge--yellow';
-
-        const badgeText = isMissed
-            ? `${r.count || 0} unresolved misses`
-            : `No Request`;
-
-        const description = isMissed
-            ? `Unresolved missed visits detected.`
-            : `Missing schedule request for this quarter.`;
-
-        return `
-            <div class="unusual-card">
-                <div class="perf-avatar">${getInitials(r.name)}</div>
-                <div class="report-info">
-                    <span class="perf-name">${r.name}</span>
-                    <span class="report-desc">${description}</span>
-                    <span class="report-badge ${badgeClass}">${badgeText}</span>
-                </div>
-            </div>
-        `;
-    }).join('');
+function backToUnusualList() {
+    document.getElementById('unusualDetailModal').classList.remove('active');
 }
 
 
@@ -909,7 +1138,7 @@ window.openRequestDetailModal = async function(repId, quarter, year) {
     const modal = document.getElementById('requestDetailModal');
     if (!modal) return;
 
-    // Reset
+    // Reset UI state
     document.getElementById('rdLoading').style.display = 'flex';
     document.getElementById('rdSummaryContent').style.display = 'none';
     document.getElementById('rdRepName').textContent = '---';
@@ -920,7 +1149,7 @@ window.openRequestDetailModal = async function(repId, quarter, year) {
     document.getElementById('rdAccordionContainer').innerHTML = '<p style="color:#999;font-size:13px;">Loading...</p>';
     rdShowCalEmpty();
 
-    // Wire buttons
+    // Wire buttons - These trigger the confirmation modals seen in image_39cedb.jpg
     document.getElementById('rdAcceptBtn').onclick = () => handleRdAccept(repId, quarter, year);
     document.getElementById('rdRejectBtn').onclick = () => handleRdReject(repId, quarter, year);
     
@@ -929,11 +1158,15 @@ window.openRequestDetailModal = async function(repId, quarter, year) {
     try {
         const data = await API.fetchSummary(repId, quarter, year);
 
-        // Rep info
-        document.getElementById('rdRepName').textContent = data.medrep?.name || '---';
+        // Store the name for the confirmation modal text (e.g., "Ben Things")
+        const currentName = data.medrep?.name || '---';
+        rdPendingAction.repName = currentName;
+
+        // Populate Rep info
+        document.getElementById('rdRepName').textContent = currentName;
         document.getElementById('rdArea').textContent = data.medrep?.area || '---';
 
-        // Period pill
+        // Period pill logic
         const qLabels = {
             1: ['Jan','Mar'], 2: ['Apr','Jun'],
             3: ['Jul','Sep'], 4: ['Oct','Dec']
@@ -941,7 +1174,7 @@ window.openRequestDetailModal = async function(repId, quarter, year) {
         const [s, e] = qLabels[quarter] || ['--','--'];
         document.getElementById('rdPeriodPill').textContent = `Q${quarter} · ${s} – ${e} ${year}`;
 
-        // Status
+        // Status logic: Hide buttons if already finalized
         const dcpRows = data.dcp_list || [];
         const allApproved = dcpRows.length > 0 && dcpRows.every(r => (r.status || '').toLowerCase() === 'approved');
         const anyRejected = dcpRows.some(r => (r.status || '').toLowerCase() === 'rejected');
@@ -954,10 +1187,8 @@ window.openRequestDetailModal = async function(repId, quarter, year) {
             document.getElementById('rdStatusBadge').innerHTML = '<span class="rd-status-approved">✓ Approved</span>';
         }
 
-        // Stats
+        // Render sections
         rdRenderStats(data.summary || {}, dcpRows);
-
-        // Breakdown accordion
         rdRenderBreakdown(dcpRows);
 
         document.getElementById('rdLoading').style.display = 'none';
@@ -968,6 +1199,31 @@ window.openRequestDetailModal = async function(repId, quarter, year) {
         document.getElementById('rdLoading').innerHTML = '<p style="color:#c62828;">Failed to load summary.</p>';
     }
 };
+
+// 2. Handler for the "Accept" button
+function handleRdAccept(repId, quarter, year) {
+    rdPendingAction = { ...rdPendingAction, repId, quarter, year };
+    
+    // Update the text in the small confirmation modal (image_39cedb.jpg)
+    const nameSpan = document.querySelector('#acceptModal .modal-body b');
+    if (nameSpan) nameSpan.textContent = rdPendingAction.repName;
+    
+    openModal('acceptModal'); // Opens the confirmation box
+}
+
+// 3. Handler for the "Reject" button[cite: 24]
+function handleRdReject(repId, quarter, year) {
+    rdPendingAction = { ...rdPendingAction, repId, quarter, year };
+    
+    const nameSpan = document.querySelector('#rejectModal .modal-body b');
+    if (nameSpan) nameSpan.textContent = rdPendingAction.repName;
+    
+    // Clear previous remarks[cite: 24]
+    const remarksInput = document.getElementById('rdRejectRemarks');
+    if (remarksInput) remarksInput.value = "";
+    
+    openModal('rejectModal');
+}
 
 /* ─── 1. RENDER DOCTOR LIST (ACCORDION STYLE) ─── */
 function renderRequestDetail(data) {
@@ -1078,12 +1334,10 @@ function rdRenderStats(summary, dcpList) {
     const doctorVisited = visitedDoctorIds.size || summary.total_doctors || 0;
     const pharmacyVisited = visitedPharmacyIds.size || summary.total_pharmacies || 0;
 
-    document.getElementById('rdStatDoctors').innerHTML =
-        `${doctorVisited}<span class="rd-stat-total">/${totalCdsDoctors}</span>`;
+    document.getElementById('rdStatDoctors').textContent = doctorVisited;
     document.getElementById('rdStatVisits').textContent =
         summary.total_visits || dcpList.length || 0;
-    document.getElementById('rdStatPharmacies').innerHTML =
-        `${pharmacyVisited}<span class="rd-stat-total">/${totalCdsPharmacies}</span>`;
+    document.getElementById('rdStatPharmacies').textContent = pharmacyVisited;
 }
 
 function rdRenderBreakdown(dcpList) {
@@ -1097,8 +1351,8 @@ function rdRenderBreakdown(dcpList) {
         const rt = (entry.record_type || entry.RecordType || entry.type || 'doctor').toLowerCase();
         const isPharmacy = rt === 'pharmacy';
         const name = isPharmacy
-            ? (entry.pharmacy_name || entry.Pharmacy_Name || entry.doctors || 'Unnamed Pharmacy')
-            : (entry.doctors || entry.doctor_name || entry.name || 'Unnamed Doctor');
+            ? (entry.display_name || entry.pharmacy_name || entry.Pharmacy_Name || 'Unnamed Pharmacy')
+            : (entry.display_name || entry.doctor_name || entry.name || 'Unnamed Doctor');
         const id = entry.cds_id || entry.id || name;
         const map = isPharmacy ? pharmacyMap : doctorMap;
         if (!map[id]) map[id] = { name, dates: [], recordType: rt };
@@ -1362,3 +1616,20 @@ async function updateRdGlobalStatus(newStatus, remarks, repId, quarter, year) {
         alert("A connection error occurred while updating status.");
     }
 }
+// ── REJECTION REMARKS MODAL ─────────────────────────────
+window.openRejectionRemarksModal = function(repName, remarks) {
+    const modal = document.getElementById('rejectionRemarksModal');
+    if (!modal) return;
+    const nameEl    = modal.querySelector('.rrm-rep-name');
+    const remarksEl = modal.querySelector('.rrm-remarks-text');
+    const avatarEl  = modal.querySelector('.rrm-avatar');
+    if (nameEl)    nameEl.textContent    = repName;
+    if (remarksEl) remarksEl.textContent = remarks || 'No remarks provided.';
+    if (avatarEl)  avatarEl.textContent  = getInitials(repName);
+    modal.style.display = 'flex';
+};
+
+window.closeRejectionRemarksModal = function() {
+    const modal = document.getElementById('rejectionRemarksModal');
+    if (modal) modal.style.display = 'none';
+};

@@ -71,12 +71,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     updateWarningCount();
 
+    // Init year selector
+    initDCPYear();
+
     // Init: lock drop zone until quarter is selected
     document.getElementById('dcpDropZone')?.classList.add('locked-zone');
 
     // Init quarter status buttons
     if (selectedRepId) {
-        await initQuarterStatus(selectedRepId);
+        await initQuarterStatus(selectedRepId, getSelectedYear());
     }
 
     // ============================
@@ -147,75 +150,98 @@ let _currentErrors = null;
 // DCP QUARTER STATUS LOGIC
 // ============================
 
-// Tracks which quarter is currently selected (for re-upload flow)
+// Tracks which quarter is currently selected (for re-upload flow)  
 window.currentSelectedQuarter = null;
 
-async function initQuarterStatus(selectedRepId) {
+async function initQuarterStatus(selectedRepId, year) {
     if (!selectedRepId) return;
 
     try {
-        const response = await API.fetchDCPByRep(selectedRepId);
+        const response = await API.fetchDCPByRep(selectedRepId, year || getSelectedYear());
         console.log("🔍 DEBUG: Quarter Status Data Received:", response);
 
-        if (response && response.error) {
-            console.error("Server Error in initQuarterStatus:", response.error);
-            return;
-        }
-
-        // Handle both direct array or { data: [...] } wrapper
         const dcpData = Array.isArray(response) ? response : (response.data || []);
-
-        console.log("DEBUG: dcpData after normalization:", dcpData);
-
-        if (!Array.isArray(dcpData)) {
-            console.warn("initQuarterStatus: Expected array but got:", typeof dcpData);
-            return;
-        }
+        
+        const currentUIYear = parseInt(getSelectedYear()); 
 
         for (let q = 1; q <= 4; q++) {
             const btn = document.getElementById(`quarter-btn-${q}`);
             if (!btn) continue;
 
-            // Reset to default state first
+            // Reset UI state
             btn.className = 'quarter-status-btn';
             btn.innerHTML = `Q${q}`;
             btn.disabled = false;
             btn.onclick = () => selectQuarter(q);
 
-            const record = dcpData.find(item => parseInt(item.quarter || item.Quarter) === q);
-            if (!record) {
-                console.log(`DEBUG: Q${q} - No record found. Button remains default.`);
+            // Filter records for this Year and Quarter using dcp_date or explicit fields
+            const quarterRecords = dcpData.filter(item => {
+                let itemQ = parseInt(item.Quarter || item.quarter);
+                let itemY = parseInt(item.Year || item.year || item.dcp_year);
+
+                const dateVal = item.dcp_date || item.DCP_DATE || item.DCP_Date || item.date || item.created_at;
+                if (dateVal) {
+                    const dateMatch = String(dateVal).match(/^(\d{4})-(\d{2})-(\d{2})/);
+                    if (dateMatch) {
+                        itemY = parseInt(dateMatch[1], 10);
+                        const month = parseInt(dateMatch[2], 10);
+                        itemQ = Math.ceil(month / 3);
+                    }
+                }
+
+                if (isNaN(itemY)) {
+                    itemY = currentUIYear;
+                }
+
+                if (isNaN(itemQ)) {
+                    return false;
+                }
+
+                return itemQ === q && itemY === currentUIYear;
+            });
+
+            const cleanedStatuses = quarterRecords.map(r => {
+                const raw = (r.status || r.visit_status || '').toString().trim().toLowerCase();
+                if (!raw || raw === 'na' || raw === 'n/a' || raw === 'none' || raw === 'null' || raw === 'undefined') {
+                    return null;
+                }
+                return raw;
+            }).filter(Boolean);
+
+            let finalStatus = 'none';
+            if (cleanedStatuses.includes('rejected')) {
+                finalStatus = 'rejected';
+            } else if (cleanedStatuses.includes('approved')) {
+                finalStatus = 'approved';
+            } else if (cleanedStatuses.includes('pending')) {
+                finalStatus = 'pending';
+            }
+
+            if (finalStatus === 'none') {
+                btn.disabled = false;
+                btn.onclick = () => selectQuarter(q);
                 continue;
             }
 
-            // Use case-insensitive status matching
-            const status = (record.status || record.Status || '').trim().toLowerCase();
-            console.log(`DEBUG: Q${q} - Raw record:`, record, `Normalized status: "${status}"`);
-
-            if (status === 'approved') {
+            // 4. APPLY TO BUTTONS
+            if (finalStatus === 'approved') {
                 btn.classList.add('q-approved');
-                btn.innerHTML = `Q${q}<small>Approved</small>`;
+                btn.innerHTML = `Q${q}<br><small>Approved</small>`;
                 btn.disabled = true;
                 btn.onclick = null;
-
-            } else if (status === 'pending') {
-                btn.classList.add('q-pending');
-                btn.innerHTML = `Q${q}<small>Pending</small>`;
-                btn.disabled = true;
-                btn.onclick = null;
-
-            } else if (status === 'rejected') {
+            } else if (finalStatus === 'rejected') {
                 btn.classList.add('q-rejected');
-                btn.innerHTML = `Q${q}<small>Rejected</small>`;
-                btn.disabled = false;
+                btn.innerHTML = `Q${q}<br><small>Rejected</small>`;
                 btn.onclick = () => prepareReupload(q, selectedRepId);
-
             } else {
-                console.log(`DEBUG: Q${q} - Unknown status "${status}". Button remains default.`);
+                btn.classList.add('q-pending');
+                btn.innerHTML = `Q${q}<br><small>Pending</small>`;
+                btn.disabled = true;
+                btn.onclick = null;
             }
         }
     } catch (err) {
-        console.error("Error loading quarter statuses:", err);
+        console.error("❌ Error loading statuses:", err);
     }
 }
 
@@ -262,6 +288,44 @@ function getSelectedQuarter() {
     return document.getElementById('quarterSelect')?.value || null;
 }
 
+function getSelectedYear() {
+    if (window.selectedDCPYear) return window.selectedDCPYear;
+    const urlParams = new URLSearchParams(window.location.search);
+    const yearParam = parseInt(urlParams.get('year'), 10);
+    return Number.isInteger(yearParam) ? yearParam : new Date().getFullYear();
+}
+
+function setSelectedYear(year) {
+    window.selectedDCPYear = year;
+    const yearEl = document.getElementById('selectedYear');
+    if (yearEl) yearEl.textContent = year;
+}
+
+function initDCPYear() {
+    const year = getSelectedYear();
+    setSelectedYear(year);
+}
+
+function changeYear(delta) {
+    const currentYear = getSelectedYear();
+    const nextYear = currentYear + delta;
+    
+    // 1. Update the global variable and UI text
+    setSelectedYear(nextYear);
+
+    // 2. Clear current selections and files when the year changes
+    resetDCPForm();
+
+    // 3. TRIGGER THE REFRESH
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedRepId = urlParams.get('id') || urlParams.get('user_id') || urlParams.get('rep_id');
+    
+    if (selectedRepId) {
+        console.log(`🔄 Year changed to ${nextYear}. Refreshing data...`);
+        initQuarterStatus(selectedRepId, nextYear);
+    }
+}
+
 
 // ============================
 // STATUS MODAL HELPERS
@@ -303,7 +367,7 @@ function showFile(input, infoId) {
         return;
     }
 
-    document.getElementById(infoId).textContent = 'Selected: ' + file.name;
+
 
     if (input.id === "file-masterlist") {
         uploadMasterlist();
@@ -412,20 +476,31 @@ async function uploadMasterlist() {
         const data = await res.json();
         console.log("CDS RESULT:", data);
 
-        if (data.inserted_count > 0) {
-            showStatusModal("Upload Success", "Masterlist successfully uploaded without any error.", '✅');
+        // Check if any modifications occurred (Inserted or Updated)
+        const hasChanges = (data.inserted_count > 0 || data.updated_count > 0);
+
+        if (hasChanges) {
+            showStatusModal("Upload Success", "Masterlist processed successfully.", '✅');
         } else {
             showStatusModal(
                 "No New Data",
-                "No new records added. Please check the logs to see the result.",
+                "All items already exist and no modifications were found.",
                 'ℹ️'
             );
         }
 
+        // Build a detailed log string dynamically
+        let logDetails = [];
+        if (data.inserted_count >= 0) logDetails.push(`Inserted: ${data.inserted_count}`);
+        if (data.updated_count > 0) logDetails.push(`Updated: ${data.updated_count}`);
+        if (data.skipped_count >= 0) logDetails.push(`Skipped: ${data.skipped_count}`);
+
+        const detailString = logDetails.length > 0 ? logDetails.join(", ") : "No changes detected";
+
         addLogEntry(
             file.name,
-            data.inserted_count > 0 ? "Success" : "No Changes",
-            data.inserted_count > 0 ? `Inserted: ${data.inserted_count}, Skipped: ${data.skipped_count}` : `All items already exist`
+            hasChanges ? "Success" : "No Changes",
+            detailString
         );
 
     } catch (err) {
@@ -456,8 +531,7 @@ async function uploadCallPlan(forceUpload = false) {
         return;
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const year = urlParams.get('year') || new Date().getFullYear();
+    const year = getSelectedYear();
 
     const formData = new FormData();
     formData.append("file", file);
@@ -554,8 +628,7 @@ async function proceedUploadAnyway() {
     const fileInput = document.getElementById("file-callplan");
     const file = fileInput.files[0];
     const quarter = getSelectedQuarter();
-    const urlParams = new URLSearchParams(window.location.search);
-    const year = urlParams.get('year') || new Date().getFullYear();
+    const year = getSelectedYear();
 
     const formData = new FormData();
     formData.append("file", file);

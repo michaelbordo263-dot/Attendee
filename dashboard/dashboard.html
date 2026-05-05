@@ -3,7 +3,7 @@
 <head>
     <link rel="stylesheet" href="dashboard.css">
     <link rel="stylesheet" href="../common/global.css">
-    <link rel="stylesheet" href="../components/modal.css">
+    <link rel="stylesheet" href="../representatives/schedule/request/request_details/components/modal.css">
     <script src="../common/navigation.js"></script>
     <style>
         * { scrollbar-width: none !important; -ms-overflow-style: none !important; }
@@ -138,12 +138,12 @@
 
 <!-- SCHEDULE MODAL -->
 <div class="modal-overlay" id="scheduleModal">
-    <div class="modal-box">
+    <div class="modal-box" style="position:relative;">
 
         <div class="modal-header">
             <h2>Schedule Request</h2>
-            <button class="modal-close" onclick="closeModal('scheduleModal')">✕</button>
         </div>
+        <button class="modal-close sched-float-close" onclick="closeModal('scheduleModal')">✕</button>
 
         <div class="schedule-controls">
 
@@ -160,6 +160,7 @@
                 <div class="tab-group">
                     <button class="tab-btn active" onclick="setSchedTab('Pending', this)">Pending</button>
                     <button class="tab-btn" onclick="setSchedTab('Approved', this)">Approved</button>
+                    <button class="tab-btn" onclick="setSchedTab('Rejected', this)">Rejected</button>
                     <button class="tab-btn" onclick="setSchedTab('Missing', this)">Missing</button>
                 </div>
 
@@ -197,44 +198,53 @@
 
 <!-- UNUSUAL MODAL -->
 <div class="modal-overlay" id="unusualModal">
-    <div class="modal-box">
+    <div class="modal-box" style="position:relative;">
         <div class="modal-header">
             <h2>Unusual Report</h2>
-            <button class="modal-close" onclick="closeModal('unusualModal')">✕</button>
         </div>
+        <button class="sched-float-close" onclick="closeModal('unusualModal')">✕</button>
         <div class="unusual-list" id="unusualList"></div>
     </div>
 </div>
 
-<!-- DETAIL MODAL -->
+<!-- THE SPECIFIC DETAIL MODAL -->
 <div class="modal-overlay" id="unusualDetailModal">
-    <div class="modal-box modal-box--unusual-detail" style="display:flex; flex-direction:column;">
-        <div class="modal-header">
-            <h2>Unusual Report</h2>
-            <button class="modal-close" onclick="backToUnusualList()">✕</button>
+    <div class="modal-box modal-box--unusual-detail" style="height: 85vh; max-height: 700px; overflow: hidden; display: flex; flex-direction: column; border-radius: 16px;">
+        
+        <!-- Header with guaranteed clickable X -->
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; background: #2c4e68; color: white; position: relative;">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600;">Unusual Report</h2>
+            <button onclick="backToUnusualList()" 
+                    style="cursor: pointer; position: absolute; right: 15px; z-index: 1100; background: rgba(255,255,255,0.25); border: none; color: white; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; pointer-events: auto;">
+                ✕
+            </button>
         </div>
 
-        <div id="detailRepHeader"></div>
-        <div id="detailIssueBar"></div>
-
-        <!-- Scrollable missed visits list -->
-        <div id="detailDoctorsList" class="detail-doctors-list" style="flex:1; overflow-y:auto; padding:4px 24px; min-height:0; scrollbar-width:thin;"></div>
-
-        <!-- Floating Notify button pinned at bottom -->
-        <div class="detail-footer">
-            <button class="notify-btn">Notify</button>
+        <!-- Content Area -->
+        <div style="flex: 1; overflow-y: auto; background: #f8fafc; padding-bottom: 20px;">
+            <div id="detailRepHeader"></div>
+            <div id="detailIssueBar"></div>
+            <div id="detailDoctorsList" style="padding: 0 24px;">
+                <!-- Real-time data from logic above injects here -->
+            </div>
+        </div>
+        
+        <div style="padding: 20px 24px; background: white; border-top: 1px solid #e2e8f0;">
+            <button class="notify-btn" style="width: 100%; padding: 15px; background: #63e678; border: none; border-radius: 12px; color: #1e2d3d; font-weight: 700; cursor: pointer; font-size: 15px;">
+                Notify Representative
+            </button>
         </div>
     </div>
 </div>
 
 <!-- PRODUCTS MODAL -->
 <div class="modal-overlay" id="productsModal">
-    <div class="modal-box modal-box--wide">
+    <div class="modal-box modal-box--wide" style="position:relative;">
 
         <div class="modal-header">
             <h2>Products</h2>
-            <button class="modal-close" onclick="closeModal('productsModal')">✕</button>
         </div>
+        <button class="sched-float-close" onclick="closeModal('productsModal')">✕</button>
 
         <div class="products-controls">
             <div class="products-search-row">
@@ -259,11 +269,12 @@
 
 <!-- ADD PRODUCT MODAL -->
 <div class="modal-overlay" id="addProductModal">
-    <div class="modal-box modal-box--sm">
+    <div class="modal-box modal-box--sm" style="position:relative;">
 
         <div class="modal-header">
             <h2>Add Product</h2>
         </div>
+        <button class="sched-float-close" onclick="closeModal('addProductModal')">✕</button>
 
         <div class="add-product-body">
 
@@ -316,7 +327,6 @@
                     <button class="rd-btn-reject" id="rdRejectBtn">Reject</button>
                     <button class="rd-btn-accept" id="rdAcceptBtn">Accept</button>
                 </div>
-                <button class="modal-close" onclick="closeModal('requestDetailModal')">✕</button>
             </div>
         </div>
 
@@ -336,7 +346,7 @@
                 <div class="rd-stat-row">
                     <div class="rd-stat-card">
                         <label>TOTAL DOCTORS</label>
-                        <div class="rd-stat-value" id="rdStatDoctors">0<span class="rd-stat-total">/0</span></div>
+                        <div class="rd-stat-value" id="rdStatDoctors">0</div>
                         <span class="rd-stat-sub">Coverage</span>
                     </div>
                     <div class="rd-stat-card">
@@ -346,7 +356,7 @@
                     </div>
                     <div class="rd-stat-card">
                         <label>PHARMACIES</label>
-                        <div class="rd-stat-value" id="rdStatPharmacies">0<span class="rd-stat-total">/0</span></div>
+                        <div class="rd-stat-value" id="rdStatPharmacies">0</div>
                         <span class="rd-stat-sub">Coverage</span>
                     </div>
                 </div>
@@ -390,6 +400,97 @@
 
     <script src="../common/backend_connection.js"></script>
     <script src="dashboard.js"></script>
+
+
+<!-- Rejection Remarks Modal -->
+<div id="rejectionRemarksModal" style="
+    display: none;
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.45);
+    align-items: center;
+    justify-content: center;
+">
+    <div style="
+        background: #fff;
+        border-radius: 16px;
+        width: 420px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        font-family: inherit;
+    ">
+        <!-- Header -->
+        <div style="
+            background: #3e627a;
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        ">
+            <span style="color: #fff; font-size: 16px; font-weight: 700; letter-spacing: 0.2px;">Request Rejected</span>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 22px 22px 20px;">
+
+            <!-- Rep info row -->
+            <div style="
+                display: flex; align-items: center; gap: 14px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid #edf2f7;
+                margin-bottom: 16px;
+            ">
+                <div class="rrm-avatar" style="
+                    width: 44px; height: 44px;
+                    border-radius: 50%;
+                    background: #3e627a;
+                    color: #fff;
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: 14px; font-weight: 700; flex-shrink: 0;
+                    letter-spacing: 0.5px;
+                "></div>
+                <div style="display: flex; flex-direction: column; gap: 3px;">
+                    <span class="rrm-rep-name" style="font-weight: 700; font-size: 15px; color: #1e2d3d;"></span>
+                    <span style="font-size: 12px; color: #94a3b8; font-weight: 500;">Rejection Reason</span>
+                </div>
+            </div>
+
+            <!-- Remarks box -->
+            <div style="
+                background: #fff8f8;
+                border: 1.5px solid #fecaca;
+                border-radius: 10px;
+                padding: 14px 16px;
+                min-height: 70px;
+                margin-bottom: 20px;
+            ">
+                <span class="rrm-remarks-text" style="
+                    color: #c0392b;
+                    font-size: 14px;
+                    line-height: 1.6;
+                    font-style: italic;
+                    word-break: break-word;
+                "></span>
+            </div>
+
+            <!-- Close button -->
+            <button onclick="closeRejectionRemarksModal()" style="
+                width: 100%;
+                padding: 13px;
+                background: #3e627a;
+                color: #fff;
+                border: none;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: 700;
+                cursor: pointer;
+                letter-spacing: 0.3px;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='#335368'" onmouseout="this.style.background='#3e627a'">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

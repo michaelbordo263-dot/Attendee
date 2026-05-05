@@ -89,8 +89,103 @@
         </main>
     </div>
 
+    <div id="toast" class="toast-hidden"></div>
+
+    <!-- Accept Modal -->
+    <div id="acceptModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Accept Request</h3>
+                <span class="header-icon" onclick="switchModal('reject')">&#9660;</span>
+            </div>
+            <div class="modal-body">
+                <div class="modal-content-box">
+                    <p>Are you sure you want to accept
+                        <strong class="dynamic-rep-name">Medical Representative's</strong> Request?
+                    </p>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-review" onclick="window.closeAcceptModal()">Review</button>
+                        <button type="button" class="btn-confirm" onclick="updateGlobalStatus('Approved')">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div id="rejectModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Reject Request</h3>
+                <span class="header-icon" onclick="switchModal('accept')">&#9660;</span>
+            </div>
+            <div class="modal-body">
+                <div class="modal-content-box">
+                    <textarea id="rejectRemarks" class="remarks-input" placeholder="Enter remarks here.."></textarea>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel-red" onclick="window.closeRejectModal()">Cancel</button>
+                        <button type="button" class="btn-confirm-reject" onclick="handleRejectConfirm()">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="../../../../common/backend_connection.js"></script>
     <script src="request_details.js"></script>
     <script src="components/modal.js"></script>
+    <script>
+        // Inline fallback — works even if modal.js fails to load
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            if (!toast) { alert(message); return; }
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+                background: ${type === 'error' ? '#ef4444' : '#3e627a'};
+                color: white; padding: 12px 24px; border-radius: 8px;
+                font-weight: 600; font-size: 14px; z-index: 99999;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            `;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        window.handleRejectConfirm = function() {
+            const input = document.getElementById('rejectRemarks');
+            const remarks = input ? input.value.trim() : '';
+            if (!remarks) {
+                if (input) input.style.borderColor = 'red';
+                showToast('Please provide a reason for rejection.', 'error');
+                return;
+            }
+            if (input) input.style.borderColor = '';
+            updateGlobalStatus('Rejected', remarks);
+        };
+
+        window.closeAcceptModal = function() {
+            const m = document.getElementById('acceptModal');
+            if (m) m.style.display = 'none';
+        };
+
+        window.closeRejectModal = function() {
+            const m = document.getElementById('rejectModal');
+            if (m) m.style.display = 'none';
+            const input = document.getElementById('rejectRemarks');
+            if (input) { input.value = ''; input.style.borderColor = ''; }
+        };
+
+        window.switchModal = function(target) {
+            if (target === 'reject') {
+                window.closeAcceptModal();
+                const m = document.getElementById('rejectModal');
+                if (m) m.style.display = 'flex';
+            } else {
+                window.closeRejectModal();
+                const m = document.getElementById('acceptModal');
+                if (m) m.style.display = 'flex';
+            }
+        };
+    </script>
 </body>
 </html>

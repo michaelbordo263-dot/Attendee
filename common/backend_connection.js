@@ -2,13 +2,12 @@
     🔧 CENTRAL API CONNECTION MODULE (GLOBAL VERSION)
 ========================================================= */
 
-/*Coolify Connection
+/*Coolify Connection*/
 window.BASE_URL = "http://s9fl1d5oewnuc80uxtd5mwz3.148.230.102.204.sslip.io/api";
-*/
 
-/**/
+/*
 window.BASE_URL = "http://127.0.0.1:5000/api";
-
+*/
 
 /* ── UI NOTIFICATIONS ── */
 function showNotification(message, type = 'success') {

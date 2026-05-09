@@ -120,10 +120,10 @@
                 </div>
             </div>
 
-            <!-- UNUSUAL REPORT (EMPTY - API ONLY) -->
+            <!-- MISSED CALL REPORTS (EMPTY - API ONLY) -->
             <div class="panel">
                 <div class="panel-header">
-                    <span class="panel-title">Unusual Report</span>
+                    <span class="panel-title">Missed Call Reports</span>
                     <a href="#" class="panel-viewall" onclick="openUnusualModal(); return false;">View all ↗</a>
                 </div>
                 <div class="panel-body" id="unusualPanelBody">
@@ -195,13 +195,35 @@
     </div>
 </div>
 
-<!-- UNUSUAL MODAL -->
+<!-- MISSED CALL REPORTS MODAL -->
 <div class="modal-overlay" id="unusualModal">
     <div class="modal-box" style="position:relative;">
         <div class="modal-header">
-            <h2>Unusual Report</h2>
+            <h2>Missed Call Reports</h2>
         </div>
         <button class="sched-float-close" onclick="closeModal('unusualModal')">✕</button>
+
+        <!-- Month / Year navigation -->
+        <div style="display:flex; align-items:center; gap:12px; padding:14px 24px 14px; border-bottom: 1px solid #e2e8f0;">
+            <div class="quarter-nav" style="min-width:unset;">
+                <button class="nav-btn" onclick="missedChangeMonth(-1)">&#8249;</button>
+                <div class="nav-label">
+                    <span class="nav-label-main" id="missedMonthLabel">--</span>
+                    <span class="nav-label-sub">Month</span>
+                </div>
+                <button class="nav-btn" onclick="missedChangeMonth(1)">&#8250;</button>
+            </div>
+            <div class="quarter-nav" style="min-width:unset;">
+                <button class="nav-btn" onclick="missedChangeYear(-1)">&#8249;</button>
+                <div class="nav-label">
+                    <span class="nav-label-main" id="missedYearLabel">--</span>
+                    <span class="nav-label-sub">Year</span>
+                </div>
+                <button class="nav-btn" onclick="missedChangeYear(1)">&#8250;</button>
+            </div>
+        </div>
+
+        <div id="unusualCount" style="padding:12px 24px 2px; font-size:13px; color:#64748b;"></div>
         <div class="unusual-list" id="unusualList"></div>
     </div>
 </div>
@@ -210,13 +232,13 @@
 <div class="modal-overlay" id="unusualDetailModal">
     <div class="modal-box modal-box--unusual-detail" style="height: 85vh; max-height: 700px; overflow: hidden; display: flex; flex-direction: column; border-radius: 16px;">
         
-        <!-- Header with guaranteed clickable X -->
-        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; background: #2c4e68; color: white; position: relative;">
-            <h2 style="margin: 0; font-size: 16px; font-weight: 600;">Unusual Report</h2>
+        <!-- Header -->
+        <div class="modal-header" style="display: flex; align-items: center; padding: 20px 24px; background: #2c4e68; color: white; position: relative;">
             <button onclick="backToUnusualList()" 
-                    style="cursor: pointer; position: absolute; right: 15px; z-index: 1100; background: rgba(255,255,255,0.25); border: none; color: white; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; pointer-events: auto;">
-                ✕
+                    style="cursor:pointer; background:rgba(255,255,255,0.15); border:none; color:white; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-size:18px; pointer-events:auto; margin-right:12px; flex-shrink:0;">
+                &#8249;
             </button>
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600; flex:1;">Missed Call Report Details</h2>
         </div>
 
         <!-- Content Area -->
@@ -226,12 +248,6 @@
             <div id="detailDoctorsList" style="padding: 0 24px;">
                 <!-- Real-time data from logic above injects here -->
             </div>
-        </div>
-        
-        <div style="padding: 20px 24px; background: white; border-top: 1px solid #e2e8f0;">
-            <button class="notify-btn" style="width: 100%; padding: 15px; background: #63e678; border: none; border-radius: 12px; color: #1e2d3d; font-weight: 700; cursor: pointer; font-size: 15px;">
-                Notify Representative
-            </button>
         </div>
     </div>
 </div>

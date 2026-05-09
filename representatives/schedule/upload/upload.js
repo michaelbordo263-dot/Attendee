@@ -117,16 +117,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ============================
 // FILE TYPE VALIDATION HELPERS
 // ============================
-
-/**
- * Returns true only if the file is a valid CSV.
- * Checks both MIME type and file extension.
- */
 function isValidCSV(file) {
     const allowedMimes = ['text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel'];
     const hasValidMime = allowedMimes.includes(file.type);
     const hasValidExt  = file.name.toLowerCase().endsWith('.csv');
-    return hasValidMime || hasValidExt; // extension is the stronger check
+    return hasValidMime || hasValidExt;
 }
 
 function showFileTypeError(fileName) {
@@ -149,8 +144,6 @@ let _currentErrors = null;
 // ============================
 // DCP QUARTER STATUS LOGIC
 // ============================
-
-// Tracks which quarter is currently selected (for re-upload flow)  
 window.currentSelectedQuarter = null;
 
 async function initQuarterStatus(selectedRepId, year) {
@@ -161,20 +154,17 @@ async function initQuarterStatus(selectedRepId, year) {
         console.log("🔍 DEBUG: Quarter Status Data Received:", response);
 
         const dcpData = Array.isArray(response) ? response : (response.data || []);
-        
-        const currentUIYear = parseInt(getSelectedYear()); 
+        const currentUIYear = parseInt(getSelectedYear());
 
         for (let q = 1; q <= 4; q++) {
             const btn = document.getElementById(`quarter-btn-${q}`);
             if (!btn) continue;
 
-            // Reset UI state
             btn.className = 'quarter-status-btn';
             btn.innerHTML = `Q${q}`;
             btn.disabled = false;
             btn.onclick = () => selectQuarter(q);
 
-            // Filter records for this Year and Quarter using dcp_date or explicit fields
             const quarterRecords = dcpData.filter(item => {
                 let itemQ = parseInt(item.Quarter || item.quarter);
                 let itemY = parseInt(item.Year || item.year || item.dcp_year);
@@ -189,13 +179,8 @@ async function initQuarterStatus(selectedRepId, year) {
                     }
                 }
 
-                if (isNaN(itemY)) {
-                    itemY = currentUIYear;
-                }
-
-                if (isNaN(itemQ)) {
-                    return false;
-                }
+                if (isNaN(itemY)) itemY = currentUIYear;
+                if (isNaN(itemQ)) return false;
 
                 return itemQ === q && itemY === currentUIYear;
             });
@@ -223,7 +208,6 @@ async function initQuarterStatus(selectedRepId, year) {
                 continue;
             }
 
-            // 4. APPLY TO BUTTONS
             if (finalStatus === 'approved') {
                 btn.classList.add('q-approved');
                 btn.innerHTML = `Q${q}<br><small>Approved</small>`;
@@ -245,7 +229,6 @@ async function initQuarterStatus(selectedRepId, year) {
     }
 }
 
-// Called when user clicks a default (no-status) quarter button
 function selectQuarter(quarter) {
     document.querySelectorAll('.quarter-status-btn').forEach(btn => {
         btn.classList.remove('q-selected');
@@ -265,7 +248,6 @@ function selectQuarter(quarter) {
     }
 }
 
-// Called when user clicks a Rejected quarter button
 function prepareReupload(quarter, repId) {
     document.querySelectorAll('.quarter-status-btn').forEach(btn => {
         btn.classList.remove('q-selected');
@@ -282,7 +264,6 @@ function prepareReupload(quarter, repId) {
     console.log(`Ready to re-upload for Quarter ${quarter}`);
 }
 
-// Helper: get currently selected quarter
 function getSelectedQuarter() {
     if (window.currentSelectedQuarter) return String(window.currentSelectedQuarter);
     return document.getElementById('quarterSelect')?.value || null;
@@ -309,17 +290,13 @@ function initDCPYear() {
 function changeYear(delta) {
     const currentYear = getSelectedYear();
     const nextYear = currentYear + delta;
-    
-    // 1. Update the global variable and UI text
-    setSelectedYear(nextYear);
 
-    // 2. Clear current selections and files when the year changes
+    setSelectedYear(nextYear);
     resetDCPForm();
 
-    // 3. TRIGGER THE REFRESH
     const urlParams = new URLSearchParams(window.location.search);
     const selectedRepId = urlParams.get('id') || urlParams.get('user_id') || urlParams.get('rep_id');
-    
+
     if (selectedRepId) {
         console.log(`🔄 Year changed to ${nextYear}. Refreshing data...`);
         initQuarterStatus(selectedRepId, nextYear);
@@ -330,17 +307,28 @@ function changeYear(delta) {
 // ============================
 // STATUS MODAL HELPERS
 // ============================
-function showStatusModal(title, message, icon = '✅') {
+function showStatusModal(title, message, icon = '✅', onClose = null) {
     const modal = document.getElementById('statusModal');
     if (!modal) return;
     document.getElementById('statusTitle').textContent = title;
     document.getElementById('statusMessage').textContent = message;
     document.getElementById('statusIcon').textContent = icon;
     modal.classList.add('active');
+
+    // Store optional onClose callback
+    modal._onClose = onClose || null;
 }
 
 window.closeStatusModal = function() {
-    document.getElementById('statusModal')?.classList.remove('active');
+    const modal = document.getElementById('statusModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+
+    // If there's a callback (e.g. reload on WrongFile), call it
+    if (typeof modal._onClose === 'function') {
+        modal._onClose();
+        modal._onClose = null;
+    }
 };
 
 
@@ -360,28 +348,23 @@ function showFile(input, infoId) {
     const file = input.files[0];
     if (!file) return;
 
-    // Guard: only CSV allowed for masterlist too
     if (!isValidCSV(file)) {
         input.value = '';
         showFileTypeError(file.name);
         return;
     }
 
-
-
     if (input.id === "file-masterlist") {
         uploadMasterlist();
     }
 }
 
-// Called when DCP file is chosen via input
 function onDCPFileSelected(input) {
     const file = input.files[0];
     if (!file) return;
 
-    // ── GUARD: CSV only ──
     if (!isValidCSV(file)) {
-        input.value = ''; // clear the bad file
+        input.value = '';
         showFileTypeError(file.name);
         return;
     }
@@ -476,7 +459,6 @@ async function uploadMasterlist() {
         const data = await res.json();
         console.log("CDS RESULT:", data);
 
-        // Check if any modifications occurred (Inserted or Updated)
         const hasChanges = (data.inserted_count > 0 || data.updated_count > 0);
 
         if (hasChanges) {
@@ -489,7 +471,6 @@ async function uploadMasterlist() {
             );
         }
 
-        // Build a detailed log string dynamically
         let logDetails = [];
         if (data.inserted_count >= 0) logDetails.push(`Inserted: ${data.inserted_count}`);
         if (data.updated_count > 0) logDetails.push(`Updated: ${data.updated_count}`);
@@ -556,8 +537,20 @@ async function uploadCallPlan(forceUpload = false) {
         const data = await res.json();
         console.log("DCP Upload Result:", data);
 
+        // ============================
+        // 🚫 WRONG FILE — HARD BLOCK
+        // ============================
+        if (data.status === "WrongFile") {
+            showStatusModal(
+                "Wrong File Detected",
+                data.message,
+                '🚫',
+                () => location.reload()   // reload page when OK is clicked
+            );
+            return;
+        }
+
         if (data.status === "Blocked" || (data.errors && data.errors.length > 0 && !forceUpload)) {
-            // Store errors for use in proceedUploadAnyway
             _currentErrors = data.errors;
             displayWarnings(data.errors);
             _pendingDCPFormData = formData;
@@ -606,7 +599,6 @@ async function proceedUploadAnyway() {
 
     const userId = getUserId();
 
-    // ── STEP 1: Sync unmatched rows to CDS first ──
     const unmatchedRows = (_currentErrors || []).filter(e =>
         e.reason && e.reason.toLowerCase().includes('masterlist')
     );
@@ -624,7 +616,6 @@ async function proceedUploadAnyway() {
         }
     }
 
-    // ── STEP 2: Force-upload the DCP (bypass checker) ──
     const fileInput = document.getElementById("file-callplan");
     const file = fileInput.files[0];
     const quarter = getSelectedQuarter();
@@ -765,8 +756,10 @@ function addLogEntry(fileName, status, details) {
     const userId = getUserId();
     if (!userId) return;
 
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const newLog = { fileName, status, details, time };
+    const now = new Date();
+    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const date = now.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+    const newLog = { fileName, status, details, time, date };
 
     const STORAGE_KEY = `masterlist_logs_${userId}`;
     let logs = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -783,22 +776,69 @@ function renderLogList(logs) {
     if (!list) return;
 
     if (!logs || logs.length === 0) {
+        const existingSearch = document.getElementById('logSearchWrapper');
+        if (existingSearch) existingSearch.remove();
+
         list.innerHTML = '<p style="text-align: center; color: #888; margin-top: 20px;">Upload a file to see logs</p>';
         if (countEl) countEl.textContent = "No activities yet";
         return;
     }
 
+    // Add search bar if not already present
+    const container = list.parentElement;
+    if (!document.getElementById('logSearchWrapper')) {
+        const searchWrapper = document.createElement('div');
+        searchWrapper.id = 'logSearchWrapper';
+        searchWrapper.style.cssText = 'padding: 8px 0 12px 0;';
+        searchWrapper.innerHTML = `
+            <input 
+                id="logSearchInput" 
+                type="text" 
+                placeholder="🔍 Search by filename..." 
+                oninput="filterLogs()"
+                style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; 
+                       border-radius: 8px; font-size: 13px; box-sizing: border-box;
+                       outline: none;"
+            />
+        `;
+        container.insertBefore(searchWrapper, list);
+    }
+
     list.innerHTML = logs.map(log => `
-        <div class="warning-card">
+        <div class="warning-card log-entry" data-filename="${(log.fileName || '').toLowerCase()}">
             <span class="warning-tag ${log.status === 'Error' ? 'mismatch' : ''}"
                   style="${log.status === 'Success' ? 'color: #27ae60;' : ''}">${log.status}</span>
             <p class="warning-name">${log.fileName}</p>
-            <p class="warning-detail">${log.time} — ${log.details}</p>
+            <p class="warning-detail">${log.date ? log.date + ' · ' : ''}${log.time} — ${log.details}</p>
         </div>
     `).join('');
 
     if (countEl) {
         countEl.textContent = `Showing ${logs.length} activit${logs.length === 1 ? 'y' : 'ies'}`;
+    }
+}
+
+// ============================
+// FILTER LOGS BY FILENAME
+// ============================
+function filterLogs() {
+    const query = (document.getElementById('logSearchInput')?.value || '').toLowerCase();
+    const entries = document.querySelectorAll('.log-entry');
+    let visible = 0;
+
+    entries.forEach(entry => {
+        const filename = entry.getAttribute('data-filename') || '';
+        if (filename.includes(query)) {
+            entry.style.display = '';
+            visible++;
+        } else {
+            entry.style.display = 'none';
+        }
+    });
+
+    const countEl = document.getElementById('logCount');
+    if (countEl) {
+        countEl.textContent = `Showing ${visible} activit${visible !== 1 ? 'ies' : 'y'}`;
     }
 }
 

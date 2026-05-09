@@ -63,6 +63,11 @@ let productsData   = [];
 let unusualReports = [];
 let isSavingProduct = false;
 
+// ── MISSED CALL REPORT STATE ───────────────────────
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let missedMonth = _now.getMonth() + 1;  // 1-12
+let missedYear  = _now.getFullYear();
+
 
 // ── UTIL ───────────────────────────────────────────
 function getInitials(name = '') {
@@ -309,66 +314,93 @@ window.saveProduct = async () => {
 };
 
 window.openUnusualModal = () => {
-    const modal = document.getElementById('unusualModal');
-    const listContainer = document.getElementById('unusualList');
-    if (!modal || !listContainer) return;
-
-    const withMisses = unusualReports.filter(rep =>
-        (rep.total_missed || 0) > 0 && Array.isArray(rep.details) && rep.details.length > 0
-    );
-    const allClear = unusualReports.filter(rep => (rep.total_missed || 0) === 0);
-
-    if (unusualReports.length === 0) {
-        listContainer.innerHTML = `
-            <div style="padding: 40px; text-align: center; color: #aab0be;">
-                <p>No approved schedules found for Q${schedQuarter}.</p>
-            </div>`;
-    } else {
-        let html = '';
-
-        if (withMisses.length > 0) {
-            html += withMisses.map(rep => {
-                const initials = getInitials(rep.name);
-                return `
-                    <div class="unusual-row" onclick='openUnusualDetail(${JSON.stringify(rep)})'
-                         style="cursor: pointer; display: flex; align-items: center; padding: 16px; border-bottom: 1px solid #f1f5f9; gap: 16px;">
-                        <div class="perf-avatar">${initials}</div>
-                        <div style="flex: 1;">
-                            <div style="font-weight: 700; color: #2c4e68;">${rep.name}</div>
-                            <div style="font-size: 11px; margin-top: 4px;">
-                                <span class="report-badge badge--red">${rep.total_missed} unresolved misses</span>
-                            </div>
-                        </div>
-                        <div style="color: #cbd5e1;">&#10217;</div>
-                    </div>`;
-            }).join('');
-        }
-
-        if (allClear.length > 0) {
-            html += `<div style="padding: 8px 16px; font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; background: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">ALL CLEAR</div>`;
-            html += allClear.map(rep => {
-                const initials = getInitials(rep.name);
-                return `
-                    <div class="unusual-row" onclick='openUnusualDetail(${JSON.stringify(rep)})'
-                         style="cursor: pointer; display: flex; align-items: center; padding: 16px; border-bottom: 1px solid #f1f5f9; gap: 16px; opacity: 0.6;">
-                        <div class="perf-avatar" style="background:#e2e8f0; color:#64748b;">${initials}</div>
-                        <div style="flex: 1;">
-                            <div style="font-weight: 700; color: #2c4e68;">${rep.name}</div>
-                            <div style="font-size: 11px; margin-top: 4px;">
-                                <span class="report-badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">No misses</span>
-                            </div>
-                        </div>
-                        <div style="color: #cbd5e1;">&#10217;</div>
-                    </div>`;
-            }).join('');
-        }
-
-        listContainer.innerHTML = html;
-    }
+    // Sync labels to current missedMonth/missedYear
+    _syncMissedLabels();
+    _renderMissedList();
     openModal('unusualModal');
 };
 
+function _syncMissedLabels() {
+    const mEl = document.getElementById('missedMonthLabel');
+    const yEl = document.getElementById('missedYearLabel');
+    if (mEl) mEl.textContent = MONTH_NAMES[missedMonth - 1];
+    if (yEl) yEl.textContent = missedYear;
+}
 
+window.missedChangeMonth = (dir) => {
+    missedMonth += dir;
+    if (missedMonth < 1)  { missedMonth = 12; missedYear--; }
+    if (missedMonth > 12) { missedMonth = 1;  missedYear++; }
+    _syncMissedLabels();
+    _renderMissedList();
+};
+
+window.missedChangeYear = (dir) => {
+    missedYear += dir;
+    _syncMissedLabels();
+    _renderMissedList();
+};
+
+function _isMissed(dateStr) {
+    // Option A: NULL visit treated as Missed only if the month is already over
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear  = now.getFullYear();
+    // If selected month/year is in the past → count NULLs as Missed
+    if (missedYear < currentYear) return true;
+    if (missedYear === currentYear && missedMonth < currentMonth) return true;
+    return false; // current or future month → still Pending
+}
+
+function _renderMissedList() {
+    const listContainer = document.getElementById('unusualList');
+    const countEl       = document.getElementById('unusualCount');
+    if (!listContainer) return;
+
+    const isPastMonth = _isMissed();
+
+    // Filter details by selected month/year, treat NULL as Missed if past month
+    const filtered = unusualReports.map(rep => {
+        const matchingDetails = (rep.details || []).filter(d => {
+            if (!d.date_missed) return false;
+            const dt = new Date(d.date_missed);
+            return (dt.getMonth() + 1) === missedMonth && dt.getFullYear() === missedYear;
+        });
+        return { ...rep, monthDetails: matchingDetails, monthMissed: matchingDetails.length };
+    }).filter(rep => {
+        if (!isPastMonth) return false; // current/future month → nothing to show yet
+        return rep.monthMissed > 0;
+    });
+
+    if (countEl) {
+        countEl.textContent = isPastMonth
+            ? `Showing ${filtered.length} representative${filtered.length !== 1 ? 's' : ''}`
+            : `No missed calls recorded yet for ${MONTH_NAMES[missedMonth - 1]} ${missedYear} — month not yet completed.`;
+    }
+
+    if (filtered.length === 0) {
+        listContainer.innerHTML = `
+            <div style="padding:40px; text-align:center; color:#aab0be;">
+                <p>${isPastMonth ? 'No missed calls for ' + MONTH_NAMES[missedMonth-1] + ' ' + missedYear + '.' : ''}</p>
+            </div>`;
+        return;
+    }
+
+    listContainer.innerHTML = filtered.map(rep => {
+        const initials = getInitials(rep.name);
+        return `
+            <div onclick='openUnusualDetail(${JSON.stringify(rep)})'
+                 class="missed-rep-card">
+                <div class="missed-rep-avatar">${initials}</div>
+                <div style="flex:1; min-width:0;">
+                    <div style="font-weight:700; color:#1e2d3d; font-size:14px;">${rep.name}</div>
+                </div>
+                <div class="missed-rep-badge">
+                    ${rep.monthMissed} Total Missed Call
+                </div>
+            </div>`;
+    }).join('');
+}
 
 
 // ── SUMMARY ────────────────────────────────────────
@@ -691,7 +723,7 @@ function updateUnusualUI() {
                     <div class="perf-avatar">${initials}</div>
                     <div class="report-info">
                         <span class="perf-name">${r.name}</span>
-                        <span class="report-badge badge--red">${r.total_missed} unresolved misses</span>
+                        <span class="report-badge badge--red">${r.total_missed} missed calls</span>
                     </div>
                     <div style="color: #cbd5e1; margin-left: auto;">&#10217;</div>
                 </div>
@@ -779,98 +811,213 @@ function renderUnusualReports(data) {
 }
 
 function openUnusualDetail(rep) {
-    const modal = document.getElementById('unusualDetailModal');
-    const listContainer = document.getElementById('detailDoctorsList');
+    const modal           = document.getElementById('unusualDetailModal');
+    const listContainer   = document.getElementById('detailDoctorsList');
     const headerContainer = document.getElementById('detailRepHeader');
+    const issueBar        = document.getElementById('detailIssueBar');
+
+    // Apply Option A logic gate
+    const isPastMonth = _isMissed();
+
+    // ── STICKY REP HEADER ─────────────────────────
+    const initials = getInitials(rep.name);
     
-    // 1. STICKY MEDREP HEADER
-    // Ginawa nating sticky para habang nag-sscroll sa body, nakapako ito sa taas.
-    const initials = rep.name.split(' ').map(n => n[0]).join('').toUpperCase();
-    headerContainer.style = `
-        position: sticky; 
-        top: 0; 
-        background: #ffffff; 
-        z-index: 100; 
-        border-bottom: 2px solid #f8fafc;
-        padding: 20px 24px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    headerContainer.style.cssText = `
+        position:sticky; top:0; background:#fff; z-index:100;
+        border-bottom:1px solid #edf2f7; padding:16px 24px;
+        box-shadow:0 2px 4px rgba(0,0,0,0.04);
     `;
-    
+
     headerContainer.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="width: 52px; height: 52px; background: #e2e8f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #475569; font-size: 20px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:44px; height:44px; background:#cfe0ef; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#2c4e68; font-size:14px; flex-shrink:0;">
                 ${initials}
             </div>
-            <div>
-                <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">${rep.name}</h3>
-                <span style="font-size: 12px; color: #64748b; font-weight: 500;">Medical Representative</span>
+            <div style="flex:1; min-width:0;">
+                <div style="font-size:15px; font-weight:700; color:#0f172a;">${rep.name}</div>
             </div>
-            <div style="margin-left: auto; text-align: right;">
-                <div style="font-size: 11px; font-weight: 700; color: #ef4444; background: #fee2e2; padding: 4px 12px; border-radius: 20px;">
-                    ${rep.total_missed} Total Alerts
+            <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <div class="quarter-nav" style="min-width:unset;">
+                    <button class="nav-btn" onclick="missedDetailChangeMonth(-1, ${JSON.stringify(rep).replace(/"/g,'&quot;')})">&#8249;</button>
+                    <div class="nav-label">
+                        <span class="nav-label-main" id="detailMonthLabel">${MONTH_NAMES[missedMonth - 1]}</span>
+                        <span class="nav-label-sub">Month</span>
+                    </div>
+                    <button class="nav-btn" onclick="missedDetailChangeMonth(1, ${JSON.stringify(rep).replace(/"/g,'&quot;')})">&#8250;</button>
+                </div>
+                <div class="quarter-nav" style="min-width:unset;">
+                    <button class="nav-btn" onclick="missedDetailChangeYear(-1, ${JSON.stringify(rep).replace(/"/g,'&quot;')})">&#8249;</button>
+                    <div class="nav-label">
+                        <span class="nav-label-main" id="detailYearLabel">${missedYear}</span>
+                        <span class="nav-label-sub">Year</span>
+                    </div>
+                    <button class="nav-btn" onclick="missedDetailChangeYear(1, ${JSON.stringify(rep).replace(/"/g,'&quot;')})">&#8250;</button>
                 </div>
             </div>
         </div>
     `;
 
-    // 2. GROUPING BY NAME (Michael Angelo / Mercury Drug)
-    // Dito natin pagsasamahin yung mga magkakaparehong pangalan
-    const groupedData = (rep.details || []).reduce((acc, current) => {
-        const name = current.display_name;
-        if (!acc[name]) {
-            acc[name] = [];
+    // ── CONDITIONAL CONTENT RENDERING ──────────────
+    if (!isPastMonth) {
+        // Hide data if month/year is current or future
+        if (issueBar) {
+            issueBar.style.cssText = 'padding:10px 24px 4px;';
+            issueBar.innerHTML = `<span style="color:#7a8fa0; font-weight:700; font-size:13px;">Month not yet completed</span>`;
         }
-        acc[name].push(current);
-        return acc;
-    }, {});
-
-    // 3. SCROLLABLE BODY
-    listContainer.style = "padding: 20px 24px; overflow-y: auto;";
-    
-    if (Object.keys(groupedData).length > 0) {
-        listContainer.innerHTML = Object.entries(groupedData).map(([name, visits]) => {
-            return `
-                <div style="margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-                    <div style="background: #f8fafc; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-                        <strong style="color: #334155; font-size: 14px;">${name}</strong>
-                        <span style="background: #ffffff; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; color: #64748b; border: 1px solid #e2e8f0;">
-                            ${visits.length} VISITS
-                        </span>
-                    </div>
-                    <div style="padding: 12px 16px;">
-                        ${visits.map(v => `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f5f9;">
-                                <div style="display: flex; flex-direction: column;">
-                                    <span style="font-size: 12px; color: #475569; font-weight: 500;">${v.date_missed}</span>
-                                    <span style="font-size: 10px; color: #94a3b8;">${v.location}</span>
-                                </div>
-                                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                                    <span style="font-size: 10px; font-weight: 800; color: #ef4444;">MISSED</span>
-                                    <span style="font-size: 10px; color: #94a3b8;">Q${v.quarter || 'N/A'}</span>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }).join('');
+        if (listContainer) {
+            listContainer.innerHTML = `
+                <div style="padding:40px; text-align:center; color:#aab0be;">
+                    <p>No missed calls recorded yet for ${MONTH_NAMES[missedMonth - 1]} ${missedYear}.</p>
+                </div>`;
+        }
     } else {
-        listContainer.innerHTML = `
-            <div style="text-align: center; padding: 40px 0; color: #94a3b8;">
-                <p>Walang nakitang detalye.</p>
-            </div>
-        `;
+        // Render normally for past months
+        const details = rep.monthDetails || rep.details || [];
+        const monthMissed = rep.monthMissed ?? details.length;
+
+        if (issueBar) {
+            issueBar.style.cssText = 'padding:10px 24px 4px;';
+            issueBar.innerHTML = `
+                <span style="color:#c0392b; font-weight:700; font-size:13px;">
+                    Showing ${monthMissed} Missed Call
+                </span>`;
+        }
+
+        _renderDetailList(listContainer, details);
     }
-    
+
     modal.classList.add('active');
 }
 
+function _renderDetailList(listContainer, details) {
+    if (!listContainer) return;
+
+    const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+    const grouped = details.reduce((acc, d) => {
+        const name = d.display_name || 'Unknown';
+        if (!acc[name]) acc[name] = [];
+        acc[name].push(d);
+        return acc;
+    }, {});
+
+    if (Object.keys(grouped).length === 0) {
+        listContainer.innerHTML = `
+            <div style="text-align:center; padding:40px; color:#94a3b8;">
+                <p>No missed calls for ${MONTH_NAMES[missedMonth-1]} ${missedYear}.</p>
+            </div>`;
+        return;
+    }
+
+    listContainer.innerHTML = Object.entries(grouped).map(([name, visits]) => {
+        const rows = visits.map(v => {
+            const dt      = v.date_missed ? new Date(v.date_missed) : null;
+            const dayName = dt ? DAY_NAMES[dt.getDay()] : 'N/A';
+            const qLabel  = v.quarter ? `Q${v.quarter}` : 'N/A';
+            return `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 16px; border-bottom:1px solid #f1f5f9;">
+                    <span style="font-size:13px; color:#334155; font-weight:500;">${v.date_missed || 'N/A'}</span>
+                    <span style="font-size:12px; color:#64748b;">${dayName} | ${qLabel}</span>
+                </div>`;
+        }).join('');
+
+        return `
+            <div style="margin-bottom:14px; border-radius:10px; overflow:hidden; border:1px solid #e2e8f0;">
+                <div style="background:#2c4e68; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:600; color:#fff; font-size:14px;">${name}</span>
+                    <span style="font-size:12px; color:#cbd5e1;">${visits.length} missed</span>
+                </div>
+                ${rows}
+            </div>`;
+    }).join('');
+}
+
+window.missedDetailChangeMonth = (dir, rep) => {
+    missedMonth += dir;
+    if (missedMonth < 1)  { missedMonth = 12; missedYear--; }
+    if (missedMonth > 12) { missedMonth = 1;  missedYear++; }
+    
+    // update labels
+    const mEl = document.getElementById('detailMonthLabel');
+    const yEl = document.getElementById('detailYearLabel');
+    if (mEl) mEl.textContent = MONTH_NAMES[missedMonth - 1];
+    if (yEl) yEl.textContent = missedYear;
+
+    const issueBar = document.getElementById('detailIssueBar');
+    const listContainer = document.getElementById('detailDoctorsList');
+
+    // ✅ Apply Option A logic to navigation
+    const isPastMonth = _isMissed();
+
+    if (!isPastMonth) {
+        if (issueBar) {
+            issueBar.innerHTML = `<span style="color:#7a8fa0; font-weight:700; font-size:13px;">Month not yet completed</span>`;
+        }
+        if (listContainer) {
+            listContainer.innerHTML = `
+                <div style="text-align:center; padding:40px; color:#94a3b8;">
+                    <p>No missed calls recorded yet for ${MONTH_NAMES[missedMonth-1]} ${missedYear}.</p>
+                </div>`;
+        }
+    } else {
+        // re-filter details for new month if it is in the past
+        const details = (rep.details || []).filter(d => {
+            if (!d.date_missed) return false;
+            const dt = new Date(d.date_missed);
+            return (dt.getMonth() + 1) === missedMonth && dt.getFullYear() === missedYear;
+        });
+        
+        if (issueBar) {
+            issueBar.innerHTML = `<span style="color:#c0392b; font-weight:700; font-size:13px;">Showing ${details.length} Missed Call</span>`;
+        }
+        _renderDetailList(listContainer, details);
+    }
+    
+    // also sync the list modal labels
+    _syncMissedLabels();
+};
+
+window.missedDetailChangeYear = (dir, rep) => {
+    missedYear += dir;
+    const mEl = document.getElementById('detailMonthLabel');
+    const yEl = document.getElementById('detailYearLabel');
+    if (mEl) mEl.textContent = MONTH_NAMES[missedMonth - 1];
+    if (yEl) yEl.textContent = missedYear;
+
+    const issueBar = document.getElementById('detailIssueBar');
+    const listContainer = document.getElementById('detailDoctorsList');
+
+    // ✅ Apply Option A logic to navigation
+    const isPastMonth = _isMissed();
+
+    if (!isPastMonth) {
+        if (issueBar) {
+            issueBar.innerHTML = `<span style="color:#7a8fa0; font-weight:700; font-size:13px;">Month not yet completed</span>`;
+        }
+        if (listContainer) {
+            listContainer.innerHTML = `
+                <div style="text-align:center; padding:40px; color:#94a3b8;">
+                    <p>No missed calls recorded yet for ${MONTH_NAMES[missedMonth-1]} ${missedYear}.</p>
+                </div>`;
+        }
+    } else {
+        const details = (rep.details || []).filter(d => {
+            if (!d.date_missed) return false;
+            const dt = new Date(d.date_missed);
+            return (dt.getMonth() + 1) === missedMonth && dt.getFullYear() === missedYear;
+        });
+        
+        if (issueBar) {
+            issueBar.innerHTML = `<span style="color:#c0392b; font-weight:700; font-size:13px;">Showing ${details.length} Missed Call</span>`;
+        }
+        _renderDetailList(listContainer, details);
+    }
+    _syncMissedLabels();
+};
 
 function backToUnusualList() {
     document.getElementById('unusualDetailModal').classList.remove('active');
 }
-
-
 // ── INIT ───────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     // Redirect "View all" link in the Med Rep Performance panel to the dedicated Performance tab

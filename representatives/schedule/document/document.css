@@ -61,19 +61,24 @@ body {
 
 /* ─── LAYOUT ────────────────────────────────────────────────── */
 .main-content {
-    padding-top: 80px;
+    padding-top: 80px;       /* 60px header + 20px gap */
     padding-left: 36px;
     padding-right: 36px;
-    padding-bottom: 48px;
-    min-height: 100vh;
+    padding-bottom: 20px;    /* matches the 20px gap at the top */
+    height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
-/* FIX 1: equal columns so both cards are the same width */
+/* FIX 1: equal columns — stretch makes both cards identical height */
 .content-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 28px;
-    align-items: start;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
 }
 
 /* ─── INFO COLUMN (LEFT) ────────────────────────────────────── */
@@ -83,7 +88,6 @@ body {
     padding: 28px 28px 36px;
     box-shadow: 0 2px 16px rgba(45,79,107,0.08);
     overflow-y: auto;
-    max-height: calc(100vh - 100px);
 }
 
 .info-column::-webkit-scrollbar { width: 5px; }
@@ -92,14 +96,45 @@ body {
     border-radius: 10px;
 }
 
-/* FIX 2: identical padding to .info-column so first titles align */
+/* Right card: flex column, product grid scrolls inside */
 .action-column {
     background: #fff;
     border-radius: 16px;
     padding: 28px 28px 36px;
     box-shadow: 0 2px 16px rgba(45,79,107,0.08);
-    position: sticky;
-    top: 80px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Panels fill remaining vertical space inside the right card */
+#panel-items,
+#panel-default {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#panel-remarks {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* The scrollable product grid zone — grows to fill, then scrolls */
+#panel-items > div[style*="overflow-y"],
+#panel-default > div[style*="overflow-y"] {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Scrollbar style for right card internals */
+.action-column ::-webkit-scrollbar { width: 5px; }
+.action-column ::-webkit-scrollbar-thumb {
+    background: #d1dbe6;
+    border-radius: 10px;
 }
 
 /* ─── SECTION TITLES ────────────────────────────────────────── */
@@ -131,7 +166,7 @@ body {
 }
 
 .suffix-group {
-    flex: 0.45;
+    flex: 1;
 }
 
 .field-group label {
@@ -520,15 +555,42 @@ body {
 
 /* ─── RESPONSIVE ────────────────────────────────────────────── */
 @media (max-width: 900px) {
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
-    .action-column {
-        position: static;
-    }
     .main-content {
+        height: auto;
+        min-height: 100vh;
         padding-left: 16px;
         padding-right: 16px;
+        padding-bottom: 32px;
+        display: block; /* revert flex so cards scroll naturally */
+    }
+    .content-grid {
+        grid-template-columns: 1fr;
+        align-items: start;
+        flex: none;
+        gap: 20px;
+    }
+    .info-column {
+        height: auto;
+        max-height: none;
+        overflow-y: visible;
+    }
+    .action-column {
+        height: auto;
+        max-height: none;
+        position: static;
+        overflow: visible; /* let the card grow naturally */
+        display: block;
+    }
+    /* Product grid inside right card — let it show all items, page scrolls */
+    #panel-items,
+    #panel-default {
+        height: auto;
+        overflow: visible;
+    }
+    #panel-items > div,
+    #panel-default > div {
+        overflow-y: visible;
+        max-height: none;
     }
 }
 

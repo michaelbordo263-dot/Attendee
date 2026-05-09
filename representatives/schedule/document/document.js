@@ -35,53 +35,85 @@ document.addEventListener('DOMContentLoaded', async () => {
         const cds = data.cds || {};
         const doc = data.document || {};
 
-        // ── LEFT SIDE (DOCTOR INFO) ─────────────────
-        setText('doc-first-name', cds.First_Name);
-        setText('doc-last-name', cds.Last_Name);
-        setText('doc-mid-name', cds.Middle_Name);
-        setText('doc-suffix', cds.Suffix);
+        // ── DETECT RECORD TYPE ──────────────────────
+        const recordType = (
+            cds.RecordType || cds.record_type || cds.type ||
+            doc.RecordType || doc.record_type || doc.type || ''
+        ).toLowerCase().trim();
+        const isPharmacy = recordType === 'pharmacy' || (!!cds.Pharmacy_Name && !cds.First_Name);
 
-        setText('doc-md-code', cds.Doctor_Code);
-        setText('doc-md-desc', cds.Specialty_MDs_Description);
-        setText('doc-hospital', cds.Hospital_Affiliation_Clinic_Name || cds.Pharmacy_Name);
+        console.log("🏥 [DEBUG] Record Type:", recordType, "| isPharmacy:", isPharmacy);
 
-        setText('doc-address', cds.City_Address_Province);
+        if (isPharmacy) {
+            // ── PHARMACY LAYOUT ──────────────────────
+            document.getElementById('layout-doctor').style.display = 'none';
+            document.getElementById('layout-pharmacy').style.display = 'block';
 
-        // ── STATUS ──
-        const status = (doc.document_status || '').toLowerCase().trim();
-        console.log("📊 [DEBUG] Document Status:", status);
+            setText('doc-pharmacy-name', cds.Pharmacy_Name || cds.Hospital_Affiliation_Clinic_Name);
+            setText('doc-pharmacy-address', cds.City_Address_Province);
 
-        renderVisitLog(status);
+            // ── STATUS (pharmacy radio group) ────────
+            const status = (doc.document_status || '').toLowerCase().trim();
+            console.log("📊 [DEBUG] Document Status:", status);
+            renderVisitLog(status, true);
 
-        // ── ITEM LOGIC ─────────────────────────────
-        /**
-         * We strictly use the items array from the 'document' object 
-         * because that represents the Document_Logs (selected items).
-         */
-        let actualItems = [];
-        
-        if (status === 'signed' || status === 'approved') {
-            console.log("✅ [DEBUG] Visit is Complete. Using Document_Logs items.");
-            actualItems = doc.items || [];
+            // ── ITEMS ────────────────────────────────
+            let actualItems = [];
+            if (status === 'signed' || status === 'approved') {
+                actualItems = doc.items || [];
+            } else {
+                actualItems = (doc.items && doc.items.length > 0) ? doc.items : (data.items || []);
+            }
+
+            renderRightPanel({ ...cds, ...doc, items: actualItems, signature_url: doc.signature_url || data.signature_url }, status);
+
         } else {
-            console.log("💡 [DEBUG] Visit is Pending. Showing Suggested items (CDS_Products).");
-            // Fallback to data.items if doc.items is empty (this is the CDS_Products list)
-            actualItems = (doc.items && doc.items.length > 0) ? doc.items : (data.items || []);
-        }
+            // ── DOCTOR LAYOUT (default) ──────────────
+            document.getElementById('layout-doctor').style.display = 'block';
+            document.getElementById('layout-pharmacy').style.display = 'none';
 
-        console.log("📦 [DEBUG] Final Items for Grid:", actualItems);
-        console.log("📏 [DEBUG] Item Count:", actualItems.length);
+            // ── LEFT SIDE (DOCTOR INFO) ─────────────────
+            setText('doc-first-name', cds.First_Name);
+            setText('doc-last-name', cds.Last_Name);
+            setText('doc-mid-name', cds.Middle_Name);
+            setText('doc-suffix', cds.Suffix);
 
-        // ── RIGHT PANEL ───────────────────────────
-        renderRightPanel(
-            {
-                ...cds,
-                ...doc,
-                items: actualItems,
-                signature_url: doc.signature_url || data.signature_url
-            },
-            status
-        );
+            setText('doc-md-code', cds.Doctor_Code);
+            setText('doc-md-desc', cds.Specialty_MDs_Description);
+            setText('doc-hospital', cds.Hospital_Affiliation_Clinic_Name || cds.Pharmacy_Name);
+
+            setText('doc-address', cds.City_Address_Province);
+
+            // ── STATUS ──
+            const status = (doc.document_status || '').toLowerCase().trim();
+            console.log("📊 [DEBUG] Document Status:", status);
+
+            renderVisitLog(status, false);
+
+            // ── ITEM LOGIC ─────────────────────────────
+            let actualItems = [];
+            
+            if (status === 'signed' || status === 'approved') {
+                console.log("✅ [DEBUG] Visit is Complete. Using Document_Logs items.");
+                actualItems = doc.items || [];
+            } else {
+                console.log("💡 [DEBUG] Visit is Pending. Showing Suggested items (CDS_Products).");
+                actualItems = (doc.items && doc.items.length > 0) ? doc.items : (data.items || []);
+            }
+
+            console.log("📦 [DEBUG] Final Items for Grid:", actualItems);
+            console.log("📏 [DEBUG] Item Count:", actualItems.length);
+
+            renderRightPanel(
+                {
+                    ...cds,
+                    ...doc,
+                    items: actualItems,
+                    signature_url: doc.signature_url || data.signature_url
+                },
+                status
+            );
+        } // end isPharmacy else
 
     } catch (err) {
         console.error("❌ [DEBUG] Fetch Error:", err);
@@ -195,23 +227,25 @@ function buildItemGrid(containerId, items) {
     });
 }
 
-function renderVisitLog(status) {
+function renderVisitLog(status, isPharmacy = false) {
     const uiStatus = (status === 'approved' || status === 'signed') ? 'signed' : status;
-    const radio = document.querySelector(`input[name="visitStatus"][value="${uiStatus}"]`);
+    const radioName = isPharmacy ? 'visitStatusPh' : 'visitStatus';
+    const radio = document.querySelector(`input[name="${radioName}"][value="${uiStatus}"]`);
 
-    document.querySelectorAll('.radio-label').forEach(label => {
-        label.style.color = 'inherit';
-        label.style.fontWeight = 'normal';
-    });
+    const scope = isPharmacy ? document.getElementById('layout-pharmacy') : document.getElementById('layout-doctor');
+    if (scope) {
+        scope.querySelectorAll('.radio-label').forEach(label => {
+            label.classList.remove('active-signed', 'active-mia', 'active-rejected');
+        });
+    }
 
     if (radio) {
         radio.checked = true;
         const label = radio.closest('.radio-label');
         if (label) {
-            label.style.fontWeight = 'bold';
-            if (uiStatus === 'signed') label.style.color = '#22c55e';
-            else if (uiStatus === 'mia') label.style.color = '#eab308';
-            else if (uiStatus === 'rejected') label.style.color = '#ef4444';
+            if (uiStatus === 'signed') label.classList.add('active-signed');
+            else if (uiStatus === 'mia') label.classList.add('active-mia');
+            else if (uiStatus === 'rejected') label.classList.add('active-rejected');
         }
     }
 }

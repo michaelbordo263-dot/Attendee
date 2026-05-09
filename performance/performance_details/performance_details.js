@@ -123,7 +123,7 @@ function renderMostVisited(doctors) {
         return;
     }
 
-    const limitedDoctors = doctors.slice(0, 10);
+    const limitedDoctors = doctors;
 
     limitedDoctors.forEach((doc, i) => {
         const rank = i + 1;
@@ -177,7 +177,10 @@ const exportXlsx = async () => {
     const response = await fetch(`${window.BASE_URL}/export_xlsx`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: _repData.id }),
+      body: JSON.stringify({ 
+        id: _repData.id,
+        year: parseInt(_repData.year)
+      }),
     });
 
     if (!response.ok) {
@@ -193,13 +196,13 @@ const exportXlsx = async () => {
     const disposition = response.headers.get("Content-Disposition");
     console.log("Content-Disposition:", disposition);
 
-    let filename = `${_repData.name}.xlsx`;
+    let filename = `${_repData.name}_${_repData.year}.xlsx`;
     if (disposition) {
-    const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i);
-    if (match) {
+      const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i);
+      if (match) {
         filename = match[1].replace(/['"]/g, "").trim();
         if (!filename.endsWith(".xlsx")) filename += ".xlsx";
-    }
+      }
     }
 
     const blob = await response.blob();

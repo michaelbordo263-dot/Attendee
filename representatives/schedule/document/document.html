@@ -24,70 +24,107 @@
     <main class="main-content">
         <div class="content-grid">
 
-            <!-- LEFT COLUMN: Doctor Info -->
+            <!-- LEFT COLUMN: Doctor Info / Pharmacy Info -->
             <div class="info-column">
 
-                <h3 class="section-title">BASIC INFORMATION</h3>
-                <div class="field-row">
-                    <div class="field-group">
-                        <label>First Name</label>
-                        <div class="field-data" id="doc-first-name">—</div>
+                <!-- ── DOCTOR LAYOUT (default) ── -->
+                <div id="layout-doctor">
+                    <h3 class="section-title">BASIC INFORMATION</h3>
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label>First Name</label>
+                            <div class="field-data" id="doc-first-name">—</div>
+                        </div>
+                        <div class="field-group">
+                            <label>Last Name</label>
+                            <div class="field-data" id="doc-last-name">—</div>
+                        </div>
                     </div>
-                    <div class="field-group">
-                        <label>Last Name</label>
-                        <div class="field-data" id="doc-last-name">—</div>
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label>Middle Name</label>
+                            <div class="field-data" id="doc-mid-name">—</div>
+                        </div>
+                        <div class="field-group">
+                            <label>Suffix</label>
+                            <div class="field-data" id="doc-suffix">—</div>
+                        </div>
                     </div>
-                </div>
-                <div class="field-row">
-                    <div class="field-group">
-                        <label>Middle Name</label>
-                        <div class="field-data" id="doc-mid-name">—</div>
+
+                    <h3 class="section-title">PROFESSIONAL DATA</h3>
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label>MD Code</label>
+                            <div class="field-data" id="doc-md-code">—</div>
+                        </div>
+                        <div class="field-group">
+                            <label>Specialization</label>
+                            <div class="field-data" id="doc-md-desc">—</div>
+                        </div>
                     </div>
-                    <div class="field-group suffix-group">
-                        <label>Suffix</label>
-                        <div class="field-data" id="doc-suffix">—</div>
+                    <div class="field-group" style="margin-bottom: 15px;">
+                        <label>Hospital / Clinic Affiliation</label>
+                        <div class="field-data" id="doc-hospital">—</div>
+                    </div>
+
+                    <h3 class="section-title">LOCATION DETAILS</h3>
+                    <div class="field-group" style="margin-bottom: 15px;">
+                        <label>City / Province</label>
+                        <div class="field-data" id="doc-address">—</div>
+                    </div>
+
+                    <h3 class="section-title">VISIT LOG</h3>
+                    <div class="radio-row">
+                        <label class="radio-label" id="label-signed">
+                            <input type="radio" name="visitStatus" value="signed" disabled>
+                            <span class="radio-custom signed"></span>
+                            Signed
+                        </label>
+                        <label class="radio-label" id="label-mia">
+                            <input type="radio" name="visitStatus" value="mia" disabled>
+                            <span class="radio-custom mia"></span>
+                            MIA
+                        </label>
+                        <label class="radio-label" id="label-rejected">
+                            <input type="radio" name="visitStatus" value="rejected" disabled>
+                            <span class="radio-custom rejected"></span>
+                            Rejected
+                        </label>
                     </div>
                 </div>
 
-                <h3 class="section-title">PROFESSIONAL DATA</h3>
-                <div class="field-row">
-                    <div class="field-group">
-                        <label>MD Code</label>
-                        <div class="field-data" id="doc-md-code">—</div>
+                <!-- ── PHARMACY LAYOUT ── -->
+                <div id="layout-pharmacy" style="display: none;">
+                    <h3 class="section-title">PHARMACY INFORMATION</h3>
+                    <div class="field-group" style="margin-bottom: 15px;">
+                        <label>Pharmacy Name</label>
+                        <div class="field-data" id="doc-pharmacy-name">—</div>
                     </div>
-                    <div class="field-group">
-                        <label>Specialization</label>
-                        <div class="field-data" id="doc-md-desc">—</div>
+
+                    <h3 class="section-title">LOCATION DETAILS</h3>
+                    <div class="field-group" style="margin-bottom: 15px;">
+                        <label>City / Province</label>
+                        <div class="field-data" id="doc-pharmacy-address">—</div>
                     </div>
-                </div>
-                <div class="field-group" style="margin-bottom: 15px;">
-                    <label>Hospital / Clinic Affiliation</label>
-                    <div class="field-data" id="doc-hospital">—</div>
-                </div>
 
-                <h3 class="section-title">LOCATION DETAILS</h3>
-                <div class="field-group" style="margin-bottom: 15px;">
-                    <label>City / Province</label>
-                    <div class="field-data" id="doc-address">—</div>
-                </div>
-
-                <h3 class="section-title">VISIT LOG</h3>
-                <div class="radio-row">
-                    <label class="radio-label" id="label-signed">
-                        <input type="radio" name="visitStatus" value="signed" disabled>
-                        <span class="radio-custom signed"></span>
-                        Signed
-                    </label>
-                    <label class="radio-label" id="label-mia">
-                        <input type="radio" name="visitStatus" value="mia" disabled>
-                        <span class="radio-custom mia"></span>
-                        MIA
-                    </label>
-                    <label class="radio-label" id="label-rejected">
-                        <input type="radio" name="visitStatus" value="rejected" disabled>
-                        <span class="radio-custom rejected"></span>
-                        Rejected
-                    </label>
+                    <h3 class="section-title">VISIT LOG</h3>
+                    <div class="radio-row">
+                        <label class="radio-label" id="label-signed-ph">
+                            <input type="radio" name="visitStatusPh" value="signed" disabled>
+                            <span class="radio-custom signed"></span>
+                            Signed
+                        </label>
+                        <label class="radio-label" id="label-mia-ph">
+                            <input type="radio" name="visitStatusPh" value="mia" disabled>
+                            <span class="radio-custom mia"></span>
+                            MIA
+                        </label>
+                        <label class="radio-label" id="label-rejected-ph">
+                            <input type="radio" name="visitStatusPh" value="rejected" disabled>
+                            <span class="radio-custom rejected"></span>
+                            Rejected
+                        </label>
+                    </div>
                 </div>
 
             </div>
@@ -96,12 +133,12 @@
             <div class="action-column" id="action-column">
 
                 <!-- DEFAULT / SIGNED: Items Grid -->
-                <div id="panel-items" class="grid-card" style="display: none; height: 510px; flex-direction: column; padding: 20px;">
+                <div id="panel-items" class="grid-card" style="display: none; padding: 20px;">
                     <h3 class="section-title">ITEMS SELECTED</h3>
                     <div style="flex-grow: 1; overflow-y: auto; padding-right: 8px; margin-bottom: 10px;">
                         <div class="item-grid" id="product-list"></div>
                     </div>
-                    <div id="signature-wrapper" style="display: none; margin-top: 20px;">
+                    <div id="signature-wrapper" style="display: none; margin-top: 16px; flex-shrink: 0;">
                         <button class="btn-signature" id="signatureBtn">
                             <i class="fas fa-signature"></i> View Signature
                         </button>
@@ -109,7 +146,7 @@
                 </div>
 
                 <!-- MIA / REJECTED: Remarks Panel -->
-                <div id="panel-remarks" class="grid-card" style="display: none; height: 510px; padding: 20px;">
+                <div id="panel-remarks" class="grid-card" style="display: none; padding: 20px;">
                     <div class="remarks-panel">
                         <div class="remarks-badge" id="remarks-badge">MIA</div>
                         <p class="remarks-hint" id="remarks-hint">The representative marked this visit as MIA.</p>
@@ -119,7 +156,7 @@
                 </div>
 
                 <!-- NO STATUS: Default empty items -->
-                <div id="panel-default" class="grid-card" style="display: none; height: 510px; flex-direction: column; padding: 20px;">
+                <div id="panel-default" class="grid-card" style="display: none; padding: 20px;">
                     <h3 class="section-title">ITEMS SELECTED</h3>
                     <div style="flex-grow: 1; overflow-y: auto; padding-right: 8px;">
                         <div class="item-grid" id="product-list-default"></div>

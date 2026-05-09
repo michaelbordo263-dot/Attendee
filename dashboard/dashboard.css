@@ -516,12 +516,55 @@ html, body {
 .unusual-list {
     overflow-y: auto;
     flex: 1;
-    min-height: 0; /* add this if missing */
-    padding: 10px 24px 20px;
+    min-height: 0;
+    padding: 12px 20px 20px;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
-.unusual-list::-webkit-scrollbar { display: none; }
+.unusual-list::-webkit-scrollbar { display: none !important; }
+
+.missed-rep-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    background: #eef4fc;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.missed-rep-card:hover {
+    border-color: #9bc8f3;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.missed-rep-avatar {
+    width: 42px;
+    height: 42px;
+    background: #9ec4e4b2;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #2c4e68;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.missed-rep-badge {
+    background: #fee2e2;
+    color: #c0392b;
+    border: 1px solid #fecaca;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
 
 .unusual-card {
     display: flex;
@@ -645,7 +688,7 @@ html, body {
 }
 
 .modal-box--unusual-detail {
-    width: 460px;
+    width: 620px;
     max-width: calc(100vw - 40px);
     height: 640px;
     max-height: 90vh;

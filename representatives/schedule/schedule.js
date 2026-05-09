@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let selectedRepName = urlParams.get('name') || "Medical Representative"; // Global for access in modal and header
     let selectedRepArea = urlParams.get('area') || "Assignment Area"; // Global for access in modal and header
     
-    // Check for return date from document page
-    const returnDateParam = urlParams.get('returnDate');
+    // Check for return date from document page (supports both 'returnDate' and 'date' param keys)
+    const returnDateParam = urlParams.get('returnDate') || urlParams.get('date');
         
     let globalScheduleData = []; 
     let currentMonthIndex = 3;    // Initial default
@@ -186,14 +186,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     if (autoSelectedData.length > 0) {
                         requestAnimationFrame(() => {
-                            const dateObj = new Date(returnDateParam);
+                            const dateObj = new Date(returnDateParam + 'T00:00:00');
                             const d = dateObj.getDate();
                             const m = dateObj.getMonth();
                             const y = dateObj.getFullYear();
                             openDateModal(d, m, y);
 
-                            const newUrl = window.location.pathname + `?id=${selectedRepId}`;
-                            window.history.replaceState({}, '', newUrl);
+                            // Clean up returnDate/date from URL but keep other params intact
+                            const cleanParams = new URLSearchParams(window.location.search);
+                            cleanParams.delete('returnDate');
+                            cleanParams.delete('date');
+                            window.history.replaceState({}, '', window.location.pathname + '?' + cleanParams.toString());
                         });
                     }
                 }
@@ -297,18 +300,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (visit) {
                 dateDiv.classList.add('has-visit');
 
+                // ── CALENDAR DOT: status → color class ──────────────
                 const vStat = (visit.visit_status || '').toLowerCase().trim();
-                let statusClass = 'status-pending'; // Default for null/empty/pending
 
-                if (vStat === 'complete' || vStat === 'completed') {
-                    statusClass = 'status-complete';
-                } else if (vStat === 'advance') {
-                    statusClass = 'status-advance';
+                if (vStat === 'complete' || vStat === 'completed' || vStat === 'signed') {
+                    dateDiv.classList.add('dot-complete');
+                } else if (vStat === 'advance' || vStat === 'advanced') {
+                    dateDiv.classList.add('dot-advance');
+                } else if (vStat.includes('make up') || vStat.includes('makeup')) {
+                    dateDiv.classList.add('dot-makeup');
+                } else if (vStat.includes('missed')) {
+                    dateDiv.classList.add('dot-missed');
+                } else if (vStat === 'mia') {
+                    dateDiv.classList.add('dot-mia');
+                } else if (vStat === 'rejected') {
+                    dateDiv.classList.add('dot-rejected');
                 }
+                // null/empty → default grey dot via .has-visit::after in CSS
+            }
 
-                const statusBar = document.createElement('div');
-                statusBar.className = `status-bar ${statusClass}`;
-                dateDiv.appendChild(statusBar);
+            // Highlight the day that was last selected (returned from document page)
+            if (returnDateParam) {
+                const returnD = new Date(returnDateParam + 'T00:00:00');
+                if (returnD.getFullYear() === year && returnD.getMonth() === month && returnD.getDate() === d) {
+                    dateDiv.classList.add('selected-day');
+                }
             }
 
             dateDiv.onclick = () => openDateModal(d, month, year);
@@ -333,7 +349,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isFuture = clickedDate > today;
 
     // selectedRepName should be defined globally
-    modalTitle.innerText = `${monthNames[month]} ${day}, ${year} - ${selectedRepName}`;
+    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const dayName = dayNames[new Date(year, month, day).getDay()];
+    modalTitle.innerText = `${monthNames[month]} ${day}, ${year} - ${dayName}`;
     modalBody.innerHTML = '';
 
     const visits = globalScheduleData.filter(item => {
@@ -344,13 +362,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (visits.length === 0) {
         modalBody.innerHTML = `<p style="text-align:center; padding:20px; color:#666;">No visits scheduled.</p>`;
     } else {
-        const sortOrder = { 'pending': 0, 'complete': 1, 'completed': 1, 'advance': 2 };
+        const sortOrder = {
+            'pending':      0,
+            'advance':      1,
+            'advanced':     1,
+            'complete':     2,
+            'completed':    2,
+            'signed':       2,
+            'make up call': 3,
+            'makeup call':  3,
+            'mia':          4,
+            'rejected':     5,
+        };
 
         const sorted = [...visits].sort((a, b) => {
             const getOrder = (item) => {
-                if (isFuture) return 0;
                 const vs = (item.visit_status || '').toLowerCase().trim();
-                if (!vs || vs === 'null') return 0;
+                if (!vs || vs === 'null') return 0; // null/empty = Pending, always top
+                if (vs.includes('make up') || vs.includes('makeup')) return 3;
                 return sortOrder[vs] ?? 0;
             };
             return getOrder(a) - getOrder(b);
@@ -392,7 +421,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const area = item.area || item.Area || item.hospital_name || 'N/A';
                 
                 if (!rawSpecialty || rawSpecialty.toLowerCase() === 'general' || rawSpecialty === 'EMPTY') {
-                    displaySub = area; // Only show area if specialty is General[cite: 10]
+                    displaySub = area; // Only show area if specialty is General
                 } else {
                     displaySub = `${toTitleCase(rawSpecialty)} - ${area}`;
                 }
@@ -425,10 +454,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             // --- 3. Status Button Logic ---
             let statusHtml = '';
             const vStat = (item.visit_status || '').toLowerCase().trim();
-            if (vStat === 'complete' || vStat === 'completed') {
-                statusHtml = `<button class="status-btn completed">Complete</button>`;
-            } else if (vStat === 'advance') {
+
+            if (vStat === 'complete' || vStat === 'completed' || vStat === 'signed') {
+                statusHtml = `<button class="status-btn complete">Complete</button>`;
+            } else if (vStat === 'advance' || vStat === 'advanced') {
                 statusHtml = `<button class="status-btn advance">Advance</button>`;
+            } else if (vStat.includes('make up') || vStat.includes('makeup')) {
+                statusHtml = `<button class="status-btn makeup">Make Up Call</button>`;
+            } else if (vStat.includes('missed')) {
+                statusHtml = `<button class="status-btn missed">Missed Call</button>`;
+            } else if (vStat === 'mia') {
+                statusHtml = `<button class="status-btn mia">MIA</button>`;
+            } else if (vStat === 'rejected') {
+                statusHtml = `<button class="status-btn rejected">Rejected</button>`;
             } else {
                 statusHtml = `<button class="status-btn pending">Pending</button>`;
             }

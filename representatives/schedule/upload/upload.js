@@ -230,12 +230,14 @@ async function initQuarterStatus(selectedRepId, year) {
 }
 
 function selectQuarter(quarter) {
+    cancelDCPUpload();  // ← clears warnings + resets form
+
     document.querySelectorAll('.quarter-status-btn').forEach(btn => {
         btn.classList.remove('q-selected');
     });
 
     const btn = document.getElementById(`quarter-btn-${quarter}`);
-    btn?.classList.add('q-selected');
+    btn?.classList.add('q-selected');  // ← re-add after cancel clears selection
 
     window.currentSelectedQuarter = quarter;
 
@@ -292,7 +294,7 @@ function changeYear(delta) {
     const nextYear = currentYear + delta;
 
     setSelectedYear(nextYear);
-    resetDCPForm();
+    cancelDCPUpload();  // ← changed from resetDCPForm()
 
     const urlParams = new URLSearchParams(window.location.search);
     const selectedRepId = urlParams.get('id') || urlParams.get('user_id') || urlParams.get('rep_id');
@@ -577,8 +579,8 @@ async function uploadCallPlan(forceUpload = false) {
 
     } catch (err) {
         console.error("DCP Upload Error:", err);
-        showStatusModal("Upload Failed", err.message, '❌');
-    }
+        showStatusModal("Upload Failed", err.message, '❌', () => location.reload());  // ← add reload
+    }   
 }
 
 
@@ -598,6 +600,7 @@ async function proceedUploadAnyway() {
     document.getElementById('warningActionBtns').style.display = 'none';
 
     const userId = getUserId();
+    const quarter = getSelectedQuarter(); // ← moved up so we can use it for sync too
 
     const unmatchedRows = (_currentErrors || []).filter(e =>
         e.reason && e.reason.toLowerCase().includes('masterlist')
@@ -607,7 +610,8 @@ async function proceedUploadAnyway() {
         try {
             const syncRes = await API.syncUnmatchedToCDS({
                 id: userId,
-                unmatched_rows: unmatchedRows
+                unmatched_rows: unmatchedRows,
+                quarter: quarter   // ← ADD THIS
             });
             const syncData = await syncRes.json();
             console.log(`✅ Synced ${syncData.count} unmatched records to CDS masterlist`);
@@ -618,7 +622,6 @@ async function proceedUploadAnyway() {
 
     const fileInput = document.getElementById("file-callplan");
     const file = fileInput.files[0];
-    const quarter = getSelectedQuarter();
     const year = getSelectedYear();
 
     const formData = new FormData();

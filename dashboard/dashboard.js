@@ -359,19 +359,21 @@ function _renderMissedList() {
 
     const isPastMonth = _isMissed();
 
-    // Filter details by selected month/year, treat NULL as Missed if past month
+    // 1. Process and filter the data based on current month/year selection
     const filtered = unusualReports.map(rep => {
         const matchingDetails = (rep.details || []).filter(d => {
             if (!d.date_missed) return false;
             const dt = new Date(d.date_missed);
             return (dt.getMonth() + 1) === missedMonth && dt.getFullYear() === missedYear;
         });
+        // Attach the specific month context to the object
         return { ...rep, monthDetails: matchingDetails, monthMissed: matchingDetails.length };
     }).filter(rep => {
-        if (!isPastMonth) return false; // current/future month → nothing to show yet
+        if (!isPastMonth) return false; 
         return rep.monthMissed > 0;
     });
 
+    // 2. Update the status/count message
     if (countEl) {
         countEl.textContent = isPastMonth
             ? `Showing ${filtered.length} representative${filtered.length !== 1 ? 's' : ''}`
@@ -386,11 +388,14 @@ function _renderMissedList() {
         return;
     }
 
+    // 3. Render cards using data-index to avoid syntax errors from quotes
     listContainer.innerHTML = filtered.map(rep => {
         const initials = getInitials(rep.name);
+        // Find the original index in the main unusualReports array
+        const originalIndex = unusualReports.findIndex(r => r.name === rep.name);
+        
         return `
-            <div onclick='openUnusualDetail(${JSON.stringify(rep)})'
-                 class="missed-rep-card">
+            <div class="missed-rep-card unusual-modal-clickable" data-index="${originalIndex}" style="cursor:pointer;">
                 <div class="missed-rep-avatar">${initials}</div>
                 <div style="flex:1; min-width:0;">
                     <div style="font-weight:700; color:#1e2d3d; font-size:14px;">${rep.name}</div>
@@ -400,6 +405,32 @@ function _renderMissedList() {
                 </div>
             </div>`;
     }).join('');
+
+    // 4. Delegated Click Detector for the Modal
+    listContainer.onclick = (e) => {
+        const card = e.target.closest('.unusual-modal-clickable');
+        if (!card) return;
+        
+        const idx = card.getAttribute('data-index');
+        const repData = unusualReports[idx];
+        
+        if (repData) {
+            // Re-calculate the specific month's details before opening the modal
+            const matchingDetails = (repData.details || []).filter(d => {
+                if (!d.date_missed) return false;
+                const dt = new Date(d.date_missed);
+                return (dt.getMonth() + 1) === missedMonth && dt.getFullYear() === missedYear;
+            });
+            
+            const repWithContext = { 
+                ...repData, 
+                monthDetails: matchingDetails,
+                monthMissed: matchingDetails.length 
+            };
+            
+            openUnusualDetail(repWithContext);
+        }
+    };
 }
 
 
@@ -611,6 +642,7 @@ function renderScheduleList(data) {
         'Pending':  'status-badge--pending',
         'Approved': 'status-badge--approved',
         'Missing':  'status-badge--missing',
+        'Rejected': 'status-badge--rejected',
     };
 
     // The API already filters by status (schedTab), so only apply the search filter here.
@@ -652,6 +684,10 @@ function renderScheduleList(data) {
                 clickHandler = 'return false;';
                 cursorStyle = 'cursor: default;';
             }
+        } else if (schedTab === 'Rejected') {
+            const idx = filtered.indexOf(r);
+            window._rejectedScheduleData = filtered;
+            clickHandler = `window._openRejectedByIndex(${idx})`;
         } else {
             clickHandler = `window.location.href='../representatives/schedule/schedule.html?id=${encodeURIComponent(repId)}&quarter=${schedQuarter}&year=${schedYear}'`;
         }
@@ -694,16 +730,15 @@ async function loadUnusualReports() {
 
 
 // ── UPDATED UNUSUAL UI RENDERER ──────────────────
+// =====================================
+// 3. MISSED CALL REPORTS (UNUSUAL)
+// =====================================
+
 function updateUnusualUI() {
     const panel = document.getElementById('unusualPanelBody');
     if (!panel) return;
 
-    // Backend now returns ALL approved medreps
-    // Split: those with misses vs those who are all clear
-    const withMisses  = unusualReports.filter(r => (r.total_missed || 0) > 0);
-    const allClear    = unusualReports.filter(r => (r.total_missed || 0) === 0);
-
-    if (unusualReports.length === 0) {
+    if (!unusualReports || unusualReports.length === 0) {
         panel.innerHTML = `
             <div style="padding:40px; text-align:center; color:#888;">
                 <p>No approved schedules found for Q${schedQuarter}</p>
@@ -711,48 +746,99 @@ function updateUnusualUI() {
         return;
     }
 
+    const withMisses = unusualReports.filter(r => (r.total_missed || 0) > 0);
+    const allClear   = unusualReports.filter(r => (r.total_missed || 0) === 0);
+
     let html = '';
 
-    // Section 1: Medreps with actual misses (shown with red badge)
-    if (withMisses.length > 0) {
-        html += withMisses.map((r, index) => {
-            const initials = getInitials(r.name);
-            const isLast = index === withMisses.length - 1 && allClear.length === 0;
-            return `
-                <div class="report-item" onclick='openUnusualDetail(${JSON.stringify(r)})' style="cursor:pointer;">
-                    <div class="perf-avatar">${initials}</div>
-                    <div class="report-info">
-                        <span class="perf-name">${r.name}</span>
-                        <span class="report-badge badge--red">${r.total_missed} missed calls</span>
-                    </div>
-                    <div style="color: #cbd5e1; margin-left: auto;">&#10217;</div>
+    // Robust card renderer using data-index instead of JSON strings in attributes
+    const renderCard = (r, isClear) => {
+        const initials = getInitials(r.name);
+        const originalIdx = unusualReports.indexOf(r);
+        const badgeStyle = isClear ? 'background:#dcfce7; color:#166534; border:1px solid #bbf7d0;' : '';
+        const badgeClass = isClear ? '' : 'badge--red';
+        const badgeText = isClear ? 'No misses' : `${r.total_missed} missed calls`;
+        const avatarStyle = isClear ? 'background:#e2e8f0; color:#64748b;' : '';
+
+        return `
+            <div class="report-item unusual-panel-card" data-index="${originalIdx}" style="cursor:pointer;">
+                <div class="perf-avatar" style="${avatarStyle}">${initials}</div>
+                <div class="report-info">
+                    <span class="perf-name">${r.name}</span>
+                    <span class="report-badge ${badgeClass}" style="${badgeStyle}">${badgeText}</span>
                 </div>
-                ${!isLast ? '<div class="report-divider"></div>' : ''}
-            `;
-        }).join('');
+                <div style="color: #cbd5e1; margin-left: auto;">&#10217;</div>
+            </div>
+            <div class="report-divider"></div>
+        `;
+    };
+
+    if (withMisses.length > 0) {
+        html += withMisses.map(r => renderCard(r, false)).join('');
     }
 
-    // Section 2: Medreps with no misses yet (all visits done or all future)
     if (allClear.length > 0) {
         html += `<div style="padding: 8px 16px; font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; background: #f8fafc; border-top: 1px solid #f1f5f9;">ALL CLEAR</div>`;
-        html += allClear.map((r, index) => {
-            const initials = getInitials(r.name);
-            const isLast = index === allClear.length - 1;
-            return `
-                <div class="report-item" onclick='openUnusualDetail(${JSON.stringify(r)})' style="cursor:pointer; opacity: 0.6;">
-                    <div class="perf-avatar" style="background:#e2e8f0; color:#64748b;">${initials}</div>
-                    <div class="report-info">
-                        <span class="perf-name">${r.name}</span>
-                        <span class="report-badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">No misses</span>
-                    </div>
-                    <div style="color: #cbd5e1; margin-left: auto;">&#10217;</div>
-                </div>
-                ${!isLast ? '<div class="report-divider"></div>' : ''}
-            `;
-        }).join('');
+        html += allClear.map(r => renderCard(r, true)).join('');
     }
 
     panel.innerHTML = html;
+
+    // Use a single delegated click listener to handle names with quotes correctly
+    panel.onclick = (e) => {
+        const card = e.target.closest('.unusual-panel-card');
+        if (!card) return;
+        const idx = card.getAttribute('data-index');
+        const rep = unusualReports[idx];
+        if (rep) openUnusualDetail(rep);
+    };
+}
+
+function openUnusualDetail(rep) {
+    const modal           = document.getElementById('unusualDetailModal');
+    const listContainer   = document.getElementById('detailDoctorsList');
+    const headerContainer = document.getElementById('detailRepHeader');
+    const issueBar        = document.getElementById('detailIssueBar');
+
+    const isPastMonth = _isMissed();
+    const initials = getInitials(rep.name);
+    
+    headerContainer.style.cssText = `position:sticky; top:0; background:#fff; z-index:100; border-bottom:1px solid #edf2f7; padding:16px 24px; box-shadow:0 2px 4px rgba(0,0,0,0.04);`;
+    headerContainer.innerHTML = `
+        <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:44px; height:44px; background:#cfe0ef; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#2c4e68; font-size:14px; flex-shrink:0;">${initials}</div>
+            <div style="flex:1; min-width:0;"><div style="font-size:15px; font-weight:700; color:#0f172a;">${rep.name}</div></div>
+            <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <div class="quarter-nav" style="min-width:unset;">
+                    <button class="nav-btn" onclick="missedDetailChangeMonth(-1, unusualReports[${unusualReports.indexOf(rep)}])">&#8249;</button>
+                    <div class="nav-label">
+                        <span class="nav-label-main" id="detailMonthLabel">${MONTH_NAMES[missedMonth - 1]}</span>
+                        <span class="nav-label-sub">Month</span>
+                    </div>
+                    <button class="nav-btn" onclick="missedDetailChangeMonth(1, unusualReports[${unusualReports.indexOf(rep)}])">&#8250;</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    if (!isPastMonth) {
+        if (issueBar) {
+            issueBar.style.cssText = 'padding:10px 24px 4px;';
+            issueBar.innerHTML = `<span style="color:#7a8fa0; font-weight:700; font-size:13px;">Month not yet completed</span>`;
+        }
+        if (listContainer) {
+            listContainer.innerHTML = `<div style="padding:40px; text-align:center; color:#aab0be;"><p>No missed calls recorded yet for ${MONTH_NAMES[missedMonth - 1]} ${missedYear}.</p></div>`;
+        }
+    } else {
+        const details = rep.monthDetails || rep.details || [];
+        const monthMissed = rep.monthMissed ?? details.length;
+        if (issueBar) {
+            issueBar.style.cssText = 'padding:10px 24px 4px;';
+            issueBar.innerHTML = `<span style="color:#c0392b; font-weight:700; font-size:13px;">Showing ${monthMissed} Missed Call</span>`;
+        }
+        _renderDetailList(listContainer, details);
+    }
+    modal.classList.add('active');
 }
 
 // 1. GLOBAL DATA STORE
@@ -1071,6 +1157,10 @@ function injectDashboardModals() {
                 overflow: hidden;
                 display: flex;
                 flex-direction: column;
+            }
+            #rejectModal .modal-card {
+                width: 580px;
+                height: 380px;
             }
             #acceptModal .modal-header,
             #rejectModal .modal-header {
@@ -1498,7 +1588,7 @@ function rdRenderBreakdown(dcpList) {
             : (entry.display_name || entry.doctor_name || entry.name || 'Unnamed Doctor');
         const id = entry.cds_id || entry.id || name;
         const map = isPharmacy ? pharmacyMap : doctorMap;
-        if (!map[id]) map[id] = { name, dates: [], recordType: rt };
+        if (!map[id]) map[id] = { name, dates: [], recordType: rt, frequency: entry.frequency ?? null };
         if (entry.dcp_date) map[id].dates.push(entry.dcp_date);
     });
 
@@ -1513,7 +1603,7 @@ function rdRenderBreakdown(dcpList) {
         container.appendChild(lbl);
 
         Object.keys(map).sort().forEach(id => {
-            const { name, dates, recordType } = map[id];
+            const { name, dates, recordType, frequency } = map[id];
 
             // Build month buckets (same logic as summary.js)
             const monthBuckets = {};
@@ -1555,6 +1645,11 @@ function rdRenderBreakdown(dcpList) {
                 </div>
                 <div class="rd-acc-body">
                     <div class="rd-acc-inner">
+                        ${frequency != null ? `
+                        <div class="rd-freq-row">
+                            <span class="rd-freq-label">Expected Frequency</span>
+                            <span class="rd-freq-value">${frequency}x / month</span>
+                        </div>` : ''}
                         ${rowsHtml}
                         <div class="rd-acc-footer">
                             <span>TOTAL VISITS</span>
@@ -1704,7 +1799,7 @@ async function confirmRejectFromModal() {
     const remarks = remarksInput?.value.trim();
 
     if (!remarks) {
-        alert("Please provide a reason for rejection.");
+        showDashToast('Please provide a reason for rejection.', 'error');
         return;
     }
 
@@ -1733,7 +1828,7 @@ async function updateRdGlobalStatus(newStatus, remarks, repId, quarter, year) {
         const result = await API.updateGlobalStatus(payload);
         
             if (result && !result.error) {
-            alert(`Request successfully ${newStatus}!`);
+            showDashToast(newStatus === 'Approved' ? 'Request Approved' : 'Request Rejected', newStatus === 'Approved' ? 'success' : 'error');
             
             // Close modals
             closeDashboardModal('acceptModal');
@@ -1752,10 +1847,53 @@ async function updateRdGlobalStatus(newStatus, remarks, repId, quarter, year) {
             loadDashboardStats();
             loadSchedulesFromAPI();
         }else {
-            alert(`Failed to update status: ${result?.error || "Unknown Error"}`);
+            showDashToast(`Failed to update: ${result?.error || "Unknown Error"}`, 'error');
         }
     } catch (err) {
         console.error("Status Update Error:", err);
-        alert("A connection error occurred while updating status.");
+        showDashToast('A connection error occurred.', 'error');
     }
+}
+
+// ── REJECTION REMARKS MODAL ──────────────────────────────
+window.openRejectionRemarksModal = function(repName, remarks) {
+    const modal = document.getElementById('rejectionRemarksModal');
+    if (!modal) return;
+    const nameEl    = modal.querySelector('.rrm-rep-name');
+    const remarksEl = modal.querySelector('.rrm-remarks-text');
+    if (nameEl)    nameEl.textContent    = repName;
+    if (remarksEl) remarksEl.textContent = (remarks || 'No remarks provided.').trim();
+    modal.style.display = 'flex';
+};
+
+window._openRejectedByIndex = function(idx) {
+    const r = window._rejectedScheduleData?.[idx];
+    if (!r) return;
+    openRejectionRemarksModal(
+        r.name || '',
+        (r.remarks || 'No remarks provided.').trim()
+    );
+};
+
+window.closeRejectionRemarksModal = function() {
+    const modal = document.getElementById('rejectionRemarksModal');
+    if (modal) modal.style.display = 'none';
+};
+
+function showDashToast(message, type = 'info') {
+    const toast = document.getElementById('dash-app-toast');
+    if (!toast) return;
+    const isSuccess = type === 'success';
+    toast.innerHTML = `
+        <div class="dash-toast-body ${isSuccess ? 'success' : 'error'}">
+            <span class="dash-toast-icon">${isSuccess ? '✓' : '✕'}</span>
+            <span class="dash-toast-text">${message}</span>
+        </div>
+        <div class="dash-toast-progress"></div>
+    `;
+    toast.classList.remove('show');
+    void toast.offsetWidth;
+    toast.classList.add('show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 2500);
 }

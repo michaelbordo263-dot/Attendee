@@ -48,14 +48,11 @@ async function fetchRequestDetails(empId, q, year) {
     const pendingActions = document.getElementById('pendingActions');
 
     try {
-        // Fetch details from backend which now uses the Fiscal Range logic
         const data = await API.fetchRequestDetails(empId, q, year);
         console.log("📥 DEBUG: Raw Backend Data Received ->", data);
 
-        // dcp_list is now filtered by the backend's calculated fiscal start/end dates
         const dcpRows = data.dcp_list || [];
         
-        // Check if all rows share the same final status
         const allApproved = dcpRows.length > 0 && dcpRows.every(row =>
             (row.status || "").toLowerCase() === "approved"
         );
@@ -66,11 +63,22 @@ async function fetchRequestDetails(empId, q, year) {
         const globalStatus = allApproved ? "approved" : allRejected ? "rejected" : "pending";
         console.log("📊 DEBUG: Derived Global Status ->", globalStatus);
 
-        // Hide action buttons and show badge for final statuses
         if (globalStatus === "approved" || globalStatus === "rejected") {
             if (pendingActions) pendingActions.style.display = "none";
             const statusActions = document.querySelector('.status-actions');
             if (statusActions && !statusActions.querySelector('.final-status-badge')) {
+
+                // Add View Remarks button FIRST (before badge) if rejected
+                if (globalStatus === "rejected") {
+                    const remarks = (dcpRows[0]?.remarks || dcpRows[0]?.reason || "No remarks provided.").trim();
+                    const remarksBtn = document.createElement('button');
+                    remarksBtn.className = 'btn-summary-outline';
+                    remarksBtn.textContent = 'View Remarks';
+                    remarksBtn.onclick = () => openRemarksModal(remarks);
+                    statusActions.appendChild(remarksBtn);
+                }
+
+                // Badge appended LAST so order is: View Summary → View Remarks → ✕ Rejected
                 const badge = document.createElement('span');
                 badge.className = `final-status-badge ${globalStatus}`;
                 badge.textContent = globalStatus === "approved" ? "✓ Approved" : "✕ Rejected";
@@ -78,13 +86,11 @@ async function fetchRequestDetails(empId, q, year) {
             }
         }
 
-        // Fill in Headers
         document.getElementById('repName').textContent = data.medrep?.name || "---";
         document.getElementById('repArea').textContent = data.medrep?.area || "---";
 
-        // Display current period in logs for debugging
-        if(data.fiscal_range) {
-             console.log(`📅 DEBUG: Processing Range ${data.fiscal_range.start} to ${data.fiscal_range.end}`);
+        if (data.fiscal_range) {
+            console.log(`📅 DEBUG: Processing Range ${data.fiscal_range.start} to ${data.fiscal_range.end}`);
         }
 
         allCdsRecords = data.cds_list || [];
@@ -246,4 +252,15 @@ function openAcceptModal() {
         if (target) target.textContent = `${name}'s`;
         modal.style.display = 'flex';
     }
+}
+
+function openRemarksModal(remarks) {
+    const repName = document.getElementById('repName').textContent;
+    document.getElementById('rrRepName').textContent = repName;
+    document.getElementById('rrRemarksText').textContent = remarks;
+    document.getElementById('remarksViewModal').style.display = 'flex';
+}
+
+function closeRemarksModal() {
+    document.getElementById('remarksViewModal').style.display = 'none';
 }

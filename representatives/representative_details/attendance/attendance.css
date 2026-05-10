@@ -568,7 +568,102 @@ body {
     opacity: 0.4;
 }
 
-/* --- 8. RESPONSIVE --- */
+/* --- MISSED TIMEOUT: Red dot top-right of date card --- */
+.date-item.has-missed-timeout::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background-color: #FF3B30;
+    border-radius: 50%;
+    z-index: 2;
+}
+
+/* --- MISSED TIMEOUT: Notification pill in sub-nav --- */
+.missed-timeout-notif {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #FFF0F0;
+    border: 1px solid #FFCDD2;
+    border-radius: 20px;
+    padding: 6px 14px 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #C62828;
+    font-weight: 500;
+    transition: background 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+    margin-left: auto;
+    box-shadow: 0 1px 4px rgba(198, 40, 40, 0.12);
+    user-select: none;
+}
+
+.missed-timeout-notif:hover {
+    background: #FFE0E0;
+    box-shadow: 0 2px 8px rgba(198, 40, 40, 0.2);
+}
+
+.mt-notif-icon {
+    font-size: 11px;
+    line-height: 1;
+}
+
+.mt-notif-text {
+    font-size: 13px;
+}
+
+.mt-notif-arrow {
+    font-size: 14px;
+    margin-left: 2px;
+    opacity: 0.7;
+}
+
+/* --- STATUS FILTER DROPDOWN --- */
+.status-filter-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 200px;
+}
+
+.status-filter-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #888;
+}
+
+.status-filter-select {
+    height: 35px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #F1F1F1;
+    font-size: 13px;
+    color: var(--color-text-main);
+    cursor: pointer;
+    outline: none;
+    width: 100%;
+}
+
+.status-filter-select:focus {
+    border-color: var(--color-navy-primary);
+}
+
+/* Filter highlight/dim states */
+.date-item.filter-highlight {
+    outline: 2px solid var(--color-navy-primary);
+    outline-offset: -2px;
+    background-color: #EBF4FF !important;
+}
+
+.date-item.filter-dim {
+    opacity: 0.3;
+}
 
 /* Tablet: ~768px - 1024px */
 @media (max-width: 1024px) {

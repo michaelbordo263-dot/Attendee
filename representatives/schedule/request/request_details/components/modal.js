@@ -54,11 +54,15 @@ async function updateGlobalStatus(newStatus, remarks = null) {
         const result = await API.updateGlobalStatus(payload);
         
         if (result && (result.updated_count > 0 || result.status === "Success")) {
-            alert(`Request successfully ${newStatus}!`);
-            window.location.reload(); 
+            if (newStatus === 'Approved') {
+                showToast('Request Approved', 'success', 'Request has been approved successfully.');
+            } else {
+                showToast('Request Rejected', 'error', 'Request has been rejected.');
+            }
+            setTimeout(() => window.location.reload(), 1800);
         } else {
             const errorMsg = result?.error || "No matching records found for this period.";
-            alert(`Update Failed: ${errorMsg}`);
+            showToast('Update Failed', 'error', errorMsg);
         }
     } catch (err) {
         console.error("Update Error:", err);
@@ -175,10 +179,35 @@ window.switchModal = function(target) {
     }
 };
 
-function showToast(message, type = "info") {
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.textContent = message;
-    toast.className = `toast-visible ${type === 'error' ? 'toast-error' : ''}`;
-    setTimeout(() => { toast.className = 'toast-hidden'; }, 3000);
+function showToast(message, type = "info", subtitle = "") {
+    let toast = document.getElementById('app-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'app-toast';
+        document.body.appendChild(toast);
+    }
+
+    const isSuccess = type === 'success' || type === 'info';
+    const icon = isSuccess ? '&#10003;' : '&#10007;';
+    const title = isSuccess ? 'Request Approved' : 'Request Rejected';
+    const sub = subtitle || message;
+
+    toast.innerHTML = `
+        <div class="toast-body ${isSuccess ? 'success' : 'error'}">
+            <span class="toast-icon-wrap">${icon}</span>
+            <div class="toast-text-wrap">
+                <div class="toast-title">${title}</div>
+                <div class="toast-subtitle">${sub}</div>
+            </div>
+            <button class="toast-close-btn" onclick="this.closest('#app-toast').classList.remove('show')">&times;</button>
+        </div>
+        <div class="toast-progress"></div>
+    `;
+
+    toast.classList.remove('show');
+    void toast.offsetWidth;
+    toast.classList.add('show');
+
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 3200);
 }

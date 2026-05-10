@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentYear = now.getFullYear();
 
     let globalAttendanceLogs = [];
+    let latestMissedTimeoutDate = null; // YYYY-MM-DD of the latest 23:59 time_out
+    let currentStatusFilter = 'all';   // 'all' | 'on_time' | 'absent'
 
     const monthNames = ["January","February","March","April","May","June",
                         "July","August","September","October","November","December"];
@@ -68,6 +70,79 @@ document.addEventListener('DOMContentLoaded', async () => {
         return match ? match[1] : null;
     }
 
+    // --- MISSED TIMEOUT DETECTION ---
+    function isMissedTimeout(log) {
+        if (!log || !log.time_out) return false;
+        return String(log.time_out).startsWith('23:59');
+    }
+
+    function computeLatestMissedTimeout() {
+        const missed = globalAttendanceLogs
+            .filter(log => isMissedTimeout(log))
+            .map(log => getNormalizedItemDate(log))
+            .filter(Boolean)
+            .sort();
+        return missed.length > 0 ? missed[missed.length - 1] : null;
+    }
+
+    // localStorage key per rep — stores the last NOTIFIED date string
+    function getNotifStorageKey() {
+        return `mt_notified_${selectedRepId}`;
+    }
+
+    function getLastNotifiedDate() {
+        try { return localStorage.getItem(getNotifStorageKey()) || null; }
+        catch { return null; }
+    }
+
+    function saveNotifiedDate(dateStr) {
+        try { localStorage.setItem(getNotifStorageKey(), dateStr); }
+        catch {}
+    }
+
+    function showMissedTimeoutNotif() {
+        if (!latestMissedTimeoutDate) return;
+
+        // Only show if latest missed date is newer than last notified date
+        const lastNotified = getLastNotifiedDate();
+        if (lastNotified && lastNotified >= latestMissedTimeoutDate) return;
+
+        // Format date nicely
+        const [y, m, d] = latestMissedTimeoutDate.split('-').map(Number);
+        const dateObj = new Date(y, m - 1, d);
+        const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+        const niceDate = `${monthNames[m - 1]} ${d}, ${y} — ${dayNames[dateObj.getDay()]}`;
+
+        const notif = document.createElement('div');
+        notif.id = 'missedTimeoutNotif';
+        notif.className = 'missed-timeout-notif';
+        notif.innerHTML = `
+            <span class="mt-notif-icon">🔴</span>
+            <span class="mt-notif-text">Unrecorded time-out detected &mdash; <strong>${niceDate}</strong></span>
+            <span class="mt-notif-arrow">→</span>
+        `;
+
+        const subNav = document.querySelector('.rep-sub-nav');
+        if (subNav) subNav.appendChild(notif);
+
+        notif.addEventListener('click', () => {
+            // Permanently dismiss this date via localStorage
+            saveNotifiedDate(latestMissedTimeoutDate);
+            notif.remove();
+            jumpToMissedDate();
+        });
+    }
+
+    function jumpToMissedDate() {
+        if (!latestMissedTimeoutDate) return;
+        const [y, m, d] = latestMissedTimeoutDate.split('-').map(Number);
+        currentMonthIndex = m - 1;
+        currentYear = y;
+        updateNavigationAndRender();
+        const log = globalAttendanceLogs.find(l => getNormalizedItemDate(l) === latestMissedTimeoutDate);
+        setTimeout(() => openDateModal(d, m - 1, y, log), 150);
+    }
+
     // --- LOAD DATA ---
     async function loadAttendance() {
         if (!selectedRepId) {
@@ -118,6 +193,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (calendarGrid) calendarGrid.style.display = 'grid';
             updateNavigationAndRender();
+
+            // --- MISSED TIMEOUT: compute latest & show notif ---
+            latestMissedTimeoutDate = computeLatestMissedTimeout();
+            showMissedTimeoutNotif();
 
         } catch (err) {
             console.error("Attendance Load Error:", err);
@@ -185,6 +264,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (log) {
                 dateDiv.classList.add('has-visit');
+            }
+
+            // Status filter highlighting
+            if (currentStatusFilter !== 'all') {
+                const logStatus = (log?.attendance_status || '').toLowerCase();
+                const matches =
+                    (currentStatusFilter === 'on_time' && (logStatus.includes('on_time') || logStatus.includes('on time') || logStatus.includes('present'))) ||
+                    (currentStatusFilter === 'absent' && logStatus.includes('absent'));
+                if (matches) {
+                    dateDiv.classList.add('filter-highlight');
+                } else {
+                    dateDiv.classList.add('filter-dim');
+                }
+            }
+
+            // Red dot at top-right on ANY date with 23:59 time_out
+            if (log && isMissedTimeout(log)) {
+                dateDiv.classList.add('has-missed-timeout');
             }
 
             dateDiv.onclick = () => openDateModal(d, month, year, log);
@@ -351,6 +448,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateNavigationAndRender();
         }
     };
+
+    // --- STATUS FILTER DROPDOWN ---
+    const statusFilter = document.getElementById('statusFilter');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', () => {
+            currentStatusFilter = statusFilter.value;
+            renderCalendar(currentMonthIndex, currentYear);
+        });
+    }
 
     // Initialize
     await loadAttendance();

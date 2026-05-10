@@ -123,8 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="lbl">Signed</span>
                     </div>
                     <div class="stat">
-                        <span class="val">${rep.visited ?? 0}</span>
-                        <span class="lbl">Visited</span>
+                        <span class="val">${rep.mia ?? 0}</span>
+                        <span class="lbl">MIA</span>
                     </div>
                     <div class="stat stat-missing">
                         <span class="val">${rep.rejected ?? 0}</span>

@@ -38,9 +38,13 @@
                     <button class="btn-pill" id="nextMonth"> > </button>
                 </div>
 
-                <div class="search-input-wrapper">
-                    <input type="text" id="dateSearch" placeholder="- Search date -">
-                    <span class="icon">🔍</span>
+                <div class="status-filter-wrapper">
+                    <label class="status-filter-label" for="statusFilter">Attendance Status</label>
+                    <select id="statusFilter" class="status-filter-select">
+                        <option value="all">All</option>
+                        <option value="on_time">On Time</option>
+                        <option value="absent">Absent</option>
+                    </select>
                 </div>
             </div>
 
@@ -69,6 +73,7 @@
         <img id="expandedImg" src="" alt="Expanded Attendance" style="max-width: 100%; max-height: 100%; border-radius: 4px; box-shadow: 0 0 50px rgba(0,0,0,0.8);">
     </div>
 
+    <script src="../../../common/backend_connection.js"></script>
     <script src="attendace.js"></script>
 </body>
 </html>

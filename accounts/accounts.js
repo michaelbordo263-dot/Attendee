@@ -133,8 +133,9 @@ window.openEdit = function(uuid) {
 
         if (currentUserRole === 'super_admin') {
             if (roleGroup) roleGroup.style.display = 'block';
-            roleInput.disabled = true;
-            roleInput.style.opacity = '0.7';
+            // ✅ FIXED: role is now fully editable for super_admin
+            roleInput.disabled = false;
+            roleInput.style.opacity = '1';
             
             const options = roleInput.querySelectorAll('option');
             options.forEach(opt => opt.style.display = 'block');
@@ -145,13 +146,12 @@ window.openEdit = function(uuid) {
         }
     }
 
-    const editableFields = ['fName', 'mName', 'lName', 'areaInput', 'districtInput'];
     if (currentUserRole === 'super_admin') {
-        editableFields.forEach(fieldId => {
+        // ✅ FIXED: all fields including empId are editable for super_admin
+        ['fName', 'mName', 'lName', 'empId', 'areaInput', 'districtInput'].forEach(fieldId => {
             const el = document.getElementById(fieldId);
             if (el) el.removeAttribute('readonly');
         });
-        document.getElementById('empId')?.setAttribute('readonly', true);
         document.getElementById('statusInput').disabled = false;
     } else {
         ['fName', 'mName', 'lName', 'empId', 'areaInput', 'districtInput'].forEach(fieldId => {
@@ -178,7 +178,6 @@ window.addAccount = function() {
 
     const empIdField = document.getElementById('empId');
     empIdField.value = window.nextGeneratedId || 'EMP0001';
-    // empIdField.setAttribute('readonly', true);
 
     ['fName', 'mName', 'lName', 'areaInput', 'districtInput'].forEach(fieldId => {
         const el = document.getElementById(fieldId);

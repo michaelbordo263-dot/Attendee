@@ -1,14 +1,16 @@
+
 /* =========================================================
-    🔧 CENTRAL API CONNECTION MODULE (GLOBAL VERSION)
+    🔧 CENTRAL API CONNECTION (DUAL ENVIRONMENT)
 ========================================================= */
 
-/* PRODUCTION CONNECTION */
-window.BASE_URL = "https://api.premierpharmaceuticalsmarketingcorporation.cloud/api";
+// DETECT IF RUNNING LOCALLY OR ON CLOUD
+const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 
-/* COMMENT THESE OUT COMPLETELY 
-// window.BASE_URL = "http://s9fl1d5oewnuc80uxtd5mwz3...sslip.io/api";
-// window.BASE_URL = "http://127.0.0.1:5000/api";
-*/
+window.BASE_URL = isLocal 
+    ? "http://127.0.0.1:5000/api" 
+    : "http://s9fl1d5oewnuc80uxtd5mwz3.148.230.102.204.sslip.io/api";
+
+console.log("🚀 CONNECTED TO:", window.BASE_URL);
 
 /* ── UI NOTIFICATIONS ── */
 function showNotification(message, type = 'success') {

@@ -114,3 +114,24 @@ body.login-page {
 .login-btn:hover {
     background-color: #2a4760;
 }
+
+.login-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #333;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.4s;
+    z-index: 2000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    white-space: nowrap;
+}
+
+.login-toast.show {
+    transform: translateX(-50%) translateY(0);
+}

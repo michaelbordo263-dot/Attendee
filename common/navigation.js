@@ -37,6 +37,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Inject shared header
     const headerHTML = `
         <header class="top-nav-bar">
+            <div class="nav-logo-section">
+                <div class="nav-logo-link">
+                    <img src="../common/assets/premier_logo_clean.png" alt="Premier Pharmaceuticals Marketing Corp." class="nav-logo-img" />
+                </div>
+            </div>
             <nav class="nav-container">
                 <a href="../dashboard/dashboard.html" class="nav-item">Dashboard</a>
                 <a href="../representatives/representatives.html" class="nav-item">Representatives</a>

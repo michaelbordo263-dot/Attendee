@@ -3,7 +3,6 @@
     🔧 CENTRAL API CONNECTION (DUAL ENVIRONMENT)
 ========================================================= */
 
-// DETECT IF RUNNING LOCALLY OR ON CLOUD
 const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 
 window.BASE_URL = isLocal 

@@ -2,13 +2,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginForm = document.getElementById('loginForm');
     const forceChangeForm = document.getElementById('forceChangeForm');
 
+    /* ── Toast Helper ── */
+    function showToast(msg) {
+        const t = document.getElementById('loginToast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
     // --- 0. PRE-FLIGHT CHECK ---
     try {
         const response = await fetch(window.BASE_URL);
         if (!response.ok) console.warn("Backend is reachable but returned an error.");
     } catch (err) {
         console.error("Backend unreachable. Ensure your Flask server is running.");
-        alert("Cannot connect to the server. Please ensure the Python backend is running.");
+        showToast("Cannot connect to the server.");
     }
 
     // --- 1. Password Visibility Toggles ---
@@ -37,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const pass = document.getElementById('password').value;
 
             if (!empId || !pass) {
-                alert("Please enter both Employee ID and Password.");
+                showToast("Please enter both Employee ID and Password.");
                 return;
             }
 
@@ -50,13 +58,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // RULE: Admin roles only
                     const allowedRoles = ['admin', 'super_admin'];
                     if (!allowedRoles.includes(user.roles)) {
-                        alert("Access Denied: This portal is for Administrators only.");
+                        showToast("Access Denied: Administrators only.");
+                        return;
+                    }
+
+                    // RULE: Block inactive accounts
+                    if (user.status === 'inactive') {
+                        showToast("Access Denied: Your account is inactive.");
                         return;
                     }
 
                     // RULE: Handle Forced Password Change
                     if (user.is_New === true) {
-                        // ✅ CRITICAL: Save the UUID temporarily to use for the update route
                         localStorage.setItem('temp_user_id', user.id);
 
                         const hiddenUser = document.getElementById('forceUsername');
@@ -69,11 +82,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     saveSessionAndRedirect(result);
                 } else {
-                    alert(result?.message || result?.error || "Invalid Credentials");
+                    showToast(result?.message || result?.error || "Invalid Credentials");
                 }
             } catch (err) {
                 console.error("Connection error:", err);
-                alert("Connection failed. Ensure your Flask backend is running on port 5000.");
+                showToast("Connection failed. Check your backend.");
             }
         });
     }
@@ -83,48 +96,45 @@ document.addEventListener('DOMContentLoaded', async () => {
         forceChangeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // ✅ We pull the UUID saved during the login attempt
             const userId = localStorage.getItem('temp_user_id'); 
             const currentPass = document.getElementById('password').value; 
             const newPass = document.getElementById('newPassword').value;
             const confirmPass = document.getElementById('confirmPassword').value;
 
-            // Basic validation
             if (!userId) {
-                alert("Session expired. Please log in again.");
-                window.location.reload();
+                showToast("Session expired. Please log in again.");
+                setTimeout(() => window.location.reload(), 2600);
                 return;
             }
 
             if (newPass.length < 8) {
-                alert("Password must be at least 8 characters long.");
+                showToast("Password must be at least 8 characters.");
                 return;
             }
 
             if (newPass !== confirmPass) {
-                alert("Passwords do not match!");
+                showToast("Passwords do not match!");
                 return;
             }
 
             if (newPass === currentPass) {
-                alert("New password cannot be the same as the temporary password.");
+                showToast("New password cannot be the same as the current one.");
                 return;
             }
 
             try {
-                // ✅ Call API using the UUID (userId) instead of just the Employee ID string
                 const result = await API.changePassword(userId, currentPass, newPass);
 
                 if (result && !result.error) {
-                    alert("Password updated successfully! Please login with your new password.");
-                    localStorage.removeItem('temp_user_id'); // Clean up
-                    window.location.reload(); 
+                    showToast("Password updated! Please login with your new password.");
+                    localStorage.removeItem('temp_user_id');
+                    setTimeout(() => window.location.reload(), 2600);
                 } else {
-                    alert(result.error || "Failed to update password.");
+                    showToast(result.error || "Failed to update password.");
                 }
             } catch (err) {
                 console.error("Update error:", err);
-                alert("An error occurred while updating the password.");
+                showToast("An error occurred. Please try again.");
             }
         });
     }

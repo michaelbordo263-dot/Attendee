@@ -75,17 +75,37 @@
                     <div class="form-grid">
                         <div class="field-group">
                             <label>First Name</label>
-                            <input type="text" id="fName" required placeholder="Enter first name">
+                            <input type="text" id="fName" required placeholder="Enter first name" autocapitalize="words" style="text-transform: capitalize;">
+                        </div>
+
+                        <div class="field-group">
+                            <label>Middle Name</label>
+                            <input type="text" id="mName" placeholder="Enter middle name" autocapitalize="words" style="text-transform: capitalize;">
                         </div>
 
                         <div class="field-group">
                             <label>Last Name</label>
-                            <input type="text" id="lName" required placeholder="Enter last name">
+                            <input type="text" id="lName" required placeholder="Enter last name" autocapitalize="words" style="text-transform: capitalize;">
                         </div>
 
                         <div class="field-group">
                             <label>Employee ID</label>
-                            <input type="text" id="empId" required placeholder="EMP 0000">
+                            <input type="text" id="empId" required placeholder="EMP0000">
+                        </div>
+
+                        <div class="field-group">
+                            <label>District</label>
+                            <input type="text" id="districtInput" placeholder="Enter district" autocapitalize="words" style="text-transform: capitalize;">
+                        </div>
+
+                        <div class="field-group">
+                            <label>Area / Assignment</label>
+                            <input type="text" id="areaInput" placeholder="Enter area/assignment" autocapitalize="words" style="text-transform: capitalize;">
+                        </div>
+
+                        <div class="field-group">
+                            <label>Constant Time</label>
+                            <input type="time" id="timeInput" value="09:30" readonly>
                         </div>
 
                         <div class="field-group">
@@ -95,21 +115,7 @@
                                 <option value="inactive">Inactive</option>
                             </select>
                         </div>
-                        
-                        <div class="field-group">
-                            <label>District</label>
-                            <input type="text" id="districtInput" required placeholder="Enter district">
-                        </div>
-                        <div class="field-group">
-                            <label>Area / Assignment</label>
-                            <input type="text" id="areaInput" required placeholder="e.g. North, South">
-                        </div>
 
-                        <div class="field-group full-width">
-                            <label>Constant Time</label>
-                            <input type="time" id="timeInput">
-                        </div>
-                        
                         <!-- Reset Password Trigger -->
                         <div class="field-group full-width" id="resetBtnContainer" style="display: none; margin-bottom: 10px;">
                             <button type="button" id="resetPasswordBtn" onclick="triggerForceReset()" 
@@ -130,6 +136,44 @@
 
                     <button type="submit" class="save-btn" id="submitBtn">Save Changes</button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Confirmation Modal ── -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-box" style="width: 400px;">
+            <div class="modal-header">
+                <h2 id="confirmTitle">Confirm Action</h2>
+            </div>
+            <div class="modal-body-pad" style="text-align: center;">
+                <p id="confirmMessage" style="font-size: 15px; color: #444; margin-bottom: 24px;"></p>
+                <div style="display: flex; gap: 12px;">
+                    <button onclick="closeConfirmModal()" 
+                        style="flex:1; padding: 12px; border-radius: 10px; border: 1.5px solid #d0d8e4; background: white; font-weight: 700; color: #666; cursor: pointer; font-size: 15px;">
+                        Cancel
+                    </button>
+                    <button id="confirmOkBtn"
+                        style="flex:1; padding: 12px; border-radius: 10px; border: none; background: #355872; color: white; font-weight: 700; cursor: pointer; font-size: 15px;">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Alert Modal ── -->
+    <div id="alertModal" class="modal-overlay">
+        <div class="modal-box" style="width: 400px;">
+            <div class="modal-header">
+                <h2 id="alertTitle">Notice</h2>
+            </div>
+            <div class="modal-body-pad" style="text-align: center;">
+                <p id="alertMessage" style="font-size: 15px; color: #444; margin-bottom: 24px;"></p>
+                <button id="alertOkBtn"
+                    style="width: 100%; padding: 12px; border-radius: 10px; border: none; background: #355872; color: white; font-weight: 700; cursor: pointer; font-size: 15px;">
+                    OK
+                </button>
             </div>
         </div>
     </div>

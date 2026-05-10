@@ -6,7 +6,7 @@
    CSS Variables & Reset
    ---------------------------------------------------------- */
 :root {
-    --primary-navy:     #1a3a5a;
+    --primary-navy:     #355872;
     --secondary-navy:   #355872;
     --card-bg:          #ffffff;
     --page-bg:          #eef2f6;
@@ -35,55 +35,6 @@ html, body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--page-bg);
     color: var(--text-dark);
-}
-
-/* ----------------------------------------------------------
-   TOP NAVIGATION BAR
-   ---------------------------------------------------------- */
-.top-nav {
-    background: var(--primary-navy);
-    padding: 12px 30px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.nav-links {
-    display: flex;
-    gap: 6px;
-}
-
-.nav-link {
-    background: none;
-    border: none;
-    color: #b0c4d4;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 8px 22px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-}
-
-.nav-link:hover {
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-}
-
-.nav-link.active {
-    background: #4caf81;
-    color: #ffffff;
-}
-
-.nav-avatar {
-    width: 38px;
-    height: 38px;
-    background: #ffffff;
-    border-radius: 50%;
-    flex-shrink: 0;
 }
 
 /* ----------------------------------------------------------

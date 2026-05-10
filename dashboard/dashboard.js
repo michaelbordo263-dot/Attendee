@@ -170,18 +170,14 @@ window.changeQuarter = (dir) => {
     const yEl = document.getElementById('yLabel');
     if (qEl) qEl.textContent = `Q${schedQuarter}`;
     if (yEl) yEl.textContent = schedYear;
-    loadSchedulesFromAPI();
-    loadUnusualReports();
-    loadDashboardStats();
+    loadSchedulesFromAPI(); // Only reload the schedule list, not the whole dashboard
 };
 
 window.changeYear = (dir) => {
     schedYear += dir;
     const yEl = document.getElementById('yLabel');
     if (yEl) yEl.textContent = schedYear;
-    loadSchedulesFromAPI();
-    loadUnusualReports();
-    loadDashboardStats();
+    loadSchedulesFromAPI(); // Only reload the schedule list, not the whole dashboard
 };
 window.openProductsModal = () => openModal('productsModal');
 window.openUnusualModal = () => openModal('unusualModal');
@@ -327,17 +323,29 @@ function _syncMissedLabels() {
     if (yEl) yEl.textContent = missedYear;
 }
 
-window.missedChangeMonth = (dir) => {
+window.missedChangeMonth = async (dir) => {
+    // 1. Update the state
     missedMonth += dir;
     if (missedMonth < 1)  { missedMonth = 12; missedYear--; }
     if (missedMonth > 12) { missedMonth = 1;  missedYear++; }
+    
+    // 2. Update the modal labels (March 2026)
     _syncMissedLabels();
+
+    // 3. 🔥 THE TRIGGER: Fetch fresh data for this specific month from Python
+    // We pass month and year directly to bypass any "Quarterly" restrictions
+    await loadUnusualReports(); 
+
+    // 4. 🔥 THE REFRESH: Update the list view with the new data
     _renderMissedList();
 };
 
-window.missedChangeYear = (dir) => {
+window.missedChangeYear = async (dir) => {
     missedYear += dir;
     _syncMissedLabels();
+
+    // Re-fetch and re-render for the new year
+    await loadUnusualReports();
     _renderMissedList();
 };
 
@@ -352,46 +360,75 @@ function _isMissed(dateStr) {
     return false; // current or future month → still Pending
 }
 
+/**
+ * Renders the list of representatives with missed calls.
+ * This version splits the data processing from the HTML generation
+ * to ensure that March (and any other month) is correctly calculated.
+ */
+/**
+ * Renders the list of representatives with missed calls.
+ * FILTER: Only counts months that have fully ended. 
+ * If it's currently May, May will show 0 results.
+ */
 function _renderMissedList() {
     const listContainer = document.getElementById('unusualList');
     const countEl       = document.getElementById('unusualCount');
     if (!listContainer) return;
 
-    const isPastMonth = _isMissed();
+    // Get today's real-time month and year
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1; // 1-12
+    const currentYear  = now.getFullYear();
 
-    // 1. Process and filter the data based on current month/year selection
+    // ── STEP 1: DATA PROCESSING with "Current Month Lock" ──
     const filtered = unusualReports.map(rep => {
+        // LOCK: If the user selected the current month/year, we return 0 misses.
+        // This ensures May results stay empty until June 1st.
+        const isCurrentMonth = (missedMonth === currentMonth && missedYear === currentYear);
+        const isFutureMonth  = (missedYear > currentYear) || (missedYear === currentYear && missedMonth > currentMonth);
+
+        if (isCurrentMonth || isFutureMonth) {
+            return { ...rep, monthMissed: 0, monthDetails: [] };
+        }
+
+        // Otherwise, process past months (March, April, etc.) normally
         const matchingDetails = (rep.details || []).filter(d => {
             if (!d.date_missed) return false;
             const dt = new Date(d.date_missed);
             return (dt.getMonth() + 1) === missedMonth && dt.getFullYear() === missedYear;
         });
-        // Attach the specific month context to the object
-        return { ...rep, monthDetails: matchingDetails, monthMissed: matchingDetails.length };
-    }).filter(rep => {
-        if (!isPastMonth) return false; 
-        return rep.monthMissed > 0;
-    });
 
-    // 2. Update the status/count message
+        return { 
+            ...rep, 
+            monthMissed: matchingDetails.length,
+            monthDetails: matchingDetails 
+        };
+    }).filter(rep => rep.monthMissed > 0); 
+
+    // ── STEP 2: UI UPDATES ──
     if (countEl) {
-        countEl.textContent = isPastMonth
-            ? `Showing ${filtered.length} representative${filtered.length !== 1 ? 's' : ''}`
-            : `No missed calls recorded yet for ${MONTH_NAMES[missedMonth - 1]} ${missedYear} — month not yet completed.`;
+        countEl.textContent = `Showing ${filtered.length} representative${filtered.length !== 1 ? 's' : ''}`;
     }
 
+    // ── STEP 3: HANDLE EMPTY STATE ──
     if (filtered.length === 0) {
+        let message = `No missed calls recorded for ${MONTH_NAMES[missedMonth - 1]} ${missedYear}.`;
+        
+        // Custom message if the user is looking at the current month
+        if (missedMonth === currentMonth && missedYear === currentYear) {
+            message = `Reports for ${MONTH_NAMES[missedMonth - 1]} will be available once the month ends.`;
+        }
+
         listContainer.innerHTML = `
             <div style="padding:40px; text-align:center; color:#aab0be;">
-                <p>${isPastMonth ? 'No missed calls for ' + MONTH_NAMES[missedMonth-1] + ' ' + missedYear + '.' : ''}</p>
+                <p>${message}</p>
             </div>`;
         return;
     }
 
-    // 3. Render cards using data-index to avoid syntax errors from quotes
+    // ── STEP 4: HTML GENERATION ──
     listContainer.innerHTML = filtered.map(rep => {
         const initials = getInitials(rep.name);
-        // Find the original index in the main unusualReports array
         const originalIndex = unusualReports.findIndex(r => r.name === rep.name);
         
         return `
@@ -406,7 +443,7 @@ function _renderMissedList() {
             </div>`;
     }).join('');
 
-    // 4. Delegated Click Detector for the Modal
+    // ── STEP 5: CLICK HANDLER ──
     listContainer.onclick = (e) => {
         const card = e.target.closest('.unusual-modal-clickable');
         if (!card) return;
@@ -415,20 +452,17 @@ function _renderMissedList() {
         const repData = unusualReports[idx];
         
         if (repData) {
-            // Re-calculate the specific month's details before opening the modal
-            const matchingDetails = (repData.details || []).filter(d => {
-                if (!d.date_missed) return false;
+            // Re-filter details for the detail view context
+            const currentMonthDetails = (repData.details || []).filter(d => {
                 const dt = new Date(d.date_missed);
                 return (dt.getMonth() + 1) === missedMonth && dt.getFullYear() === missedYear;
             });
             
-            const repWithContext = { 
+            openUnusualDetail({ 
                 ...repData, 
-                monthDetails: matchingDetails,
-                monthMissed: matchingDetails.length 
-            };
-            
-            openUnusualDetail(repWithContext);
+                details: currentMonthDetails, 
+                total_missed: currentMonthDetails.length 
+            });
         }
     };
 }
@@ -474,13 +508,9 @@ async function loadPerformance() {
     if (!container) return;
 
     container.innerHTML = (Array.isArray(data) ? data : []).map(rep => {
-        const repId = rep.uuid || rep.uui || rep.id;
-        const name = rep.name || 'Unknown';
         const pct = Math.floor(rep.progress || 0);
         return `
-        <div class="perf-item" 
-             style="cursor: pointer;" 
-             onclick="window.location.href='../performance/performance_details/performance_details.html?id=${encodeURIComponent(repId)}&name=${encodeURIComponent(name)}'">
+        <div class="perf-item">
             <div class="perf-avatar">${getInitials(rep.name || '?')}</div>
             <div class="perf-info">
                 <span class="perf-name">${rep.name || 'Unknown'}</span>
@@ -709,36 +739,77 @@ function renderScheduleList(data) {
 
 // ── UNUSUAL ────────────────────────────────────────
 async function loadUnusualReports() {
-    const url = `${BASE_URL}/dashboard/unusual?q=${schedQuarter}&year=${schedYear}`;
-    console.log("🔍 Fetching Unusual Reports:", url);
+    const url = `${BASE_URL}/dashboard/unusual?month=${missedMonth}&year=${missedYear}`;
+    console.log("🔍 Fetching Month-Specific Reports:", url);
 
     try {
-        const data = await apiFetch(url);
+        const response = await fetch(url);
+        const data = await response.json();
 
         unusualReports = Array.isArray(data) ? data : [];
 
-        console.log("📥 RAW UNUSUAL DATA:", unusualReports);
-
-        updateUnusualUI();
+        if (typeof updateUnusualUI === 'function') {
+            updateUnusualUI();
+        }
 
     } catch (err) {
         console.error("❌ Unusual Load Error:", err);
         unusualReports = [];
-        updateUnusualUI();
     }
 }
 
+window.missedChangeMonth = async (dir) => {
+    missedMonth += dir;
+    if (missedMonth < 1)  { missedMonth = 12; missedYear--; }
+    if (missedMonth > 12) { missedMonth = 1;  missedYear++; }
+
+    _syncMissedLabels();
+    await loadUnusualReports();
+    _renderMissedList();
+};
 
 // ── UPDATED UNUSUAL UI RENDERER ──────────────────
 // =====================================
 // 3. MISSED CALL REPORTS (UNUSUAL)
 // =====================================
 
+/**
+ * Renders the "Missed Call Reports" list on the main dashboard panel.
+ * This version syncs with the modal by filtering out the current month (May)
+ * and only showing totals for months that have fully completed.
+ */
 function updateUnusualUI() {
     const panel = document.getElementById('unusualPanelBody');
     if (!panel) return;
 
-    if (!unusualReports || unusualReports.length === 0) {
+    // ── STEP 1: DEFINE THE LOCK CONTEXT ──
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1; // 5 (May)
+    const currentYear  = now.getFullYear();  // 2026
+
+    // ── STEP 2: PROCESS DATA (The Sync Gate) ──
+    // We map the raw data to calculate a "Synced Total" that excludes May.
+    const processedReports = unusualReports.map(rep => {
+        const pastDetails = (rep.details || []).filter(d => {
+            if (!d.date_missed) return false;
+            const dt = new Date(d.date_missed);
+            const m = dt.getMonth() + 1;
+            const y = dt.getFullYear();
+
+            // 🔥 THE GATE: Only include records if the month has ended
+            if (y > currentYear) return false;
+            if (y === currentYear && m >= currentMonth) return false;
+
+            return true;
+        });
+
+        return {
+            ...rep,
+            syncedTotal: pastDetails.length
+        };
+    });
+
+    if (!processedReports || processedReports.length === 0) {
         panel.innerHTML = `
             <div style="padding:40px; text-align:center; color:#888;">
                 <p>No approved schedules found for Q${schedQuarter}</p>
@@ -746,18 +817,21 @@ function updateUnusualUI() {
         return;
     }
 
-    const withMisses = unusualReports.filter(r => (r.total_missed || 0) > 0);
-    const allClear   = unusualReports.filter(r => (r.total_missed || 0) === 0);
+    // Separate into those with misses and those without based on the SYNCED total
+    const withMisses = processedReports.filter(r => r.syncedTotal > 0);
+    const allClear   = processedReports.filter(r => r.syncedTotal === 0);
 
     let html = '';
 
-    // Robust card renderer using data-index instead of JSON strings in attributes
+    // ── STEP 3: RENDERER HELPER ──
     const renderCard = (r, isClear) => {
         const initials = getInitials(r.name);
-        const originalIdx = unusualReports.indexOf(r);
+        const originalIdx = unusualReports.findIndex(orig => orig.name === r.name);
+        
+        // Match the colors and styles from your dashboard
         const badgeStyle = isClear ? 'background:#dcfce7; color:#166534; border:1px solid #bbf7d0;' : '';
         const badgeClass = isClear ? '' : 'badge--red';
-        const badgeText = isClear ? 'No misses' : `${r.total_missed} missed calls`;
+        const badgeText  = isClear ? 'No misses' : `${r.syncedTotal} missed calls`;
         const avatarStyle = isClear ? 'background:#e2e8f0; color:#64748b;' : '';
 
         return `
@@ -773,7 +847,10 @@ function updateUnusualUI() {
         `;
     };
 
+    // ── STEP 4: ASSEMBLE THE LIST ──
     if (withMisses.length > 0) {
+        // Sort by highest misses to match the view in your screenshot
+        withMisses.sort((a, b) => b.syncedTotal - a.syncedTotal);
         html += withMisses.map(r => renderCard(r, false)).join('');
     }
 
@@ -784,14 +861,14 @@ function updateUnusualUI() {
 
     panel.innerHTML = html;
 
-    // Use a single delegated click listener to handle names with quotes correctly
-    panel.onclick = (e) => {
-        const card = e.target.closest('.unusual-panel-card');
-        if (!card) return;
-        const idx = card.getAttribute('data-index');
-        const rep = unusualReports[idx];
-        if (rep) openUnusualDetail(rep);
-    };
+    // ── STEP 5: ATTACH CLICK EVENTS ──
+    panel.querySelectorAll('.unusual-panel-card').forEach(card => {
+        card.onclick = () => {
+            const idx = card.getAttribute('data-index');
+            const rep = unusualReports[idx];
+            if (rep) openUnusualDetail(rep);
+        };
+    });
 }
 
 function openUnusualDetail(rep) {

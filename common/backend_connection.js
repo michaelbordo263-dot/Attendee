@@ -8,7 +8,7 @@ const isLocal = window.location.hostname === "127.0.0.1" || window.location.host
 
 window.BASE_URL = isLocal 
     ? "http://127.0.0.1:5000/api" 
-    : "http://s9fl1d5oewnuc80uxtd5mwz3.148.230.102.204.sslip.io/api";
+    : "https://api.premierpharmaceuticalsmarketingcorporation.cloud/api";
 
 console.log("🚀 CONNECTED TO:", window.BASE_URL);
 

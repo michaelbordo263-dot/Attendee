@@ -1,15 +1,18 @@
-
 /* =========================================================
-    🔧 CENTRAL API CONNECTION (DUAL ENVIRONMENT)
+    🔧 CENTRAL API CONNECTION (TOGGLE SWITCH)
 ========================================================= */
 
-const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+// --- 🟢 STEP 1: CHOOSE YOUR ENVIRONMENT ---
+// UNCOMMENT the one you want to use right now:
 
-window.BASE_URL = isLocal 
-    ? "http://127.0.0.1:5000/api" 
-    : "https://api.premierpharmaceuticalsmarketingcorporation.cloud/api";
+// const ENV_URL = "http://127.0.0.1:5000/api"; // LOCAL (Development)
+const ENV_URL = "https://api.premierpharmaceuticalsmarketingcorporation.cloud/api"; // COOLIFY (Production)
 
-console.log("🚀 CONNECTED TO:", window.BASE_URL);
+
+// --- 🔵 STEP 2: GLOBAL ASSIGNMENT ---
+window.BASE_URL = ENV_URL;
+
+console.log("🚀 API SOURCE SET TO:", window.BASE_URL);
 
 /* ── UI NOTIFICATIONS ── */
 function showNotification(message, type = 'success') {

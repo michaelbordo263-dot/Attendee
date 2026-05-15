@@ -41,6 +41,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // --- LATE CHECK HELPER ---
+    // Returns true if the raw timetz string is 9:31 AM or later
+    function isLateTimeIn(timetz) {
+        if (!timetz || timetz === '--:--') return false;
+        const match = String(timetz).match(/^(\d{2}):(\d{2})/);
+        if (!match) return false;
+        const hours = parseInt(match[1]);
+        const minutes = parseInt(match[2]);
+        // Late = 9:31 AM (09:31) or later
+        return (hours > 9) || (hours === 9 && minutes >= 31);
+    }
+
     // --- TIMEZONE HELPER ---
     function formatLocalTime(timetz) {
         if (!timetz || timetz === '--:--') return '--:--';
@@ -269,9 +281,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Status filter highlighting
             if (currentStatusFilter !== 'all') {
                 const logStatus = (log?.attendance_status || '').toLowerCase();
+                const isOnTime = logStatus.includes('on_time') || logStatus.includes('on time') || logStatus.includes('present');
+                const isLate = isOnTime && isLateTimeIn(log?.time_in);
+                const isAbsent = logStatus.includes('absent');
+
                 const matches =
-                    (currentStatusFilter === 'on_time' && (logStatus.includes('on_time') || logStatus.includes('on time') || logStatus.includes('present'))) ||
-                    (currentStatusFilter === 'absent' && logStatus.includes('absent'));
+                    (currentStatusFilter === 'on_time' && isOnTime && !isLate) ||
+                    (currentStatusFilter === 'late'    && isLate) ||
+                    (currentStatusFilter === 'absent'  && isAbsent);
+
                 if (matches) {
                     dateDiv.classList.add('filter-highlight');
                 } else {
@@ -310,7 +328,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         let badgeClass = 'badge-nolog';
         let statusLabel = 'No Log';
         if (rawStatus.includes('on_time') || rawStatus.includes('on time') || rawStatus.includes('present')) {
-            badgeClass = 'badge-present'; statusLabel = 'On Time';
+            // Override to LATE if time_in is 9:31 AM or later
+            if (isLateTimeIn(log?.time_in)) {
+                badgeClass = 'badge-late'; statusLabel = 'Late';
+            } else {
+                badgeClass = 'badge-present'; statusLabel = 'On Time';
+            }
         } else if (rawStatus.includes('late')) {
             badgeClass = 'badge-late'; statusLabel = 'Late';
         } else if (rawStatus.includes('absent')) {

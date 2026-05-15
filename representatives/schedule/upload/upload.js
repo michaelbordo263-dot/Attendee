@@ -461,6 +461,13 @@ async function uploadMasterlist() {
         const data = await res.json();
         console.log("CDS RESULT:", data);
 
+        // Handle WrongFile response
+        if (data.status === "WrongFile") {
+            showStatusModal("Wrong File Detected", data.message, '🚫');
+            addLogEntry(file.name, "Error", data.message);
+            return;
+        }
+
         const hasChanges = (data.inserted_count > 0 || data.updated_count > 0);
 
         if (hasChanges) {

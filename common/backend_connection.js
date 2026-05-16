@@ -5,8 +5,8 @@
 // --- 🟢 STEP 1: CHOOSE YOUR ENVIRONMENT ---
 // UNCOMMENT the one you want to use right now:
 
-const ENV_URL = "http://127.0.0.1:5000/api"; // LOCAL (Development)
-//  const ENV_URL = "https://api.premierpharmaceuticalsmarketingcorporation.cloud/api"; // COOLIFY (Production)
+//  const ENV_URL = "http://127.0.0.1:5000/api"; // LOCAL (Development)
+const ENV_URL = "https://api.premierpharmaceuticalsmarketingcorporation.cloud/api"; // COOLIFY (Production)
 
 
 // --- 🔵 STEP 2: GLOBAL ASSIGNMENT ---

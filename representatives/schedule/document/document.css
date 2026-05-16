@@ -105,6 +105,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    padding-bottom: 36px;  /* ADD THIS */
 }
 
 /* Panels fill remaining vertical space inside the right card */
@@ -220,6 +221,11 @@ body {
 .radio-custom { display: none; }
 
 .radio-label.active-signed {
+    background: #e8f5ee;
+    border-color: #2da366;
+    color: #1a7a48;
+}
+.radio-label.active-selfie {
     background: #e8f5ee;
     border-color: #2da366;
     color: #1a7a48;

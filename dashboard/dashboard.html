@@ -4,6 +4,7 @@
     <link rel="stylesheet" href="dashboard.css">
     <link rel="stylesheet" href="../common/global.css">
     <link rel="stylesheet" href="../representatives/schedule/request/request_details/components/modal.css">
+    <link rel="stylesheet" href="attendance_card/attendance_card.css">
     <script src="../common/navigation.js"></script>
     <style>
         * { scrollbar-width: none !important; -ms-overflow-style: none !important; }
@@ -98,12 +99,22 @@
                 <div class="stat-value" id="totalProductsValue">0</div>
             </div>
 
-            <div class="stat-card stat-card--date">
-                <div class="stat-date-day" id="clock-day">--</div>
-                <div class="stat-date-month" id="clock-month">--</div>
-                <div class="stat-date-time" id="clock-time">--</div>
+            <div class="stat-card" id="attendance-card" onclick="openAttendanceModal()">
+                <div>
+                    <div class="stat-label">Attendance Today</div>
+                    <div class="stat-sub" id="attendance-sub-label">--</div>
+                </div>
+                <div id="attendance-card-counts" style="display:flex; gap:16px; margin-top:8px;">
+                    <div style="text-align:center;">
+                        <div class="stat-value" id="att-present-count" style="color:#166534;">--</div>
+                        <div style="font-size:11px; color:#888;">Present</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div class="stat-value" id="att-absent-count" style="color:#991b1b;">--</div>
+                        <div style="font-size:11px; color:#888;">Absent</div>
+                    </div>
+                </div>
             </div>
-
         </div>
 
         <!-- PANELS -->
@@ -441,6 +452,7 @@
 </div>
 
         <div id="dash-app-toast"></div>
+        <script src="attendance_card/attendance_card.js"></script>
 
 </body>
 </html>

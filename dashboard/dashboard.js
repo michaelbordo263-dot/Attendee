@@ -80,35 +80,6 @@ function getInitials(name = '') {
         .slice(0, 2);
 }
 
-
-// ── CLOCK ──────────────────────────────────────────
-function updateClock() {
-    const now = new Date();
-
-    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const months = [
-        'January','February','March','April','May','June',
-        'July','August','September','October','November','December'
-    ];
-
-    document.getElementById('clock-day').textContent = now.getDate();
-
-    document.getElementById('clock-month').textContent =
-        `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getFullYear()}`;
-
-    let h = now.getHours();
-    let m = now.getMinutes();
-    const ampm = h >= 12 ? 'PM' : 'AM';
-
-    h = h % 12 || 12;
-
-    document.getElementById('clock-time').textContent =
-        `${h}:${m.toString().padStart(2,'0')} ${ampm}`;
-}
-
-updateClock();
-setInterval(updateClock, 1000);
-
 // ── MODAL ──────────────────────────────────────────
 function openModal(id) {
     const modal = document.getElementById(id);
@@ -835,7 +806,7 @@ function updateUnusualUI() {
         const avatarStyle = isClear ? 'background:#e2e8f0; color:#64748b;' : '';
 
         return `
-            <div class="report-item unusual-panel-card" data-index="${originalIdx}" style="cursor:pointer;">
+            <div class="report-item unusual-panel-card" data-index="${originalIdx}">
                 <div class="perf-avatar" style="${avatarStyle}">${initials}</div>
                 <div class="report-info">
                     <span class="perf-name">${r.name}</span>
@@ -858,17 +829,7 @@ function updateUnusualUI() {
         html += `<div style="padding: 8px 16px; font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; background: #f8fafc; border-top: 1px solid #f1f5f9;">ALL CLEAR</div>`;
         html += allClear.map(r => renderCard(r, true)).join('');
     }
-
     panel.innerHTML = html;
-
-    // ── STEP 5: ATTACH CLICK EVENTS ──
-    panel.querySelectorAll('.unusual-panel-card').forEach(card => {
-        card.onclick = () => {
-            const idx = card.getAttribute('data-index');
-            const rep = unusualReports[idx];
-            if (rep) openUnusualDetail(rep);
-        };
-    });
 }
 
 function openUnusualDetail(rep) {
@@ -1058,7 +1019,10 @@ function _renderDetailList(listContainer, details) {
     const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
     const grouped = details.reduce((acc, d) => {
-        const name = d.display_name || 'Unknown';
+        const raw = d.display_name || 'Unknown';
+        const name = raw.startsWith('Dr.')
+            ? 'Dr. ' + raw.slice(3).trim().replace(/\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+            : raw.replace(/\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
         if (!acc[name]) acc[name] = [];
         acc[name].push(d);
         return acc;

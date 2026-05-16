@@ -179,10 +179,10 @@ html, body {
 .perf-item {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 10px 0;
-    border-bottom: 1px solid #f0f4f8;
+    gap: 12px;
+    padding: 10px 16px;
 }
+
 .perf-item:last-child { border-bottom: none; }
 
 .perf-avatar {
@@ -200,15 +200,15 @@ html, body {
 }
 
 .perf-info {
-    display: flex;
-    flex-direction: column;
-    min-width: 140px;
+    flex: 1;             /* name area takes remaining space */
+    min-width: 0;        /* allows text truncation if needed */
 }
 
 .perf-name {
-    font-size: 14px;
-    font-weight: 700;
-    color: #1e2d3d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;   /* long names get "..." instead of pushing */
+    display: block;
 }
 
 .perf-area {
@@ -218,17 +218,18 @@ html, body {
 }
 
 .perf-bar-wrap {
-    flex: 1;
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    gap: 8px;
+    width: 420px;        
+    flex-shrink: 0;      
 }
 
 .perf-bar-track {
-    width: 100%;
-    background: #f0f4f8;
-    border-radius: 10px;
-    height: 9px;
+    flex: 1;             /* bar track fills remaining space */
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 99px;
     overflow: hidden;
 }
 
@@ -239,9 +240,12 @@ html, body {
 }
 
 .perf-pct {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #4caf50;
+    width: 36px;         /* fixed width so % label never shifts */
+    text-align: right;
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
 }
 
 /* ── UNUSUAL REPORT LIST ── */

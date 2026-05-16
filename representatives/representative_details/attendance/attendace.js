@@ -374,13 +374,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <span class="modal-info-label">Time Out</span>
                         <span class="modal-info-value">${log?.time_out ? formatLocalTime(log.time_out) : '--:--'}</span>
                     </div>
-                    <div class="modal-info-row">
+                    <div class="modal-info-row align-top">
                         <span class="modal-info-label">Tagged Location</span>
                         <span class="modal-info-value" style="font-size:12px;">
                             ${log?.tagged_location
                                 ? `<a href="${mapBase}${taggedLocQuery}" target="_blank" style="color:#007bff;text-decoration:none;">
-                                       📍 ${log.tagged_location}
-                                   </a>`
+                                    📍 ${log.tagged_location}
+                                </a>`
                                 : 'N/A'}
                         </span>
                     </div>

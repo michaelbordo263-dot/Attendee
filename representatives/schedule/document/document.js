@@ -228,14 +228,16 @@ function buildItemGrid(containerId, items) {
 }
 
 function renderVisitLog(status, isPharmacy = false) {
-    const uiStatus = (status === 'approved' || status === 'signed') ? 'signed' : status;
+    const uiStatus = (status === 'approved' || status === 'signed') ? 'signed' 
+                   : status === 'selfie' ? 'selfie' 
+                   : status;
     const radioName = isPharmacy ? 'visitStatusPh' : 'visitStatus';
     const radio = document.querySelector(`input[name="${radioName}"][value="${uiStatus}"]`);
 
     const scope = isPharmacy ? document.getElementById('layout-pharmacy') : document.getElementById('layout-doctor');
     if (scope) {
         scope.querySelectorAll('.radio-label').forEach(label => {
-            label.classList.remove('active-signed', 'active-mia', 'active-rejected');
+            label.classList.remove('active-signed', 'active-mia', 'active-rejected', 'active-selfie');
         });
     }
 
@@ -244,6 +246,7 @@ function renderVisitLog(status, isPharmacy = false) {
         const label = radio.closest('.radio-label');
         if (label) {
             if (uiStatus === 'signed') label.classList.add('active-signed');
+            else if (uiStatus === 'selfie') label.classList.add('active-selfie');
             else if (uiStatus === 'mia') label.classList.add('active-mia');
             else if (uiStatus === 'rejected') label.classList.add('active-rejected');
         }
@@ -261,12 +264,26 @@ function renderRightPanel(data, status) {
     panelDefault.style.display = 'none';
     if (sigWrapper) sigWrapper.style.display = 'none';
 
-    if (status === 'signed' || status === 'approved') {
+    if (status === 'signed' || status === 'approved' || status === 'selfie') {
         panelItems.style.display = 'flex';
         const title = panelItems.querySelector('.section-title');
         if (title) title.textContent = 'ITEMS SELECTED';
 
         buildItemGrid('product-list', data.items);
+
+        // Additional Remarks
+        const remarksEl = document.getElementById('doc-signed-remarks');
+        if (remarksEl) {
+            remarksEl.textContent = data.document_remarks || 'No remarks provided.';
+        }
+
+        // Change button label based on status
+        const sigBtn = document.getElementById('signatureBtn');
+        if (sigBtn) {
+            sigBtn.innerHTML = status === 'selfie'
+                ? '<i class="fas fa-camera"></i> View Selfie'
+                : '<i class="fas fa-signature"></i> View Signature';
+        }
 
         if (sigWrapper) sigWrapper.style.display = 'block';
 

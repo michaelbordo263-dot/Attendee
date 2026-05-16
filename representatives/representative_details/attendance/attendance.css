@@ -444,16 +444,17 @@ body {
 /* Name + badge on the same row */
 .modal-name-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: 10px;
     margin-bottom: 2px;
-    flex-wrap: wrap;
 }
 
 .modal-rep-name {
     font-size: 18px;
     font-weight: 700;
     color: #1e2d3d;
+    flex: 1;
 }
 
 .modal-rep-area {
@@ -719,6 +720,10 @@ body {
 
 .fab-add-btn:active {
     transform: scale(0.96);
+}
+
+.modal-info-row.align-top {
+    align-items: flex-start;
 }
 
 @media (max-width: 767px) {

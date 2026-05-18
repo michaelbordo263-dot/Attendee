@@ -64,6 +64,9 @@ async function loadAttendanceCard() {
 
         // 2. Fetch each rep's attendance — update card as each one comes in
         await Promise.all(reps.map(async rep => {
+            if ((rep.status || '').toLowerCase() !== 'active') return;
+            if ((rep.roles || '').toLowerCase() !== 'medrep') return;
+
             const repId = rep.id;
             const repName = `${rep.first_name || ''} ${rep.last_name || ''}`.trim() || 'Unknown';
             const territory = rep.area || 'No Area Assigned';
@@ -77,9 +80,9 @@ async function loadAttendanceCard() {
                     return String(raw).startsWith(ATT_TODAY);
                 }) || null;
 
-                _attAllLogs.push({ repId, repName, territory, log: todayLog });
+                _attAllLogs.push({ repId, repName, lastName: (rep.last_name || '').trim().toLowerCase(), territory, log: todayLog });
             } catch {
-                _attAllLogs.push({ repId, repName, territory, log: null });
+                _attAllLogs.push({ repId, repName, lastName: (rep.last_name || '').trim().toLowerCase(), territory, log: null });
             }
 
             // Update card counts after every single rep loads
@@ -162,6 +165,8 @@ function attRenderList() {
         return s === 'absent';
     });
 
+    list.sort((a, b) => (a.lastName || '').localeCompare(b.lastName || ''));
+
     if (list.length === 0) {
         container.innerHTML = `<div class="att-empty">No records found</div>`;
         return;
@@ -220,7 +225,7 @@ function attOpenDetail(repId, repName) {
         <div style="display:flex; gap:28px; align-items:flex-start;">
             <div style="flex-shrink:0; width:270px; height:270px; border-radius:14px; background:#dce7f0; overflow:hidden; display:flex; align-items:center; justify-content:center;">
                 ${hasPic
-                    ? `<img src="${log.daily_picture}" style="width:100%;height:100%;object-fit:cover;">`
+                    ? `<img src="${log.daily_picture}" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in;" onclick="attOpenLightbox('${log.daily_picture}')">`
                     : `<div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
                            <div style="width:60px;height:60px;border-radius:50%;background:#a8c4d8;color:#2c4a60;font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:center;">${initials}</div>
                            <div style="font-size:12px;color:#5a7a8f;font-weight:500;text-align:center;">${repName}</div>
@@ -316,9 +321,38 @@ function attInjectModal() {
     });
 }
 
+// ── LIGHTBOX ──────────────────────────────────────────
+
+function attInjectLightbox() {
+    if (document.getElementById('attLightbox')) return;
+    const html = `
+    <div id="attLightbox" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.85); backdrop-filter:blur(5px); align-items:center; justify-content:center;">
+        <button onclick="attCloseLightbox()" style="position:absolute; top:20px; right:20px; font-size:44px; color:white; background:rgba(0,0,0,0.3); border:none; border-radius:50%; width:64px; height:64px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:100000;">✕</button>
+        <img id="attLightboxImg" src="" alt="Expanded Attendance" style="max-width:90%; max-height:90%; border-radius:4px; box-shadow:0 0 50px rgba(0,0,0,0.8);">
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    document.getElementById('attLightbox').addEventListener('click', e => {
+        if (e.target.id === 'attLightbox') attCloseLightbox();
+    });
+}
+
+function attOpenLightbox(src) {
+    const lb = document.getElementById('attLightbox');
+    if (!lb) return;
+    document.getElementById('attLightboxImg').src = src;
+    lb.style.display = 'flex';
+}
+
+function attCloseLightbox() {
+    const lb = document.getElementById('attLightbox');
+    if (lb) lb.style.display = 'none';
+}
+
 // ── INIT ──────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
     attInjectModal();
+    attInjectLightbox();
     loadAttendanceCard();
 });

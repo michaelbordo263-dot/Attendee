@@ -406,6 +406,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const lightbox = document.getElementById('imageLightbox');
             const expandedImg = document.getElementById('expandedImg');
             expandedImg.src = e.target.src;
+            expandedImg.style.transform = 'rotate(0deg)';
+            window._attPageRotation = 0;
             lightbox.style.display = 'flex';
             lightbox.classList.add('active');
         }
@@ -420,6 +422,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             modal.classList.remove('active');
         };
     }
+
+    // Rotate button
+    window._attPageRotation = 0;
+    window.attPageRotate = function() {
+        window._attPageRotation = (window._attPageRotation + 90) % 360;
+        document.getElementById('expandedImg').style.transform = `rotate(${window._attPageRotation}deg)`;
+    };
 
     const closeLightbox = document.getElementById('closeLightbox');
     if (closeLightbox) {

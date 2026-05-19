@@ -66,7 +66,6 @@ async function loadAttendanceCard() {
         await Promise.all(reps.map(async rep => {
             if ((rep.status || '').toLowerCase() !== 'active') return;
             if ((rep.roles || '').toLowerCase() !== 'medrep') return;
-
             const repId = rep.id;
             const repName = `${rep.first_name || ''} ${rep.last_name || ''}`.trim() || 'Unknown';
             const territory = rep.area || 'No Area Assigned';
@@ -185,7 +184,7 @@ function attRenderList() {
         const timeOut = r.log?.time_out ? attFormatTime(r.log.time_out) : '--:--';
 
         return `
-        <div class="att-rep-row" onclick="attOpenDetail('${r.repId}', '${(r.repName || 'Unknown').replace(/'/g,"\\'")}')">
+        <div class="att-rep-row" onclick="attOpenDetail('${r.repId}', '${(r.repName || 'Unknown').replace(/'/g,"\\'")}')"> 
             <div class="att-rep-avatar">${initials}</div>
             <div class="att-rep-info">
                 <div class="att-rep-name">${r.repName}</div>
@@ -201,6 +200,15 @@ function attRenderList() {
 // ── DETAIL MODAL ──
 
 function attOpenDetail(repId, repName) {
+    const btn = document.getElementById('att-view-att-btn');
+    if (btn) {
+        const entry2 = _attAllLogs.find(r => String(r.repId) === String(repId));
+        const area = encodeURIComponent(entry2?.territory || '');
+        const name = encodeURIComponent(repName);
+        btn.href = `../../representatives/representative_details/attendance/attendance.html?id=${repId}&name=${name}&area=${area}`;
+        btn.onclick = null;
+    }
+
     const entry = _attAllLogs.find(r => String(r.repId) === String(repId));
     if (!entry) return;
 
@@ -307,6 +315,7 @@ function attInjectModal() {
                 <div class="modal-card-header" style="display:flex; align-items:center; gap:12px; padding:18px 24px;">
                     <button class="att-back-btn" onclick="attBackToList()">‹</button>
                     <span class="modal-date-title" id="att-detail-date-title">Attendance Detail</span>
+                    <a id="att-view-att-btn" href="#" class="att-view-att-btn" onclick="return false;">View Attendance</a>
                 </div>
                     <div id="att-detail-body" style="overflow-y:auto;"></div>
             </div>
@@ -321,6 +330,7 @@ function attInjectModal() {
     });
 }
 
+
 // ── LIGHTBOX ──────────────────────────────────────────
 
 function attInjectLightbox() {
@@ -328,20 +338,32 @@ function attInjectLightbox() {
     const html = `
     <div id="attLightbox" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.85); backdrop-filter:blur(5px); align-items:center; justify-content:center;">
         <button onclick="attCloseLightbox()" style="position:absolute; top:20px; right:20px; font-size:44px; color:white; background:rgba(0,0,0,0.3); border:none; border-radius:50%; width:64px; height:64px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:100000;">✕</button>
-        <img id="attLightboxImg" src="" alt="Expanded Attendance" style="max-width:90%; max-height:90%; border-radius:4px; box-shadow:0 0 50px rgba(0,0,0,0.8);">
+        <div style="position:relative; display:inline-block;">
+            <button onclick="attRotateLightbox()" style="position:absolute; top:10px; right:10px; z-index:100001; background:rgba(0,0,0,0.5); border:none; border-radius:50%; width:40px; height:40px; color:white; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Rotate">↻</button>
+            <img id="attLightboxImg" src="" alt="Expanded Attendance" style="max-width:90vw; max-height:90vh; border-radius:4px; box-shadow:0 0 50px rgba(0,0,0,0.8); display:block; transition:transform 0.3s ease;">
+        </div>
     </div>`;
     document.body.insertAdjacentHTML('beforeend', html);
-
     document.getElementById('attLightbox').addEventListener('click', e => {
         if (e.target.id === 'attLightbox') attCloseLightbox();
     });
 }
 
+let _attRotation = 0;
+
 function attOpenLightbox(src) {
     const lb = document.getElementById('attLightbox');
     if (!lb) return;
-    document.getElementById('attLightboxImg').src = src;
+    _attRotation = 0;
+    const img = document.getElementById('attLightboxImg');
+    img.src = src;
+    img.style.transform = 'rotate(0deg)';
     lb.style.display = 'flex';
+}
+
+function attRotateLightbox() {
+    _attRotation = (_attRotation + 90) % 360;
+    document.getElementById('attLightboxImg').style.transform = `rotate(${_attRotation}deg)`;
 }
 
 function attCloseLightbox() {

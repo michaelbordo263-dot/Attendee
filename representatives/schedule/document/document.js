@@ -1,3 +1,7 @@
+// ── VISIT DATE STATE ────────────────────────────────────────
+let _visitDateRaw = '';
+let _visitStatus  = '';
+
 document.addEventListener('DOMContentLoaded', async () => {
 
     const params = new URLSearchParams(window.location.search);
@@ -121,15 +125,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ── MODAL LOGIC ─────────────────────────────
-    const modal = document.getElementById('signature-modal');
+    const modal     = document.getElementById('signature-modal');
     const prodModal = document.getElementById('product-preview-modal');
 
     document.getElementById('signatureBtn')?.addEventListener('click', () => {
         modal.style.display = 'flex';
     });
 
-    const close = () => modal.style.display = 'none';
-    const closeProd = () => { if(prodModal) prodModal.style.display = 'none'; };
+    const close     = () => modal.style.display = 'none';
+    const closeProd = () => { if (prodModal) prodModal.style.display = 'none'; };
 
     document.getElementById('closeSigBtn')?.addEventListener('click', close);
     document.getElementById('closeProdBtn')?.addEventListener('click', closeProd);
@@ -138,10 +142,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (e.target === modal) close();
     });
 
+    // ── VISIT DATE MODAL CLOSE ───────────────────
+    const visitDateModal = document.getElementById('visit-date-modal');
+
+    document.getElementById('closeVisitDateBtn2')?.addEventListener('click', () => {
+        visitDateModal.style.display = 'none';
+    });
+    visitDateModal?.addEventListener('click', (e) => {
+        if (e.target === visitDateModal) visitDateModal.style.display = 'none';
+    });
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             close();
             closeProd();
+            if (visitDateModal) visitDateModal.style.display = 'none';
         }
     });
 });
@@ -156,11 +171,45 @@ function setText(id, value) {
 
 window.openProductPreview = (url, name) => {
     const modal = document.getElementById('product-preview-modal');
-    const img = document.getElementById('preview-img');
+    const img   = document.getElementById('preview-img');
     if (!modal || !img) return;
     img.src = url;
     modal.style.display = 'flex';
 };
+
+// ── VISIT DATE MODAL ─────────────────────────────────────
+
+function openVisitDateModal() {
+    const modal = document.getElementById('visit-date-modal');
+    const label = document.getElementById('visit-date-modal-label');
+    const value = document.getElementById('visit-date-modal-value');
+    const time  = document.getElementById('visit-date-modal-time');
+
+    const labelMap = {
+        'signed':   'Signed Time',
+        'approved': 'Signed Time',
+        'selfie':   'Selfie Time',
+        'mia':      'MIA Time',
+        'rejected': 'Rejected Time'
+    };
+
+    label.textContent = labelMap[_visitStatus] || 'Visit Time';
+
+    if (_visitDateRaw) {
+        const d = new Date(_visitDateRaw);
+        value.textContent = d.toLocaleDateString('en-PH', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+        time.textContent = d.toLocaleTimeString('en-PH', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+    } else {
+        value.textContent = 'No date recorded.';
+        time.textContent  = '';
+    }
+
+    modal.style.display = 'flex';
+}
 
 // ── ITEM GRID ───────────────────────────────────────────
 
@@ -174,7 +223,6 @@ function buildItemGrid(containerId, items) {
 
     console.log(`🎨 [DEBUG] Building grid for ${containerId} with ${items?.length || 0} items.`);
 
-    // Only render real items — skip empty/null slots
     const realItems = (items || []).filter(item =>
         item && (item.product_brand_name || item.product_generic_name)
     );
@@ -185,12 +233,10 @@ function buildItemGrid(containerId, items) {
     }
 
     realItems.forEach((item, i) => {
-        // Format Name
         const bName = item?.product_brand_name || '';
         const gName = item?.product_generic_name || '';
         const displayName = bName || gName || `Item ${i + 1}`;
 
-        // Image Formatting
         let rawImg = item?.product_image || item?.image_url || '';
         let imgSrc = String(rawImg || '').trim();
 
@@ -228,8 +274,8 @@ function buildItemGrid(containerId, items) {
 }
 
 function renderVisitLog(status, isPharmacy = false) {
-    const uiStatus = (status === 'approved' || status === 'signed') ? 'signed' 
-                   : status === 'selfie' ? 'selfie' 
+    const uiStatus = (status === 'approved' || status === 'signed') ? 'signed'
+                   : status === 'selfie' ? 'selfie'
                    : status;
     const radioName = isPharmacy ? 'visitStatusPh' : 'visitStatus';
     const radio = document.querySelector(`input[name="${radioName}"][value="${uiStatus}"]`);
@@ -245,9 +291,9 @@ function renderVisitLog(status, isPharmacy = false) {
         radio.checked = true;
         const label = radio.closest('.radio-label');
         if (label) {
-            if (uiStatus === 'signed') label.classList.add('active-signed');
-            else if (uiStatus === 'selfie') label.classList.add('active-selfie');
-            else if (uiStatus === 'mia') label.classList.add('active-mia');
+            if (uiStatus === 'signed')   label.classList.add('active-signed');
+            else if (uiStatus === 'selfie')   label.classList.add('active-selfie');
+            else if (uiStatus === 'mia')      label.classList.add('active-mia');
             else if (uiStatus === 'rejected') label.classList.add('active-rejected');
         }
     }
@@ -259,7 +305,7 @@ function renderRightPanel(data, status) {
     const panelDefault = document.getElementById('panel-default');
     const sigWrapper   = document.getElementById('signature-wrapper');
 
-    panelItems.style.display = 'none';
+    panelItems.style.display   = 'none';
     panelRemarks.style.display = 'none';
     panelDefault.style.display = 'none';
     if (sigWrapper) sigWrapper.style.display = 'none';
@@ -271,13 +317,32 @@ function renderRightPanel(data, status) {
 
         buildItemGrid('product-list', data.items);
 
+        // Store for modal
+        _visitDateRaw = data.document_date || '';
+        _visitStatus  = status;
+
+        // Visit Date badge
+        const visitDateEl = document.getElementById('doc-visit-date');
+        if (visitDateEl) {
+            const raw = data.document_date;
+            if (raw) {
+                const d = new Date(raw);
+                visitDateEl.textContent = d.toLocaleDateString('en-PH', {
+                    year: 'numeric', month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+            } else {
+                visitDateEl.textContent = '';
+            }
+        }
+
         // Additional Remarks
         const remarksEl = document.getElementById('doc-signed-remarks');
         if (remarksEl) {
             remarksEl.textContent = data.document_remarks || 'No remarks provided.';
         }
 
-        // Change button label based on status
+        // Button label
         const sigBtn = document.getElementById('signatureBtn');
         if (sigBtn) {
             sigBtn.innerHTML = status === 'selfie'
@@ -287,9 +352,9 @@ function renderRightPanel(data, status) {
 
         if (sigWrapper) sigWrapper.style.display = 'block';
 
-        const sigImg = document.getElementById('sig-img');
+        const sigImg         = document.getElementById('sig-img');
         const sigPlaceholder = document.getElementById('sig-placeholder');
-        const rawSigUrl = String(data.signature_url || '').trim();
+        const rawSigUrl      = String(data.signature_url || '').trim();
 
         if (rawSigUrl && rawSigUrl !== 'null' && rawSigUrl !== '' && sigImg) {
             let sigUrl = rawSigUrl.replace('qsqjjswyducujtuglwai', 'qsqjjswydcucjtuglwai');
@@ -297,19 +362,51 @@ function renderRightPanel(data, status) {
             sigImg.style.display = 'block';
             if (sigPlaceholder) sigPlaceholder.style.display = 'none';
         } else {
-            if (sigImg) sigImg.style.display = 'none';
+            if (sigImg)         sigImg.style.display         = 'none';
             if (sigPlaceholder) sigPlaceholder.style.display = 'flex';
         }
-    } 
+
+            if (_visitDateRaw) openVisitDateModal();
+    }
     else if (status === 'mia' || status === 'rejected') {
         panelRemarks.style.display = 'block';
+
         const badge = document.getElementById('remarks-badge');
         if (badge) {
             badge.textContent = status.toUpperCase();
             badge.style.backgroundColor = status === 'mia' ? '#eab308' : '#ef4444';
         }
-        document.getElementById('doc-remarks').textContent = data.document_remarks || data.remarks || 'No remarks provided.';
-    } 
+        document.getElementById('doc-remarks').textContent =
+            data.document_remarks || data.remarks || 'No remarks provided.';
+
+        // Hint text
+        const hint = document.getElementById('remarks-hint');
+        if (hint) {
+            hint.textContent = status === 'mia'
+                ? 'The representative marked this visit as MIA.'
+                : 'The representative marked this visit as Rejected.';
+        }
+
+        // Store for modal
+        _visitDateRaw = data.document_date || '';
+        _visitStatus  = status;
+
+        // Visit Date badge
+        const visitDateRemarksEl = document.getElementById('doc-visit-date-remarks');
+        if (visitDateRemarksEl) {
+            const raw = data.document_date;
+            if (raw) {
+                const d = new Date(raw);
+                visitDateRemarksEl.textContent = d.toLocaleDateString('en-PH', {
+                    year: 'numeric', month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+            } else {
+                visitDateRemarksEl.textContent = '';
+            }
+        }
+        if (_visitDateRaw) openVisitDateModal();
+    }
     else {
         panelDefault.style.display = 'flex';
         const title = panelDefault.querySelector('.section-title');

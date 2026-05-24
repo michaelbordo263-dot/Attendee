@@ -559,6 +559,25 @@ body {
 }
 .modal-close-btn:hover { background: #dce5ef; }
 
+/* ─── VISIT DATE ───────────────────────────────────────── */
+.visit-date-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #355872;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    white-space: nowrap;
+}
+.visit-date-badge:hover {
+    background: #2d4f6b;
+    transform: translateY(-1px);
+}
+.visit-date-badge:empty { display: none; }
+
 /* ─── RESPONSIVE ────────────────────────────────────────────── */
 @media (max-width: 900px) {
     .main-content {

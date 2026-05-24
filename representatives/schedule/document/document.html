@@ -144,12 +144,14 @@
 
                 <!-- DEFAULT / SIGNED: Items Grid -->
                 <div id="panel-items" class="grid-card" style="display: none; padding: 20px;">
-                    <h3 class="section-title">ITEMS SELECTED</h3>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1.5px solid #dce5ef; padding-bottom: 8px;">
+                        <h3 class="section-title" style="margin: 0; border: none; padding: 0;">ITEMS SELECTED</h3>
+                        <span id="doc-visit-date" onclick="openVisitDateModal()" class="visit-date-badge"></span>
+                    </div>
                     <div style="flex-grow: 1; overflow-y: auto; padding-right: 8px; margin-bottom: 10px;">
                         <div class="item-grid" id="product-list"></div>
                     </div>
 
-                    <!-- ADD IT HERE -->
                     <div id="signed-extras" style="flex-shrink: 0; margin-top: 16px;">
                         <h3 class="section-title" style="margin-top: 0; margin-bottom: 8px;">ADDITIONAL REMARKS</h3>
                         <div class="field-data remarks-box" id="doc-signed-remarks" style="min-height: 80px;">—</div>
@@ -164,9 +166,12 @@
 
                 <!-- MIA / REJECTED: Remarks Panel -->
                 <div id="panel-remarks" class="grid-card" style="display: none; padding: 20px;">
-                    <div class="remarks-panel">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1.5px solid #dce5ef; padding-bottom: 8px;">
                         <div class="remarks-badge" id="remarks-badge">MIA</div>
-                        <p class="remarks-hint" id="remarks-hint">The representative marked this visit as MIA.</p>
+                        <span id="doc-visit-date-remarks" onclick="openVisitDateModal()" class="visit-date-badge"></span>
+                    </div>
+                    <div class="remarks-panel">
+                        <p class="remarks-hint" id="remarks-hint">The representative marked this visit as Rejected.</p>
                         <h3 class="section-title" style="margin-top: 20px;">REMARKS / NOTES</h3>
                         <div class="field-data remarks-box" id="doc-remarks">No remarks provided.</div>
                     </div>
@@ -174,7 +179,7 @@
 
                 <!-- NO STATUS: Default empty items -->
                 <div id="panel-default" class="grid-card" style="display: none; padding: 20px;">
-                    <h3 class="section-title">ITEMS SELECTED</h3>
+                    <h3 class="section-title">SUGGESTED ITEMS</h3>
                     <div style="flex-grow: 1; overflow-y: auto; padding-right: 8px;">
                         <div class="item-grid" id="product-list-default"></div>
                     </div>
@@ -198,6 +203,26 @@
     <div id="product-preview-modal" class="modal-overlay" style="display: none;">
         <button id="closeProdBtn" class="prod-preview-close"><i class="fas fa-times"></i></button>
         <img id="preview-img" src="" alt="Product Preview" style="display: block; max-width: 92vw; max-height: 92vh; object-fit: contain; box-shadow: 0 10px 50px rgba(0,0,0,0.5); border-radius: 8px; background-color: #fff; padding: 15px;" />
+    </div>
+
+    <!-- Visit Date Modal -->
+    <div id="visit-date-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card" style="max-width: 360px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-calendar-check"></i>
+                    <span id="visit-date-modal-label">Visit Time</span>
+                </div>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <i class="fas fa-clock" style="font-size: 40px; color: #355872; margin-bottom: 16px; display: block;"></i>
+                <p id="visit-date-modal-value" style="font-size: 20px; font-weight: 700; color: #1e2d3d; margin: 0;"></p>
+                <p id="visit-date-modal-time" style="font-size: 14px; font-weight: 500; color: #7a8fa0; margin-top: 6px;"></p>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="modal-close-btn" id="closeVisitDateBtn2">Close</button>
+            </div>
+        </div>
     </div>
 
     <script src="../../../common/backend_connection.js"></script>

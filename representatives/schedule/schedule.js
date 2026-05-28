@@ -495,7 +495,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 const dateValue = item.date || item.dcp_date || fullDateString;
-                window.location.href = `document/document.html?cds_id=${targetId}&user_id=${selectedRepId}&date=${encodeURIComponent(dateValue)}`;
+                const dcpId = item.dcp_id || item.DCP_ID || '';
+                window.location.href = `document/document.html?cds_id=${targetId}&user_id=${selectedRepId}&date=${encodeURIComponent(dateValue)}&dcp_id=${dcpId}`;
             };
 
             modalBody.appendChild(row);

@@ -187,8 +187,9 @@ window.API = {
         return apiFetch(`${BASE_URL}/accounts/${user_id}/reset-password`, "POST");
     },
 
-    fetchDoctorDetails: (id) =>
-        apiFetch(`${BASE_URL}/doctor_details/${id}`),
+    // NEW
+    fetchDoctorDetails: (id, dcpId) =>
+        apiFetch(`${BASE_URL}/doctor_details/${id}${dcpId ? `?dcp_id=${dcpId}` : ''}`),
 
     /* ── CDS/DCP UPLOADS ── */
     uploadCDS: (formData) =>

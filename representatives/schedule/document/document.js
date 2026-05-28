@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
 
     const identifier = params.get('cds_id') || params.get('id');
+    const dcpId      = params.get('dcp_id');
     const returnDate = params.get('date');
     const repId      = params.get('user_id');
 
@@ -32,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ── FETCH ────────────────────────────────────
     try {
         console.log("📡 [DEBUG] Fetching doctor details for ID:", identifier);
-        const data = await API.fetchDoctorDetails(identifier);
+        const data = await API.fetchDoctorDetails(identifier, dcpId);
 
         console.log("📥 [DEBUG] FULL API RESPONSE:", data);
 

@@ -83,7 +83,6 @@ async function fetchPerformanceData(rep) {
 function updateScore(s) {
     if (!s) return;
 
-    document.getElementById('cvOnTime').textContent     = `${Math.floor(s.on_time ?? 0)}%`;
     document.getElementById('cvAttendance').textContent = `${Math.floor(s.attendance ?? 0)}%`;
     document.getElementById('cvVisits').textContent     = `${Math.floor(s.visits_done ?? 0)}%`;
     document.getElementById('cvMissing').textContent    = `${Math.floor(s.missed_visits ?? 0)}%`;

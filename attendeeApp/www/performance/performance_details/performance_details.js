@@ -1,12 +1,17 @@
 /* ============================================================
-   performance_details.js — WHOLE NUMBER ROUNDING VERSION
+   performance_details.js — WHOLE NUMBER ROUNDING VERSION (Refactored)
    ============================================================ */
-
-const BASE_URL = "http://26.209.189.89:5000";
 
 function goBack() {
     history.back();
 }
+
+/* ============================================================
+   MODULE-LEVEL STATE (used by export)
+   ============================================================ */
+let _repData    = null;
+let _scoreData  = null;
+let _doctorData = null;
 
 /* ============================================================
    INIT
@@ -15,25 +20,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const now = new Date();
 
-    // FORCE CURRENT QUARTER:
-    // This ensures that since today is April 19, 2026, it forces 'Q2'.
-    const currentRealQuarter = getCurrentQuarter();
+    const urlQ = params.get('q') || params.get('quarter');
+    const currentRealQuarter = urlQ ? parseInt(urlQ.replace('Q', '')) : getCurrentQuarter();
 
-    const repData = {
+    _repData = {
         name:    params.get('name') || 'Medical Representative',
         loc:     params.get('location') || params.get('area') || 'Assignment Area',
         id:      params.get('user_id') || params.get('id'),
-        quarter: currentRealQuarter, 
+        quarter: currentRealQuarter,
         year:    params.get('year') || now.getFullYear().toString()
     };
 
-    // Update UI Header
-    document.getElementById('repName').textContent = repData.name;
-    document.getElementById('repLoc').textContent  = repData.loc;
-    document.getElementById('quarterBadge').textContent = `${repData.quarter} · ${repData.year}`;
+    document.getElementById('repName').textContent    = _repData.name;
+    document.getElementById('repLoc').textContent     = _repData.loc;
+    document.getElementById('quarterBadge').textContent = `Q${_repData.quarter} · ${_repData.year}`;
 
-    if (repData.id) {
-        fetchPerformanceData(repData);
+    if (_repData.id) {
+        fetchPerformanceData(_repData);
     } else {
         console.error("No User ID provided.");
         document.getElementById('repName').textContent = "User ID Missing";
@@ -44,11 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
    HELPERS
    ============================================================ */
 function getCurrentQuarter() {
-    const m = new Date().getMonth(); 
-    if (m <= 2) return 'Q1';
-    if (m <= 5) return 'Q2';
-    if (m <= 8) return 'Q3';
-    return 'Q4';
+    const m = new Date().getMonth();
+    if (m <= 2) return 1;
+    if (m <= 5) return 2;
+    if (m <= 8) return 3;
+    return 4;
 }
 
 /* ============================================================
@@ -56,20 +59,18 @@ function getCurrentQuarter() {
    ============================================================ */
 async function fetchPerformanceData(rep) {
     try {
-        const url = `${BASE_URL}/api/medrep/performance?user_id=${rep.id}&quarter=${rep.quarter}&year=${rep.year}`;
-
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Network error");
-
-        const data = await res.json();
+        const data = await API.fetchMedrepPerformanceDetails(rep.id, `Q${rep.quarter}`, rep.year);
 
         if (data.error) {
             console.error("API Error:", data.error);
             return;
         }
 
-        updateScore(data.scores);
-        renderMostVisited(data.top_doctors);
+        _scoreData  = data.scores;
+        _doctorData = data.top_doctors;
+
+        updateScore(_scoreData);
+        renderMostVisited(_doctorData);
 
     } catch (err) {
         console.error("Fetch Error:", err);
@@ -82,8 +83,6 @@ async function fetchPerformanceData(rep) {
 function updateScore(s) {
     if (!s) return;
 
-    // Using Math.floor() to always round down to the nearest whole number
-    document.getElementById('cvOnTime').textContent     = `${Math.floor(s.on_time ?? 0)}%`;
     document.getElementById('cvAttendance').textContent = `${Math.floor(s.attendance ?? 0)}%`;
     document.getElementById('cvVisits').textContent     = `${Math.floor(s.visits_done ?? 0)}%`;
     document.getElementById('cvMissing').textContent    = `${Math.floor(s.missed_visits ?? 0)}%`;
@@ -123,17 +122,13 @@ function renderMostVisited(doctors) {
         return;
     }
 
-    // --- ADDED LIMIT HERE ---
-    // .slice(0, 10) takes only the first 10 items from the array
-    const limitedDoctors = doctors.slice(0, 10);
+    const limitedDoctors = doctors;
 
     limitedDoctors.forEach((doc, i) => {
         const rank = i + 1;
-        
-        // ... rest of your existing logic (displayName, displayLoc, etc.)
         const displayName = doc.name || doc.pharmacy_name || 'Unknown Entity';
-        const displayLoc = (doc.location && doc.location !== 'N/A') 
-            ? doc.location 
+        const displayLoc = (doc.location && doc.location !== 'N/A')
+            ? doc.location
             : (doc.city_address_province || 'Location N/A');
 
         const total = doc.total_visits_planned || 0;
@@ -171,3 +166,66 @@ function renderMostVisited(doctors) {
         });
     }, 300);
 }
+
+/* ============================================================
+   EXPORT REPORT — generates an .xlsx file via SheetJS
+   ============================================================ */
+
+const exportXlsx = async () => {
+  try {
+    const response = await fetch(`${window.BASE_URL}/export_xlsx`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        id: _repData.id,
+        year: parseInt(_repData.year)
+      }),
+    });
+
+    if (!response.ok) {
+      let errMsg = `HTTP ${response.status}`;
+      try {
+        const err = await response.json();
+        errMsg = err.error || JSON.stringify(err);
+      } catch (_) {}
+      console.error("Export failed:", errMsg);
+      return;
+    }
+
+    const disposition = response.headers.get("Content-Disposition");
+    console.log("Content-Disposition:", disposition);
+
+    let filename = `${_repData.name}_${_repData.year}.xlsx`;
+    if (disposition) {
+      const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i);
+      if (match) {
+        filename = match[1].replace(/['"]/g, "").trim();
+        if (!filename.endsWith(".xlsx")) filename += ".xlsx";
+      }
+    }
+
+    const blob = await response.blob();
+
+    if (window.cordova) {
+      console.warn("Cordova detected: exportXlsx should use a native file plugin for safe device download.");
+      if (typeof showNotification === 'function') {
+          showNotification("Download is unavailable in Cordova without a native file plugin. Please integrate Cordova File or File Opener plugin.", "error");
+      } else {
+          alert("Download is unavailable in Cordova without a native file plugin. Please integrate Cordova File or File Opener plugin.");
+      }
+      return;
+    }
+
+    const url  = window.URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error("Export error:", error);
+  }
+};

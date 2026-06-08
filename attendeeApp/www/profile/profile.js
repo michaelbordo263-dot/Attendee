@@ -1,123 +1,163 @@
 /* profile/profile.js */
 
-const API_BASE = "http://26.209.189.89:5000";
+/* ── INJECT MODAL HTML ── */
+function injectProfileModals() {
+    const html = `
+        <div id="profileOverlay" class="profile-overlay" role="dialog" aria-modal="true" style="display:none;">
+            <div class="profile-modal">
+                <button class="profile-modal-close" id="closeProfileModal">&times;</button>
 
-/* ── OPEN / CLOSE HELPERS ── */
+                <div class="profile-avatar-wrap">
+                    <div class="profile-avatar">
+                        <svg viewBox="0 0 80 80" width="80" height="80">
+                            <circle cx="40" cy="40" r="40" fill="#e8f4f8"/>
+                            <circle cx="40" cy="30" r="14" fill="#f5cba7"/>
+                            <path d="M26 62c0-8 6-14 14-14s14 6 14 14" fill="#f5cba7"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <h2 class="profile-title" id="user-role-header">User Profile</h2>
+
+                <div class="profile-info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Full Name</span>
+                        <span class="info-value" id="user-fullname">...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Employee ID</span>
+                        <span class="info-value" id="user-employee-id">...</span>
+                    </div>
+                </div>
+
+                <div class="button-row" style="margin-top: 20px; justify-content: center;">
+                    <button class="btn-logout" id="logoutBtn" style="width: 100%;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+/* ── OPEN / CLOSE ── */
 function openProfileModal() {
     const overlay = document.getElementById('profileOverlay');
-    overlay.style.display = 'flex';
-    loadProfileData();
+    if (overlay) {
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        loadProfileData();
+    }
 }
 
 function closeProfileModal() {
-    document.getElementById('profileOverlay').style.display = 'none';
+    const overlay = document.getElementById('profileOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+    }
 }
 
-function openChangePasswordModal() {
-    document.getElementById('changePasswordOverlay').style.display = 'flex';
-    // Clear fields
-    document.getElementById('currentPw').value = '';
-    document.getElementById('newPw').value = '';
-    document.getElementById('confirmPw').value = '';
-    document.getElementById('pwError').textContent = '';
+/* ── LOGOUT ── */
+function handleLogout() {
+    // 1. Clear all session data
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // 2. Redirect using a relative path for Cordova local files
+    window.location.href = '../auth/login.html';
 }
 
-function closeChangePasswordModal() {
-    document.getElementById('changePasswordOverlay').style.display = 'none';
-}
-
-/* ── LOAD PROFILE DATA ── */
+/* ── LOAD & DISPLAY PROFILE DATA ── */
 async function loadProfileData() {
+    // 1. Try to load from cache immediately for speed
+    const cachedUser = localStorage.getItem('user_profile');
+    if (cachedUser) {
+        try { displayUserData(JSON.parse(cachedUser)); } catch (e) { console.error(e); }
+    }
+
     const empId = localStorage.getItem('current_emp_id');
-
-    // Set employee ID immediately
-    const empIdEl = document.getElementById('profile-emp-id');
-    if (empIdEl) empIdEl.textContent = empId || '—';
-
     if (!empId) {
-        document.getElementById('profile-first-name').textContent = 'Unknown';
-        document.getElementById('profile-last-name').textContent = 'User';
-        document.getElementById('profile-role').textContent = '—';
+        handleLogout();
         return;
     }
 
+    // 2. Refresh from API
     try {
-        const response = await fetch(`${API_BASE}/api/accounts/${empId}`);
-        const result = await response.json();
+        const result = await API.fetchAccount(empId);
+        const data = Array.isArray(result?.data) ? result.data[0] : (result?.data || result);
 
-        if (response.ok && result.data) {
-            const data = Array.isArray(result.data) ? result.data[0] : result.data;
-            document.getElementById('profile-first-name').textContent = data.first_name || '—';
-            document.getElementById('profile-last-name').textContent  = data.last_name  || '—';
-            document.getElementById('profile-role').textContent       = data.role        || '—';
-        } else {
-            throw new Error(result.error || 'Not found');
+        if (data && data.employee_id) {
+            displayUserData(data);
+            localStorage.setItem('user_profile', JSON.stringify(data));
         }
     } catch (err) {
-        console.error('Profile load error:', err);
-        document.getElementById('profile-first-name').textContent = 'Server';
-        document.getElementById('profile-last-name').textContent  = 'Offline';
-        document.getElementById('profile-role').textContent       = '—';
+        console.error('Could not refresh profile data:', err);
     }
 }
 
-/* ── CHANGE PASSWORD SUBMIT ── */
-async function handlePasswordChange() {
-    const currentPw = document.getElementById('currentPw').value.trim();
-    const newPw     = document.getElementById('newPw').value.trim();
-    const confirmPw = document.getElementById('confirmPw').value.trim();
-    const errorEl   = document.getElementById('pwError');
-    errorEl.textContent = '';
+function displayUserData(user) {
+    if (!user || Object.keys(user).length === 0) return;
 
-    if (!currentPw || !newPw || !confirmPw) {
-        errorEl.textContent = 'Please fill in all fields.'; return;
-    }
-    if (newPw !== confirmPw) {
-        errorEl.textContent = 'New passwords do not match.'; return;
-    }
-    if (newPw.length < 4) {
-        errorEl.textContent = 'Password must be at least 4 characters.'; return;
+    const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+    
+    // --- 🔹 ROLE MAPPING LOGIC ---
+    // This converts raw database values like 'super_admin' to 'Administrator'
+    let rawRole = user.roles || 'user';
+    let displayRole = 'User'; // Default fallback
+
+    if (rawRole === 'super_admin') {
+        displayRole = 'Super Administrator';
+    } else if (rawRole === 'admin') {
+        displayRole = 'Administrator'; 
+    } else if (rawRole === 'medrep') {
+        displayRole = 'Medical Representative';
+    } else {
+        // Capitalize the first letter if it doesn't match the above
+        displayRole = rawRole.charAt(0).toUpperCase() + rawRole.slice(1);
     }
 
-    const empId = localStorage.getItem('current_emp_id');
-    try {
-        const res = await fetch(`${API_BASE}/api/accounts/${empId}/change-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ current_password: currentPw, new_password: newPw })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            errorEl.style.color = '#27ae60';
-            errorEl.textContent = 'Password updated successfully!';
-            setTimeout(closeChangePasswordModal, 1500);
-        } else {
-            errorEl.style.color = '#e74c3c';
-            errorEl.textContent = data.error || 'Failed to update password.';
-        }
-    } catch {
-        errorEl.style.color = '#e74c3c';
-        errorEl.textContent = 'Server is not reachable.';
+    const elements = {
+        'user-role-header': displayRole,
+        'user-fullname': fullName || 'N/A',
+        'user-employee-id': user.employee_id || 'N/A'
+    };
+
+    for (const [id, value] of Object.entries(elements)) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
     }
 }
 
 /* ── EVENT LISTENERS ── */
-// Called by navigation.js AFTER it injects the modal HTML into the page
 function initProfileListeners() {
     document.getElementById('closeProfileModal')?.addEventListener('click', closeProfileModal);
-    document.getElementById('openChangePassword')?.addEventListener('click', openChangePasswordModal);
-    document.getElementById('closeChangePassword')?.addEventListener('click', closeChangePasswordModal);
-    document.getElementById('submitNewPassword')?.addEventListener('click', handlePasswordChange);
+    document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
 
-    document.getElementById('profileOverlay')?.addEventListener('click', (e) => {
-        if (e.target === document.getElementById('profileOverlay')) closeProfileModal();
+    const profileOverlay = document.getElementById('profileOverlay');
+    profileOverlay?.addEventListener('click', (e) => {
+        if (e.target === profileOverlay) closeProfileModal();
     });
-    document.getElementById('changePasswordOverlay')?.addEventListener('click', (e) => {
-        if (e.target === document.getElementById('changePasswordOverlay')) closeChangePasswordModal();
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeProfileModal();
     });
 }
 
+/* ── INIT ── */
+function initProfile() {
+    injectProfileModals();
+    initProfileListeners();
+}
+
 /* ── EXPORTS ── */
-window.openProfileModal      = openProfileModal;
-window.closeProfileModal     = closeProfileModal;
-window.initProfileListeners  = initProfileListeners;
+window.initProfile        = initProfile;
+window.openProfileModal   = openProfileModal;
+window.closeProfileModal  = closeProfileModal;
+window.handleLogout       = handleLogout;

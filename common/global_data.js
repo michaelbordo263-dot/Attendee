@@ -9,7 +9,7 @@ async function loadHeaderData(empIdParam = null) {
         return;
     }
 
-    const API_BASE = "http://26.209.189.89:5000";
+    const API_BASE = "window.BASE_URL";
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 

@@ -1,26 +1,51 @@
-import { fetchMedreps } from '../../common/backend_connection.js';
-
 document.addEventListener('DOMContentLoaded', async () => {
     // --- 1. CONFIG & STATE ---
-    const BASE_URL = "http://26.209.189.89:5000"; 
-
     const urlParams = new URLSearchParams(window.location.search);
     // Accept multiple parameter names to prevent navigation bugs
     const selectedRepId = urlParams.get('id') || urlParams.get('user_id') || urlParams.get('rep_id'); 
-    let selectedRepName = "Medical Representative"; // Global for access in modal and header
-    let selectedRepArea = "Assignment Area"; // Global for access in modal and header
+    let selectedRepName = urlParams.get('name') || "Medical Representative"; // Global for access in modal and header
+    let selectedRepArea = urlParams.get('area') || "Assignment Area"; // Global for access in modal and header
     
-    // Check for return date from document page
-    const returnDateParam = urlParams.get('returnDate');
+    // Check for return date from document page (supports both 'returnDate' and 'date' param keys)
+    const returnDateParam = urlParams.get('returnDate') || urlParams.get('date');
         
     let globalScheduleData = []; 
     let currentMonthIndex = 3;    // Initial default
-    const currentYear = 2026;
-    const monthNames = ["January", "February", "March", "April", "May", "June"];
+    let currentYear = new Date().getFullYear();
+    const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
     
     const calendarGrid = document.querySelector('.calendar-grid');
     const monthDisplay = document.querySelector('.date-label');
     const searchInput = document.querySelector('.search-input-wrapper input');
+
+    // Update UI Header immediately from URL params
+    const repNameHeaderInit = document.getElementById('repNameHeader') || document.getElementById('rep-name'); 
+    const repAreaHeaderInit = document.getElementById('repAreaHeader') || document.getElementById('rep-location'); 
+    if (repNameHeaderInit) repNameHeaderInit.textContent = selectedRepName;
+    if (repAreaHeaderInit) repAreaHeaderInit.textContent = selectedRepArea;
+
+    // --- 1.5 BACK BUTTON LOGIC ---
+    const backBtn = document.getElementById('goBack') || document.querySelector('.back-btn');
+    if (backBtn) {
+        // Remove inline onclick if present to avoid dual triggers
+        backBtn.onclick = null; 
+        backBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!selectedRepId) {
+                window.history.back();
+                return;
+            }
+            const query = new URLSearchParams({
+                id: selectedRepId,
+                name: selectedRepName,
+                area: selectedRepArea
+            }).toString();
+            window.location.href = `../representative_details/representative_details.html?${query}`;
+        });
+    }
 
     // --- 2. BACKEND FETCH ---
     async function loadSchedule() {
@@ -33,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Fetch representative details first to display their name/area
         try {
-            const allRepsResult = await fetchMedreps();
+            const allRepsResult = await API.fetchMedreps();
             console.log("DEBUG: allRepsResult from fetchMedreps():", allRepsResult);
             if (allRepsResult && (allRepsResult.success || Array.isArray(allRepsResult))) {
                 let reps = allRepsResult.data || allRepsResult.medreps || allRepsResult.representatives || allRepsResult;
@@ -80,13 +105,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            const response = await fetch(`${BASE_URL}/api/dcp/schedule/${selectedRepId}`);
+            const result = await API.fetchScheduleByRep(selectedRepId);
             
-            console.log(`DEBUG: Fetching from ${BASE_URL}/api/dcp/schedule/${selectedRepId}`);
-            console.log(`DEBUG: Response Status: ${response.status}`);
-
-            if (response.ok) {
-                const result = await response.json();
+            if (result) {
+                console.log(`DEBUG: Received schedule for Rep ID: ${selectedRepId}`);
                 let rawData = result.data || result;
                 const items = Array.isArray(rawData) ? rawData : [];
 
@@ -129,15 +151,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                         searchInput.placeholder = "No schedule available";
                     }
                 } else {
-                    // Calculate the range of available data
-                    const availableMonths = [...new Set(globalScheduleData.map(item => {
-                        const d = new Date(getNormalizedItemDate(item));
-                        return d.getMonth(); // Using month index for 2026
-                    }))].sort((a, b) => a - b);
+                    // 1. Extract all valid dates
+                    const validDates = globalScheduleData
+                        .map(item => new Date(getNormalizedItemDate(item)))
+                        .filter(d => !isNaN(d.getTime()))
+                        .sort((a, b) => a - b);
 
-                    // Set initial view to the first month that actually has data
-                    if (availableMonths.length > 0) {
-                        currentMonthIndex = availableMonths[0];
+                    if (validDates.length > 0) {
+                        if (returnDateParam) {
+                            const d = new Date(returnDateParam);
+                            currentMonthIndex = d.getMonth();
+                            currentYear = d.getFullYear();
+                        } else {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            // Land on closest future date, or the latest available record if all are in the past
+                            const target = validDates.find(d => d >= today) || validDates[validDates.length - 1];
+                            currentMonthIndex = target.getMonth();
+                            currentYear = target.getFullYear();
+                        }
+                        console.log(`🚀 Landing on data for: ${monthNames[currentMonthIndex]} ${currentYear}`);
                     }
 
                     if (calendarGrid) calendarGrid.style.display = 'grid';
@@ -149,25 +182,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 if (returnDateParam) {
-                    const autoSelectedData = globalScheduleData.filter(item => item.dcp_date === returnDateParam);
+                    const autoSelectedData = globalScheduleData.filter(item => getNormalizedItemDate(item) === returnDateParam);
                     
                     if (autoSelectedData.length > 0) {
                         requestAnimationFrame(() => {
-                            const dateObj = new Date(returnDateParam);
-                            const formattedTitle = dateObj.toLocaleDateString('en-US', { 
-                                month: 'long', 
-                                day: 'numeric', 
-                                year: 'numeric' 
-                            });
-                            
-                            // Use correct function name
+                            const dateObj = new Date(returnDateParam + 'T00:00:00');
                             const d = dateObj.getDate();
                             const m = dateObj.getMonth();
                             const y = dateObj.getFullYear();
                             openDateModal(d, m, y);
 
-                            const newUrl = window.location.pathname + `?id=${selectedRepId}`;
-                            window.history.replaceState({}, '', newUrl);
+                            // Clean up returnDate/date from URL but keep other params intact
+                            const cleanParams = new URLSearchParams(window.location.search);
+                            cleanParams.delete('returnDate');
+                            cleanParams.delete('date');
+                            window.history.replaceState({}, '', window.location.pathname + '?' + cleanParams.toString());
                         });
                     }
                 }
@@ -182,26 +211,28 @@ document.addEventListener('DOMContentLoaded', async () => {
      * Disables buttons if no approved data exists for the adjacent months.
      */
     function updateNavigationAndRender() {
-        const prevBtn = document.getElementById('prevMonth');
-        const nextBtn = document.getElementById('nextMonth');
+    const prevBtn = document.getElementById('prevMonth');
+    const nextBtn = document.getElementById('nextMonth');
 
-        const hasPrev = globalScheduleData.some(item => {
-            const d = new Date(getNormalizedItemDate(item));
-            return d.getMonth() === currentMonthIndex - 1 && d.getFullYear() === currentYear;
-        });
+    // Find ANY data that exists before the current month/year
+    const hasPrev = globalScheduleData.some(item => {
+        const d = new Date(getNormalizedItemDate(item));
+        return (d.getFullYear() < currentYear) || 
+               (d.getFullYear() === currentYear && d.getMonth() < currentMonthIndex);
+    });
 
-        const hasNext = globalScheduleData.some(item => {
-            const d = new Date(getNormalizedItemDate(item));
-            return d.getMonth() === currentMonthIndex + 1 && d.getFullYear() === currentYear;
-        });
+    // Find ANY data that exists after the current month/year
+    const hasNext = globalScheduleData.some(item => {
+        const d = new Date(getNormalizedItemDate(item));
+        return (d.getFullYear() > currentYear) || 
+               (d.getFullYear() === currentYear && d.getMonth() > currentMonthIndex);
+    });
 
-        if (prevBtn) prevBtn.disabled = !hasPrev;
-        if (nextBtn) nextBtn.disabled = !hasNext;
+    if (prevBtn) prevBtn.disabled = !hasPrev;
+    if (nextBtn) nextBtn.disabled = !hasNext;
 
-        // If the current month index somehow has no data, month display logic 
-        // still works but cards will simply not appear in the grid.
-        renderCalendar(currentMonthIndex, currentYear);
-    }
+    renderCalendar(currentMonthIndex, currentYear);
+}
 
 
     // Helper to extract and normalize date from a record
@@ -219,15 +250,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        if (!raw) {
-            return null;
-        }
+        if (!raw) return null;
         
-        const datePart = String(raw).split('T')[0].trim();
-        const parts = datePart.split('-'); // Expecting YYYY-MM-DD
-        if (parts.length !== 3) return datePart;
-        
-        return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        // Extract YYYY-MM-DD part using regex to handle variations (ISO T, spaces, or timestamps)
+        const match = String(raw).match(/^(\d{4}-\d{2}-\d{2})/);
+        return match ? match[1] : null;
     }
 
     // --- 4. CALENDAR RENDER ---
@@ -273,18 +300,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (visit) {
                 dateDiv.classList.add('has-visit');
 
+                // ── CALENDAR DOT: status → color class ──────────────
                 const vStat = (visit.visit_status || '').toLowerCase().trim();
-                let statusClass = 'status-pending'; // Default for null/empty/pending
 
-                if (vStat === 'complete' || vStat === 'completed') {
-                    statusClass = 'status-complete';
-                } else if (vStat === 'advance') {
-                    statusClass = 'status-advance';
+                if (vStat === 'complete' || vStat === 'completed' || vStat === 'signed') {
+                    dateDiv.classList.add('dot-complete');
+                } else if (vStat === 'advance' || vStat === 'advanced') {
+                    dateDiv.classList.add('dot-advance');
+                } else if (vStat.includes('make up') || vStat.includes('makeup')) {
+                    dateDiv.classList.add('dot-makeup');
+                } else if (vStat.includes('missed')) {
+                    dateDiv.classList.add('dot-missed');
+                } else if (vStat === 'mia') {
+                    dateDiv.classList.add('dot-mia');
+                } else if (vStat === 'rejected') {
+                    dateDiv.classList.add('dot-rejected');
                 }
+                // null/empty → default grey dot via .has-visit::after in CSS
+            }
 
-                const statusBar = document.createElement('div');
-                statusBar.className = `status-bar ${statusClass}`;
-                dateDiv.appendChild(statusBar);
+            // Highlight the day that was last selected (returned from document page)
+            if (returnDateParam) {
+                const returnD = new Date(returnDateParam + 'T00:00:00');
+                if (returnD.getFullYear() === year && returnD.getMonth() === month && returnD.getDate() === d) {
+                    dateDiv.classList.add('selected-day');
+                }
             }
 
             dateDiv.onclick = () => openDateModal(d, month, year);
@@ -294,161 +334,177 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- 5. MODAL LOGIC (window attached) ---
     window.openDateModal = (day, month, year) => {
-        const modal = document.getElementById('dateModal');
-        const modalBody = document.getElementById('modalBody');
-        const modalTitle = document.getElementById('modalDateTitle');
-        
-        const fullDateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const clickedDate = new Date(year, month, day);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        clickedDate.setHours(0, 0, 0, 0);
-        
-        const isToday = clickedDate.getTime() === today.getTime();
-        const isPast = clickedDate < today;
-        const isFuture = clickedDate > today;
+    const modal = document.getElementById('dateModal');
+    const modalBody = document.getElementById('modalBody');
+    const modalTitle = document.getElementById('modalDateTitle');
+    
+    const fullDateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const clickedDate = new Date(year, month, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    clickedDate.setHours(0, 0, 0, 0);
+    
+    const isToday = clickedDate.getTime() === today.getTime();
+    const isPast = clickedDate < today;
+    const isFuture = clickedDate > today;
 
-        modalTitle.innerText = `${monthNames[month]} ${day}, ${year} - ${selectedRepName}`;
-        modalBody.innerHTML = '';
+    // selectedRepName should be defined globally
+    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const dayName = dayNames[new Date(year, month, day).getDay()];
+    modalTitle.innerText = `${monthNames[month]} ${day}, ${year} - ${dayName}`;
+    modalBody.innerHTML = '';
 
-        const visits = globalScheduleData.filter(item => {
-            const dbDate = getNormalizedItemDate(item);
-            const match = dbDate === fullDateString;
-            
-            // Log a sample of the comparison to see why it might be failing
-            if (dbDate && !match && Math.random() < 0.01) { 
-                console.log(`DEBUG: Comparison mismatch - DB: "${dbDate}" vs Calendar: "${fullDateString}"`);
-            }
-            return match;
+    const visits = globalScheduleData.filter(item => {
+        const dbDate = getNormalizedItemDate(item);
+        return dbDate === fullDateString;
+    });
+
+    if (visits.length === 0) {
+        modalBody.innerHTML = `<p style="text-align:center; padding:20px; color:#666;">No visits scheduled.</p>`;
+    } else {
+        const sortOrder = {
+            'pending':      0,
+            'advance':      1,
+            'advanced':     1,
+            'complete':     2,
+            'completed':    2,
+            'signed':       2,
+            'make up call': 3,
+            'makeup call':  3,
+            'mia':          4,
+            'rejected':     5,
+        };
+
+        const sorted = [...visits].sort((a, b) => {
+            const getOrder = (item) => {
+                const vs = (item.visit_status || '').toLowerCase().trim();
+                if (!vs || vs === 'null') return 0; // null/empty = Pending, always top
+                if (vs.includes('make up') || vs.includes('makeup')) return 3;
+                return sortOrder[vs] ?? 0;
+            };
+            return getOrder(a) - getOrder(b);
         });
-        console.log(`DEBUG: Total global items: ${globalScheduleData.length}. Visits found for ${fullDateString}:`, visits);
 
-        if (visits.length === 0) {
-            modalBody.innerHTML = `<p style="text-align:center; padding:20px; color:#666;">No visits scheduled.</p>`;
-        } else {
-            const sortOrder = { 'pending': 0, 'complete': 1, 'completed': 1, 'advance': 2 };
+        const currentSearchQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-            const sorted = [...visits].sort((a, b) => {
-                const getOrder = (item) => {
-                    if (isFuture) return 0;
-                    const vs = (item.visit_status || '').toLowerCase();
-                    if (vs === null || vs === '' || vs === 'null') return 0;
-                    return sortOrder[vs] ?? 0;
-                };
-                return getOrder(a) - getOrder(b);
-            });
+        // Helper: Proper Case (Title Case)
+        const toTitleCase = (str) => {
+            if (!str || str === 'EMPTY') return '';
+            return str.toLowerCase().split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        };
 
-            const currentSearchQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        sorted.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'doctor-row';
 
-            sorted.forEach(item => {
-                console.log("DEBUG: Rendering Visit Item. Full JSON object:", item);
-                console.log("DEBUG: Keys available in this visit:", Object.keys(item));
+            let displayName = '';
+            let displaySub = '';
+            let initial = '';
 
-                const row = document.createElement('div');
-                row.className = 'doctor-row';
+            // --- 1. Identify Record Type & Map Fields ---
+            const recordType = (item.RecordType || item.record_type || item.type || '').toLowerCase();
+            const isPharmacy = recordType === 'pharmacy' || !!item.pharmacy_name;
 
-                // --- 1. Robust Name Retrieval (Handles common key variations) ---
-                const recordType = (item.RecordType || item.record_type || item.type || '').toLowerCase();
-                const pharName = item.Pharmacy_Name || item.pharmacy_name || item.pharmacy || item.Pharmacy || 
-                                 (recordType === 'pharmacy' ? item.name : '');
+            if (!isPharmacy) {
+                // DOCTOR LOGIC
+                let rawDocName = item.doctor_name || item.Doctor_Name || item.name || item.Full_Name || 'Unknown Doctor';
+                // Strip "Dr." if it exists so we don't double it up
+                const cleanName = toTitleCase(rawDocName.replace(/^dr\.?\s*/i, '')); 
                 
-                let docName = item.doctor_name || item.Doctor_Name || item.doctor || item.Doctor || item.Full_Name;
-                
-                // Support first_name / last_name from your sample data
-                if (!docName && item.first_name) {
-                    docName = `${item.first_name} ${item.last_name || ''}`.trim();
-                }
-                if (!docName && recordType !== 'pharmacy') {
-                    docName = item.name;
-                }
-                
-                const hasDoc = docName && docName.toLowerCase() !== 'unknown' && docName.trim() !== '';
-                const hasPhar = pharName && pharName.toLowerCase() !== 'unknown' && pharName.trim() !== '';
+                displayName = `Dr. ${cleanName}`;
+                initial = cleanName.charAt(0).toUpperCase();
 
-                let displayName = '';
-                let displaySub = '';
-                let initial = '';
-
-                // --- 2. Combined Display Logic ---
-                if (hasDoc) {
-                    const rawName = docName.trim();
-                    displayName = (rawName.toLowerCase().startsWith('dr.') || rawName.toLowerCase().startsWith('dr ')) 
-                        ? rawName : `Dr. ${rawName}`;
-                    
-                    const specialty = item.Specs || item.specialty || 'General';
-                    const loc = item.hospital_name || item.hospital || item.area || item.Area || 'N/A';
-                    
-                    // Display both: Doctor as primary, Pharmacy in the subtitle
-                    displaySub = hasPhar ? `${specialty} @ ${pharName}` : `${specialty} - ${loc}`;
-                    initial = (displayName.startsWith('Dr. ') ? displayName.substring(4) : displayName).charAt(0).toUpperCase();
-                } else if (hasPhar) {
-                    displayName = pharName;
-                    displaySub = item.City_Address_Province || item.city_address_province || item.city || 'N/A';
-                    initial = displayName.charAt(0).toUpperCase();
+                // --- Updated Specialty/Area Logic to remove "General"[cite: 10] ---
+                const rawSpecialty = item.Specs || item.specialty || '';
+                const area = item.area || item.Area || item.hospital_name || 'N/A';
+                
+                if (!rawSpecialty || rawSpecialty.toLowerCase() === 'general' || rawSpecialty === 'EMPTY') {
+                    displaySub = area; // Only show area if specialty is General
                 } else {
-                    console.warn("DEBUG: Found record but could not determine Name. Raw Item:", item);
-                    displayName = 'Unknown Entity';
-                    displaySub = 'N/A';
-                    initial = 'U';
+                    displaySub = `${toTitleCase(rawSpecialty)} - ${area}`;
                 }
 
-                // --- Highlight matching card if search is active ---
-                if (currentSearchQuery) {
-                    if (displayName.toLowerCase().includes(currentSearchQuery)) {
-                        row.classList.add('search-highlight');
-                    } else {
-                        row.classList.add('search-dim');
-                    }
+                // If a pharmacy is attached to a doctor visit, append it
+                const attachedPhar = item.pharmacy_name || item.Pharmacy_Name;
+                if (attachedPhar) {
+                    displaySub += ` @ ${toTitleCase(attachedPhar)}`;
                 }
 
-                let statusHtml = '';
-                const vStat = (item.visit_status || '').toLowerCase().trim();
+            } else {
+                // PHARMACY LOGIC
+                let rawPharName = item.pharmacy_name || item.Pharmacy_Name || item.name || 'Unknown Pharmacy';
+                displayName = toTitleCase(rawPharName);
+                initial = displayName.charAt(0).toUpperCase();
+                
+                // Subtitle for Pharmacies uses City/Address
+                displaySub = item.city || item.City_Address_Province || 'N/A';
+            }
 
-                if (vStat === 'complete' || vStat === 'completed') {
-                    statusHtml = `<button class="status-btn completed">Complete</button>`;
-                } else if (vStat === 'advance') {
-                    statusHtml = `<button class="status-btn advance">Advance</button>`;
+            // --- 2. Search Highlighting ---
+            if (currentSearchQuery) {
+                if (displayName.toLowerCase().includes(currentSearchQuery)) {
+                    row.classList.add('search-highlight');
                 } else {
-                    // Default to Pending if NULL, 'null', or empty
-                    statusHtml = `<button class="status-btn pending">Pending</button>`;
+                    row.classList.add('search-dim');
+                }
+            }
+
+            // --- 3. Status Button Logic ---
+            let statusHtml = '';
+            const vStat = (item.visit_status || '').toLowerCase().trim();
+
+            if (vStat === 'complete' || vStat === 'completed' || vStat === 'signed') {
+                statusHtml = `<button class="status-btn complete">Complete</button>`;
+            } else if (vStat === 'advance' || vStat === 'advanced') {
+                statusHtml = `<button class="status-btn advance">Advance</button>`;
+            } else if (vStat.includes('make up') || vStat.includes('makeup')) {
+                statusHtml = `<button class="status-btn makeup">Make Up Call</button>`;
+            } else if (vStat.includes('missed')) {
+                statusHtml = `<button class="status-btn missed">Missed Call</button>`;
+            } else if (vStat === 'mia') {
+                statusHtml = `<button class="status-btn mia">MIA</button>`;
+            } else if (vStat === 'rejected') {
+                statusHtml = `<button class="status-btn rejected">Rejected</button>`;
+            } else {
+                statusHtml = `<button class="status-btn pending">Pending</button>`;
+            }
+
+            row.innerHTML = `
+                <div class="doc-identity">
+                    <div class="doc-avatar">${initial}</div>
+                    <div class="user-info-stack">
+                        <span class="name-label" style="font-size:16px; font-weight:600;">${displayName}</span>
+                        <span class="area-label">${displaySub}</span>
+                    </div>
+                </div>
+                <div class="doc-action" style="display:flex; align-items:center; gap:10px;">
+                    ${statusHtml}
+                    <span class="arrow-icon">▶</span>
+                </div>
+            `;
+
+            row.onclick = () => {
+                const targetId = item.cds_id || (item.cds && item.cds.id);
+
+                if (!targetId) {
+                    console.error("Missing unique identifier:", item);
+                    alert("Error: Missing Unique Identifier (cds_id) for this visit.");
+                    return;
                 }
 
-                row.innerHTML = `
-                    <div class="doc-identity">
-                        <div class="doc-avatar">${initial}</div>
-                        <div class="user-info-stack">
-                            <span class="name-label" style="font-size:16px;">${displayName}</span>
-                            <span class="area-label">${displaySub}</span>
-                        </div>
-                    </div>
-                    <div class="doc-action" style="display:flex; align-items:center; gap:10px;">
-                        ${statusHtml}
-                        <span class="arrow-icon">▶</span>
-                    </div>
-                `;
+                const dateValue = item.date || item.dcp_date || fullDateString;
+                const dcpId = item.dcp_id || item.DCP_ID || '';
+                window.location.href = `document/document.html?cds_id=${targetId}&user_id=${selectedRepId}&date=${encodeURIComponent(dateValue)}&dcp_id=${dcpId}`;
+            };
 
-                row.onclick = () => {
-                    // Resolve the target ID using cds_id or nested cds.id as requested
-                    const targetId = item.cds_id || (item.cds && item.cds.id) || item.dcp_id || item.uuid;
-
-                    if (!targetId) {
-                        console.error("Missing unique identifier (cds_id or cds.id):", item);
-                        alert("Error: Missing Unique Identifier for this visit.");
-                        return;
-                    }
-
-                    const repId = selectedRepId;
-                    const dateValue = item.dcp_date || item.date || "";
-
-                    window.location.href =
-                        `document/document.html?cds_id=${targetId}&user_id=${repId}&date=${encodeURIComponent(dateValue)}`;
-                };
-                modalBody.appendChild(row);
-            });
-        }
-        modal.style.display = 'flex';
-        modal.classList.add('active');
-    };
+            modalBody.appendChild(row);
+        });
+    }
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+};
 
     // UI Listeners
     const closeBtn = document.getElementById('closeModalBtn');
@@ -515,16 +571,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     document.getElementById('prevMonth').onclick = () => {
-        if (currentMonthIndex > 0) {
-            currentMonthIndex--;
-            updateNavigationAndRender();
-            applySearchHighlight();
-        }
-    };
+    const available = globalScheduleData
+        .map(item => new Date(getNormalizedItemDate(item)))
+        .filter(d => (d.getFullYear() < currentYear) || (d.getFullYear() === currentYear && d.getMonth() < currentMonthIndex))
+        .sort((a, b) => b - a); // Get closest previous date
+
+    if (available.length > 0) {
+        currentMonthIndex = available[0].getMonth();
+        currentYear = available[0].getFullYear();
+        updateNavigationAndRender();
+        applySearchHighlight();
+    }
+};
 
     document.getElementById('nextMonth').onclick = () => {
-        if (currentMonthIndex < 11) {
-            currentMonthIndex++;
+        const available = globalScheduleData
+            .map(item => new Date(getNormalizedItemDate(item)))
+            .filter(d => (d.getFullYear() > currentYear) || (d.getFullYear() === currentYear && d.getMonth() > currentMonthIndex))
+            .sort((a, b) => a - b); // Get closest future date
+
+        if (available.length > 0) {
+            currentMonthIndex = available[0].getMonth();
+            currentYear = available[0].getFullYear();
             updateNavigationAndRender();
             applySearchHighlight();
         }

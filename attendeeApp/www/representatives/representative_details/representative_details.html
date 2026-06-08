@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Representative | Attendee</title>
+    <link rel="stylesheet" href="../../common/global.css">
+    <link rel="stylesheet" href="representative_details.css">
+</head>
+<body>
+
+    <div class="detail-wrapper">
+
+        <!-- Simplified Header -->
+        <header class="detail-header">
+            <h1 class="header-title">Representatives</h1>
+        </header>
+
+        <!-- Rep Sub-bar: back button + name/location -->
+        <div class="rep-sub-nav">
+            <div class="rep-left-section">
+                <button class="back-btn" id="goBack"> &lt; </button>
+                <div class="user-info-stack">
+                    <span class="name-label" id="rep-name">Loading...</span>
+                    <span class="area-label" id="rep-location">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards -->
+        <main class="cards-area">
+
+            <!-- Attendance Card -->
+            <div class="detail-card" id="card-attendance">
+                <div class="card-icon card-icon--navy">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+                        <rect x="8" y="12" width="48" height="44" rx="6" stroke="white" stroke-width="3.5" fill="none"/>
+                        <rect x="20" y="6" width="6" height="12" rx="3" fill="white"/>
+                        <rect x="38" y="6" width="6" height="12" rx="3" fill="white"/>
+                        <line x1="8" y1="26" x2="56" y2="26" stroke="white" stroke-width="3"/>
+                        <circle cx="22" cy="38" r="3.5" fill="white"/>
+                        <circle cx="32" cy="38" r="3.5" fill="white"/>
+                        <circle cx="42" cy="38" r="3.5" fill="white"/>
+                        <circle cx="22" cy="49" r="3.5" fill="white"/>
+                        <circle cx="32" cy="49" r="3.5" fill="white"/>
+                    </svg>
+                </div>
+                <span class="card-label">Attendance</span>
+            </div>
+
+            <!-- Schedule Card -->
+            <div class="detail-card" id="card-schedule">
+                <div class="card-icon card-icon--navy">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="36" r="22" stroke="white" stroke-width="3.5" fill="none"/>
+                        <line x1="32" y1="36" x2="32" y2="20" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+                        <line x1="32" y1="36" x2="43" y2="43" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <circle cx="32" cy="36" r="3" fill="white"/>
+                        <line x1="32" y1="14" x2="32" y2="10" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="50" y1="36" x2="54" y2="36" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="14" y1="36" x2="10" y2="36" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <span class="card-label">Schedule</span>
+            </div>
+
+            <!-- Request Card -->
+            <div class="detail-card" id="card-request">
+                <div class="card-icon card-icon--navy">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+                        <rect x="10" y="8" width="44" height="36" rx="6" fill="none" stroke="white" stroke-width="3.5"/>
+                        <line x1="20" y1="20" x2="44" y2="20" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="20" y1="28" x2="44" y2="28" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="20" y1="36" x2="34" y2="36" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M28 44 L22 56 L32 50 L42 56 L36 44" fill="none" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <span class="card-label">Request</span>
+            </div>
+
+            <!-- Upload Schedule Card -->
+            <div class="detail-card" id="card-upload-schedule">
+                <div class="card-icon card-icon--navy">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+                        <!-- Document base -->
+                        <rect x="12" y="8" width="32" height="40" rx="4" fill="white" stroke="white" stroke-width="3"/>
+                        <!-- Folded corner -->
+                        <path d="M36 8 L44 16 L36 16 Z" fill="white" stroke="white" stroke-width="1"/>
+                        <path d="M36 8 L36 16 L44 16" fill="rgba(255,255,255,0.4)" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+                        <!-- Lines on document -->
+                        <line x1="19" y1="26" x2="33" y2="26" stroke="#355872" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="19" y1="32" x2="33" y2="32" stroke="#355872" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="19" y1="38" x2="28" y2="38" stroke="#355872" stroke-width="2.5" stroke-linecap="round"/>
+                        <!-- Upload arrow -->
+                        <circle cx="46" cy="46" r="11" fill="white"/>
+                        <line x1="46" y1="52" x2="46" y2="40" stroke="#355872" stroke-width="2.5" stroke-linecap="round"/>
+                        <polyline points="41,45 46,40 51,45" stroke="#355872" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                </div>
+                <span class="card-label">Upload Schedule</span>
+            </div>
+
+        </main>
+
+    </div>
+
+    <script src="../../common/backend_connection.js"></script>
+    <script src="representative_details.js"></script>
+</body>
+</html>

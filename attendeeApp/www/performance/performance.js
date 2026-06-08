@@ -10,17 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentQuarter = Math.ceil((_now.getMonth() + 1) / 3);
     let currentYear = _now.getFullYear();
 
-    // Navigation Bounds (Sync with backend availability)
-    const MIN_YEAR = 2026;
-    const MAX_YEAR = 2026; 
-    const MIN_QUARTER = 2; // Data starts at Q2 (April)
-    const MAX_QUARTER = 2; // Data currently only exists up to Q2
-
-    // If current system date is before our data starts, default to the first available quarter
-    if (currentYear === MIN_YEAR && currentQuarter < MIN_QUARTER) {
-        currentQuarter = MIN_QUARTER;
-    }
-
     const grid = document.getElementById('performance-grid');
     const searchInput = document.getElementById('perf-search');
     const resultsCount = document.getElementById('results-count');
@@ -134,8 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="lbl">Signed</span>
                     </div>
                     <div class="stat">
-                        <span class="val">${rep.visited ?? 0}</span>
-                        <span class="lbl">Visited</span>
+                        <span class="val">${rep.mia ?? 0}</span>
+                        <span class="lbl">MIA</span>
                     </div>
                     <div class="stat stat-missing">
                         <span class="val">${rep.rejected ?? 0}</span>
@@ -175,10 +164,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadData(q, year) {
         renderSkeletons();
         try {
-            const response = await fetch(`http://26.209.189.89:5000/api/performance?q=${q}&year=${year}`);
-            if (!response.ok) throw new Error('Server error');
-            const result = await response.json();
-            
+            const result = await API.fetchPerformanceByPeriod(q, year);
+
             const rawList = Array.isArray(result) ? result : [];
             console.log("DEBUG: Raw data received from /api/performance:", rawList);
 
@@ -214,48 +201,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateNavButtons() {
-        const qPrev = document.getElementById('q-prev');
-        const qNext = document.getElementById('q-next');
-        const yPrev = document.getElementById('y-prev');
-        const yNext = document.getElementById('y-next');
-
-        if (yPrev) yPrev.disabled = (currentYear <= MIN_YEAR);
-        if (yNext) yNext.disabled = (currentYear >= MAX_YEAR);
-        if (qPrev) qPrev.disabled = (currentYear === MIN_YEAR && currentQuarter <= MIN_QUARTER);
-        if (qNext) qNext.disabled = (currentYear === MAX_YEAR && currentQuarter >= MAX_QUARTER);
+        // Navigation is now dynamic; buttons remain enabled for all periods.
     }
 
     /* --- Navigation Listeners --- */
     document.getElementById('q-prev').addEventListener('click', () => {
-        if (currentQuarter > MIN_QUARTER || (currentYear > MIN_YEAR && currentQuarter > 1)) {
-            currentQuarter--;
-        } else if (currentYear > MIN_YEAR) {
-            currentYear--;
+        currentQuarter--;
+        if (currentQuarter < 1) {
             currentQuarter = 4;
-        } else {
-            return; // Boundary reached, do nothing
+            currentYear--;
         }
         loadData(currentQuarter, currentYear);
     });
 
     document.getElementById('q-next').addEventListener('click', () => {
-        if (currentQuarter < MAX_QUARTER) {
-            currentQuarter++;
-        } else if (currentYear < MAX_YEAR) {
-            currentYear++;
+        currentQuarter++;
+        if (currentQuarter > 4) {
             currentQuarter = 1;
-        } else {
-            return; // Boundary reached, do nothing
+            currentYear++;
         }
         loadData(currentQuarter, currentYear);
     });
 
     document.getElementById('y-prev').addEventListener('click', () => {
-        if (currentYear > MIN_YEAR) { currentYear--; loadData(currentQuarter, currentYear); }
+        currentYear--;
+        loadData(currentQuarter, currentYear);
     });
 
     document.getElementById('y-next').addEventListener('click', () => {
-        if (currentYear < MAX_YEAR) { currentYear++; loadData(currentQuarter, currentYear); }
+        currentYear++;
+        loadData(currentQuarter, currentYear);
     });
 
     searchInput.addEventListener('input', applyFilters);

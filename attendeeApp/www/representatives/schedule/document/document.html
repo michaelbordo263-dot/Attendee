@@ -24,74 +24,117 @@
     <main class="main-content">
         <div class="content-grid">
 
-            <!-- LEFT COLUMN: Doctor Info -->
+            <!-- LEFT COLUMN: Doctor Info / Pharmacy Info -->
             <div class="info-column">
 
-                <h3 class="section-title">BASIC INFORMATION</h3>
-                <div class="field-row">
-                    <div class="field-group">
-                        <label>First Name</label>
-                        <div class="field-data" id="doc-first-name">—</div>
+                <!-- ── DOCTOR LAYOUT (default) ── -->
+                <div id="layout-doctor">
+                    <h3 class="section-title">BASIC INFORMATION</h3>
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label>First Name</label>
+                            <div class="field-data" id="doc-first-name">—</div>
+                        </div>
+                        <div class="field-group">
+                            <label>Last Name</label>
+                            <div class="field-data" id="doc-last-name">—</div>
+                        </div>
                     </div>
-                    <div class="field-group">
-                        <label>Last Name</label>
-                        <div class="field-data" id="doc-last-name">—</div>
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label>Middle Name</label>
+                            <div class="field-data" id="doc-mid-name">—</div>
+                        </div>
+                        <div class="field-group">
+                            <label>Suffix</label>
+                            <div class="field-data" id="doc-suffix">—</div>
+                        </div>
                     </div>
-                </div>
-                <div class="field-row">
-                    <div class="field-group">
-                        <label>Middle Name</label>
-                        <div class="field-data" id="doc-mid-name">—</div>
+
+                    <h3 class="section-title">PROFESSIONAL DATA</h3>
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label>MD Code</label>
+                            <div class="field-data" id="doc-md-code">—</div>
+                        </div>
+                        <div class="field-group">
+                            <label>Specialization</label>
+                            <div class="field-data" id="doc-md-desc">—</div>
+                        </div>
                     </div>
-                    <div class="field-group suffix-group">
-                        <label>Suffix</label>
-                        <div class="field-data" id="doc-suffix">—</div>
+                    <div class="field-group" style="margin-bottom: 15px;">
+                        <label>Hospital / Clinic Affiliation</label>
+                        <div class="field-data" id="doc-hospital">—</div>
+                    </div>
+
+                    <h3 class="section-title">LOCATION DETAILS</h3>
+                    <div class="field-group" style="margin-bottom: 15px;">
+                        <label>City / Province</label>
+                        <div class="field-data" id="doc-address">—</div>
+                    </div>
+
+                    <h3 class="section-title">VISIT LOG</h3>
+                    <div class="radio-row">
+                        <label class="radio-label" id="label-signed">
+                            <input type="radio" name="visitStatus" value="signed" disabled>
+                            <span class="radio-custom signed"></span>
+                            Signed
+                        </label>
+                        <label class="radio-label" id="label-selfie">
+                            <input type="radio" name="visitStatus" value="selfie" disabled>
+                            <span class="radio-custom selfie"></span>
+                            Selfie
+                        </label>
+                        <label class="radio-label" id="label-mia">
+                            <input type="radio" name="visitStatus" value="mia" disabled>
+                            <span class="radio-custom mia"></span>
+                            MIA
+                        </label>
+                        <label class="radio-label" id="label-rejected">
+                            <input type="radio" name="visitStatus" value="rejected" disabled>
+                            <span class="radio-custom rejected"></span>
+                            Rejected
+                        </label>
                     </div>
                 </div>
 
-                <h3 class="section-title">PROFESSIONAL DATA</h3>
-                <div class="field-row">
-                    <div class="field-group">
-                        <label>MD Code</label>
-                        <div class="field-data" id="doc-md-code">—</div>
+                <!-- ── PHARMACY LAYOUT ── -->
+                <div id="layout-pharmacy" style="display: none;">
+                    <h3 class="section-title">PHARMACY INFORMATION</h3>
+                    <div class="field-group" style="margin-bottom: 15px;">
+                        <label>Pharmacy Name</label>
+                        <div class="field-data" id="doc-pharmacy-name">—</div>
                     </div>
-                    <div class="field-group">
-                        <label>Specialization</label>
-                        <div class="field-data" id="doc-md-desc">—</div>
+
+                    <h3 class="section-title">LOCATION DETAILS</h3>
+                    <div class="field-group" style="margin-bottom: 15px;">
+                        <label>City / Province</label>
+                        <div class="field-data" id="doc-pharmacy-address">—</div>
                     </div>
-                </div>
-                <div class="field-group" style="margin-bottom: 15px;">
-                    <label>Hospital / Clinic Affiliation</label>
-                    <div class="field-data" id="doc-hospital">—</div>
-                </div>
 
-                <h3 class="section-title">LOCATION DETAILS</h3>
-                <div class="field-group" style="margin-bottom: 10px;">
-                    <label>Building / Street / Barangay</label>
-                    <div class="field-data" id="doc-bldg">—</div>
-                </div>
-                <div class="field-group" style="margin-bottom: 15px;">
-                    <label>City / Province</label>
-                    <div class="field-data" id="doc-address">—</div>
-                </div>
-
-                <h3 class="section-title">VISIT LOG</h3>
-                <div class="radio-row">
-                    <label class="radio-label" id="label-signed">
-                        <input type="radio" name="visitStatus" value="signed" disabled>
-                        <span class="radio-custom signed"></span>
-                        Signed
-                    </label>
-                    <label class="radio-label" id="label-mia">
-                        <input type="radio" name="visitStatus" value="mia" disabled>
-                        <span class="radio-custom mia"></span>
-                        MIA
-                    </label>
-                    <label class="radio-label" id="label-rejected">
-                        <input type="radio" name="visitStatus" value="rejected" disabled>
-                        <span class="radio-custom rejected"></span>
-                        Rejected
-                    </label>
+                    <h3 class="section-title">VISIT LOG</h3>
+                    <div class="radio-row">
+                        <label class="radio-label" id="label-signed">
+                            <input type="radio" name="visitStatusPh" value="signed" disabled>
+                            <span class="radio-custom signed"></span>
+                            Signed
+                        </label>
+                        <label class="radio-label" id="label-selfie">
+                            <input type="radio" name="visitStatusPh" value="selfie" disabled>
+                            <span class="radio-custom selfie"></span>
+                            Selfie
+                        </label>
+                        <label class="radio-label" id="label-mia">
+                            <input type="radio" name="visitStatusPh" value="mia" disabled>
+                            <span class="radio-custom mia"></span>
+                            MIA
+                        </label>
+                        <label class="radio-label" id="label-rejected">
+                            <input type="radio" name="visitStatusPh" value="rejected" disabled>
+                            <span class="radio-custom rejected"></span>
+                            Rejected
+                        </label>
+                    </div>
                 </div>
 
             </div>
@@ -100,30 +143,46 @@
             <div class="action-column" id="action-column">
 
                 <!-- DEFAULT / SIGNED: Items Grid -->
-                <div id="panel-items" style="display: none;">
-                    <h3 class="section-title">ITEMS SELECTED</h3>
-                    <div class="item-grid" id="product-list"></div>
-                    <div id="signature-wrapper" style="display: none; margin-top: 20px;">
-                        <button class="btn-signature" id="signatureBtn">
+                <div id="panel-items" class="grid-card" style="display: none; padding: 20px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1.5px solid #dce5ef; padding-bottom: 8px;">
+                        <h3 class="section-title" style="margin: 0; border: none; padding: 0;">ITEMS SELECTED</h3>
+                        <span id="doc-visit-date" onclick="openVisitDateModal()" class="visit-date-badge"></span>
+                    </div>
+                    <div style="flex-grow: 1; overflow-y: auto; padding-right: 8px; margin-bottom: 10px;">
+                        <div class="item-grid" id="product-list"></div>
+                    </div>
+
+                    <div id="signed-extras" style="flex-shrink: 0; margin-top: 16px;">
+                        <h3 class="section-title" style="margin-top: 0; margin-bottom: 8px;">ADDITIONAL REMARKS</h3>
+                        <div class="field-data remarks-box" id="doc-signed-remarks" style="min-height: 80px;">—</div>
+                    </div>
+
+                    <div id="signature-wrapper" style="display: none; flex-shrink: 0;">
+                        <button class="btn-signature" id="signatureBtn" style="margin-top: 12px; padding-bottom: 16px;">
                             <i class="fas fa-signature"></i> View Signature
                         </button>
                     </div>
                 </div>
 
                 <!-- MIA / REJECTED: Remarks Panel -->
-                <div id="panel-remarks" style="display: none;">
-                    <div class="remarks-panel">
+                <div id="panel-remarks" class="grid-card" style="display: none; padding: 20px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1.5px solid #dce5ef; padding-bottom: 8px;">
                         <div class="remarks-badge" id="remarks-badge">MIA</div>
-                        <p class="remarks-hint" id="remarks-hint">The representative marked this visit as MIA.</p>
+                        <span id="doc-visit-date-remarks" onclick="openVisitDateModal()" class="visit-date-badge"></span>
+                    </div>
+                    <div class="remarks-panel">
+                        <p class="remarks-hint" id="remarks-hint">The representative marked this visit as Rejected.</p>
                         <h3 class="section-title" style="margin-top: 20px;">REMARKS / NOTES</h3>
                         <div class="field-data remarks-box" id="doc-remarks">No remarks provided.</div>
                     </div>
                 </div>
 
                 <!-- NO STATUS: Default empty items -->
-                <div id="panel-default" style="display: none;">
-                    <h3 class="section-title">ITEMS SELECTED</h3>
-                    <div class="item-grid" id="product-list-default"></div>
+                <div id="panel-default" class="grid-card" style="display: none; padding: 20px;">
+                    <h3 class="section-title">SUGGESTED ITEMS</h3>
+                    <div style="flex-grow: 1; overflow-y: auto; padding-right: 8px;">
+                        <div class="item-grid" id="product-list-default"></div>
+                    </div>
                 </div>
 
             </div>
@@ -132,27 +191,41 @@
 
     <!-- Signature Modal -->
     <div id="signature-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-card">
+        <button id="closeSigBtn" class="prod-preview-close"><i class="fas fa-times"></i></button>
+        <img id="sig-img" src="" alt="Signature" style="display: none;" onerror="this.onerror=null; this.style.display='none'; document.getElementById('sig-placeholder').style.display='flex';" />
+        <div id="sig-placeholder" class="sig-placeholder lightbox-placeholder" style="display: none;">
+            <i class="fas fa-file-signature"></i>
+            <span>No signature image available</span>
+        </div>
+    </div>
+
+    <!-- Product Preview Modal -->
+    <div id="product-preview-modal" class="modal-overlay" style="display: none;">
+        <button id="closeProdBtn" class="prod-preview-close"><i class="fas fa-times"></i></button>
+        <img id="preview-img" src="" alt="Product Preview" style="display: block; max-width: 92vw; max-height: 92vh; object-fit: contain; box-shadow: 0 10px 50px rgba(0,0,0,0.5); border-radius: 8px; background-color: #fff; padding: 15px;" />
+    </div>
+
+    <!-- Visit Date Modal -->
+    <div id="visit-date-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card" style="max-width: 360px;">
             <div class="modal-header">
-                <span class="modal-title"><i class="fas fa-signature"></i> Doctor's Signature</span>
-                <button class="modal-close" id="closeModal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="sig-frame" id="sig-frame">
-                    <img id="sig-img" src="" alt="Signature" style="display: none; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px;" />
-                    <div id="sig-placeholder" class="sig-placeholder">
-                        <i class="fas fa-file-signature"></i>
-                        <span>No signature image available</span>
-                    </div>
+                <div class="modal-title">
+                    <i class="fas fa-calendar-check"></i>
+                    <span id="visit-date-modal-label">Visit Time</span>
                 </div>
             </div>
-            <div class="modal-footer">
-                <span class="modal-sub" id="modal-doctor-name"></span>
-                <button class="modal-close-btn" id="closeModalBtn">Close</button>
+            <div class="modal-body" style="text-align: center;">
+                <i class="fas fa-clock" style="font-size: 40px; color: #355872; margin-bottom: 16px; display: block;"></i>
+                <p id="visit-date-modal-value" style="font-size: 20px; font-weight: 700; color: #1e2d3d; margin: 0;"></p>
+                <p id="visit-date-modal-time" style="font-size: 14px; font-weight: 500; color: #7a8fa0; margin-top: 6px;"></p>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="modal-close-btn" id="closeVisitDateBtn2">Close</button>
             </div>
         </div>
     </div>
 
+    <script src="../../../common/backend_connection.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="document.js"></script>
 </body>

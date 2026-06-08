@@ -416,19 +416,19 @@ body {
 /* Missed Call — red */
 .status-btn.missed {
     background: linear-gradient(180deg, #FF8A80 0%, #E74C3C 100%);
-    color: #fff;
+    color: #7f1d1d;
 }
 
 /* MIA — orange */
 .status-btn.mia {
     background: linear-gradient(180deg, #FFCC80 0%, #F39C12 100%);
-    color: #fff;
+    color: #7c3d00;
 }
 
 /* Rejected — dark red */
 .status-btn.rejected {
     background: linear-gradient(180deg, #EF9A9A 0%, #C0392B 100%);
-    color: #fff;
+    color: #7f1d1d;
 }
 
 .arrow-icon {

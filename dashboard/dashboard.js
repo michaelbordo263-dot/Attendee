@@ -441,7 +441,6 @@ function _renderMissedList() {
 
 // ── SUMMARY ────────────────────────────────────────
 async function loadDashboardStats() {
-    // Pass quarter and year to summary to get period-accurate counts
     const data = await apiFetch(`${BASE_URL}/dashboard/summary?q=${schedQuarter}&year=${schedYear}`);
 
     console.log("📊 SUMMARY:", data);
@@ -449,7 +448,6 @@ async function loadDashboardStats() {
     const el = document.getElementById('totalMedRepsValue');
     if (el) el.textContent = data.medreps ?? 0;
 
-    // Update the sub-label for the Schedule Request card to reflect current period
     const sub = document.getElementById('scheduleSubLabel');
     if (sub) sub.textContent = `Q${schedQuarter} - ${schedYear}`;
 
@@ -457,14 +455,21 @@ async function loadDashboardStats() {
     if (prod) {
         prod.textContent = data.products ?? 0;
         const prodCard = prod.closest('.card') || prod.closest('.stat-card') || prod.parentElement;
-        if (prodCard) { // Make the entire card clickable
+        if (prodCard) {
             prodCard.style.cursor = 'pointer'; 
-            prodCard.onclick = () => openModal('productsModal'); // Open the modal
+            prodCard.onclick = () => openModal('productsModal');
         }
     }
 
     const sched = document.getElementById('totalSchedulesValue');
     if (sched) sched.textContent = data.requestedSchedules ?? 0;
+
+    // ── SCHEDULE TODAY ──
+    const schedToday = document.getElementById('schedule-today-count');
+    if (schedToday) schedToday.textContent = data.scheduleTodayCount ?? 0;
+
+    const schedTodaySub = document.getElementById('schedule-today-sub');
+    if (schedTodaySub) schedTodaySub.textContent = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 

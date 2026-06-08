@@ -41,11 +41,11 @@ html, body {
    MAIN CONTENT WRAPPER
    ---------------------------------------------------------- */
 .main-content {
-    height: calc(100vh - 62px);  /* try increasing this offset */
+    height: calc(100vh - 90px);
     display: flex;
     flex-direction: column;
     padding: 24px;
-    margin-top: 25px; /* ← add this, match your nav height */
+    margin-top: 78px; /* changed from 25px to match fixed header */
 }
 
 /* ----------------------------------------------------------
@@ -409,9 +409,58 @@ html, body {
     .summary-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 640px) {
-    .cards-grid { grid-template-columns: 1fr; }
+@media (max-width: 900px) {
+    html, body {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .main-content {
+        height: calc(100vh - 90px) !important;
+        margin-top: 78px !important;
+        padding: 16px !important;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+        flex-shrink: 0;
+    }
+
+    .main-wrapper-card {
+        overflow: hidden;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .scrollable-content {
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .cards-grid { grid-template-columns: repeat(2, 1fr); }
+
+    .filter-navigation-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .search-wrapper input { width: 100%; }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        height: calc(100vh - 70px) !important;
+        margin-top: 82px !important;
+        padding: 12px !important;
+    }
+
     .summary-grid { grid-template-columns: repeat(2, 1fr); }
-    .top-nav { padding: 10px 15px; }
-    .main-content { padding: 14px 14px 20px; }
+    .cards-grid { grid-template-columns: 1fr; }
 }

@@ -4,23 +4,41 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval' 'unsafe-inline'; 
+                   style-src 'self' 'unsafe-inline'; 
+                   media-src *; 
+                   img-src 'self' data: content:; 
+                   connect-src 'self' 
+                               https://api.premierpharmaceuticalsmarketingcorporation.cloud 
+                               https://qsajjswydcucjtuglwai.supabase.co 
+                               http://127.0.0.1:5000;">
+
     <title>Attendee App</title>
+
+    <script src="cordova.js"></script>
 
     <script>
         function goToApp() {
-            // Change this depending on your real structure:
-            // OPTION A: auth/login.html
-            // OPTION B: dashboard/dashboard.html
-
-            window.location.replace("dashboard/dashboard.html");
+            // Checks if a valid user session exists, otherwise sends them straight to login page
+            const userId = localStorage.getItem('user_id');
+            
+            if (userId) {
+                window.location.replace("dashboard/dashboard.html");
+            } else {
+                window.location.replace("auth/login.html");
+            }
         }
 
+        // Fire redirect when Cordova container wraps its native hook arrays
         document.addEventListener("deviceready", goToApp, false);
 
-        // Fallback for browser testing
-        document.addEventListener("DOMContentLoaded", function () {
-            setTimeout(goToApp, 100);
-        });
+        // Fallback safety route wrapper if tested inside standard PC browser engines
+        if (!window.hasOwnProperty('cordova')) {
+            document.addEventListener("DOMContentLoaded", function () {
+                setTimeout(goToApp, 100);
+            });
+        }
     </script>
 
     <style>
@@ -28,6 +46,8 @@
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 80px;
+            background-color: #0f172a;
+            color: #ffffff;
         }
     </style>
 </head>

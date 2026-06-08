@@ -43,7 +43,6 @@ body {
 
 /* --- 2. LAYOUT: HEADERS & BARS --- */
 
-/* Primary Navy Header */
 .main-header {
     background-color: var(--color-navy-primary);
     padding: 20px var(--padding-screen);
@@ -60,7 +59,6 @@ body {
     font-weight: 400; 
 }
 
-/* Secondary White Sub-nav (Rep Info) */
 .rep-sub-nav {
     background: white;
     padding: 12px var(--padding-screen);
@@ -158,11 +156,6 @@ body {
     position: relative;
 }
 
-/* 
-    CALENDAR CONTROLS — 3-column layout:
-    [spacer] | [< Month Year >] | [Search Doctor]
-    Spacer on the left mirrors search width so center group stays truly centered.
-*/
 .calendar-controls {
     display: flex;
     justify-content: space-between;
@@ -172,12 +165,10 @@ body {
     flex-shrink: 0;
 }
 
-/* Left spacer — mirrors search input width to balance centering */
 .controls-right-spacer {
     width: 200px;
 }
 
-/* Center group: prev button + Month Year label + next button */
 .month-nav-group {
     display: flex;
     align-items: center;
@@ -205,7 +196,6 @@ body {
     font-weight: 400; 
 }
 
-/* Search input — right side, aligned with Request tab */
 .search-input-wrapper { 
     background: #F1F1F1; 
     padding: 0 15px; 
@@ -224,7 +214,6 @@ body {
     font-size: 13px;
 }
 
-/* Nav pill buttons (prev/next) */
 .btn-pill { 
     background: #C4C4C4; 
     border: none; 
@@ -241,11 +230,10 @@ body {
     background: #b0b0b0;
 }
 
-/* Calendar Grid Logic */
+/* Calendar Grid */
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    /* Day names get auto height, date cells get 140px */
     grid-template-rows: auto;
     grid-auto-rows: 140px;
     column-gap: 4px;
@@ -271,13 +259,11 @@ body {
     height: 30px;
     padding: 0;
     width: 100%;
-    /* Override grid-auto-rows so day names don't get 140px height */
     align-self: center;
     grid-row: 1;
     margin-bottom: 10px;
 }
 
-/* Each individual date card — always white */
 .date-item {
     background-color: #FFFFFF;
     min-height: 100px;
@@ -346,12 +332,12 @@ body {
     padding: 20px; 
     max-height: 330px; 
     overflow-y: auto;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 .modal-body::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+    display: none;
 }
 
 .close-modal { 
@@ -391,7 +377,7 @@ body {
     font-size: 18px;
 }
 
-/* Status Buttons */
+/* ── STATUS BUTTONS ───────────────────────────────── */
 .status-btn { 
     padding: 6px 20px; 
     border-radius: 20px; 
@@ -403,19 +389,46 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* Pending — light gray */
 .status-btn.pending { 
-    background: linear-gradient(180deg, #FFD54F 0%, #FBC02D 100%); 
-    color: #5F4400; 
+    background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%); 
+    color: #475569; 
 }
 
-.status-btn.completed { 
+/* Complete — green */
+.status-btn.complete { 
     background: linear-gradient(to bottom, #A1F0A1, #63D463);
     color: #1B5E20; 
 }
 
+/* Advance — blue */
 .status-btn.advance {
     background: linear-gradient(180deg, #90CAF9 0%, #42A5F5 100%);
     color: #0D47A1;
+}
+
+/* Make Up Call — gold */
+.status-btn.makeup {
+    background: linear-gradient(180deg, #FFE680 0%, #FFD700 100%);
+    color: #5F4400;
+}
+
+/* Missed Call — red */
+.status-btn.missed {
+    background: linear-gradient(180deg, #FF8A80 0%, #E74C3C 100%);
+    color: #fff;
+}
+
+/* MIA — orange */
+.status-btn.mia {
+    background: linear-gradient(180deg, #FFCC80 0%, #F39C12 100%);
+    color: #fff;
+}
+
+/* Rejected — dark red */
+.status-btn.rejected {
+    background: linear-gradient(180deg, #EF9A9A 0%, #C0392B 100%);
+    color: #fff;
 }
 
 .arrow-icon {
@@ -423,6 +436,8 @@ body {
     font-size: 14px;
     margin-left: 5px;
 }
+
+.status-btn { text-transform: uppercase; }
 
 /* --- 6. UTILITY: FUTURE VIEW --- */
 .future-view .status-btn,
@@ -433,10 +448,7 @@ body {
     display: none !important;
 }
 
-/* 
-    has-visit: keep white background, only show blue dot indicator.
-    No more greenish tint.
-*/
+/* ── CALENDAR DOT — base (grey for pending/null) ── */
 .date-item.has-visit {
     background-color: #FFFFFF;
     border: none;
@@ -448,9 +460,9 @@ body {
     bottom: 4px;
     left: 50%;
     transform: translateX(-50%);
-    width: 6px;
-    height: 6px;
-    background-color: #007AFF;
+    width: 8px;
+    height: 8px;
+    background-color: #2196F3;
     border-radius: 50%;
 }
 
@@ -485,7 +497,6 @@ body {
 
 /* --- 8. RESPONSIVE --- */
 
-/* Tablet: ~768px - 1024px */
 @media (max-width: 1024px) {
     :root {
         --padding-screen: 20px;
@@ -508,8 +519,52 @@ body {
     }
 }
 
-/* Mobile: up to ~767px */
+/* --- 9. FLOATING ADD BUTTON (FAB) --- */
+.fab-add-btn {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--color-navy-dark);
+    color: white;
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    z-index: 500;
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.fab-add-btn:hover {
+    background-color: var(--color-navy-hover);
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.fab-add-btn:active {
+    transform: scale(0.96);
+}
+
 @media (max-width: 767px) {
+    .fab-add-btn {
+        bottom: 20px;
+        right: 20px;
+        width: 52px;
+        height: 52px;
+        font-size: 28px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+
     :root {
         --padding-screen: 12px;
     }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext traffic for development and your specific domains -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">api.premierpharmaceuticalsmarketingcorporation.cloud</domain>
+        <domain includeSubdomains="true">qsajjswydcucjtuglwai.supabase.co</domain>
+        <domain includeSubdomains="true">localhost</domain>
+    </domain-config>
+    
+    <!-- Use system and user trust anchors for all other secure connections -->
+    <base-config>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

@@ -2,15 +2,14 @@
 //  DYNAMIC NAME HELPER
 // =====================================
 function getRepName() {
-    const nameElement = document.querySelector('.header-title h2') ||
-                        document.querySelector('.rep-name-header') ||
+    const nameElement = document.getElementById('repName') || 
+                        document.querySelector('.header-title h2') ||
                         document.querySelector('h2');
+                        
     if (nameElement) {
-        // Use regex to grab everything BEFORE the first "Q" (cuts off "Q2 - April...")
         const rawText = nameElement.innerText.split(/Q\d/)[0].trim();
         return rawText || "Medical Representative";
     }
-    
     return "Medical Representative";
 }
 
@@ -19,14 +18,14 @@ function getRepName() {
 // =====================================
 function getRequestContext() {
     const urlParams = new URLSearchParams(window.location.search);
-    const empId = urlParams.get('user_id') || urlParams.get('id');
+    const targetId = urlParams.get('id') || urlParams.get('user_id');
     const quarterParam = urlParams.get('q');
     const yearParam = urlParams.get('year');
 
     return {
-        empId: empId,
-        quarter: quarterParam ? parseInt(quarterParam, 10) : 1, // Ensure integer
-        year: yearParam ? parseInt(yearParam, 10) : 2026 // Ensure integer
+        id: targetId, 
+        quarter: quarterParam || "1", 
+        year: yearParam || "2026"
     };
 }
 
@@ -34,87 +33,87 @@ function getRequestContext() {
 //  UPDATE BACKEND REQUEST
 // =====================================
 async function updateGlobalStatus(newStatus, remarks = null) {
-    const { empId, quarter, year } = getRequestContext();
+    const context = getRequestContext();
 
-    if (!empId) {
-        alert("Error: No User ID found in URL.");
+    if (!context.id) {
+        alert("Error: No ID found in URL parameters.");
         return;
     }
 
     const payload = {
-        id: empId, // Changed from employee_id to match UUID column
-        quarter: quarter,
-        year: year,
-        status: newStatus,
-        remarks: remarks
+        id: context.id, 
+        quarter: parseInt(context.quarter, 10), 
+        year: parseInt(context.year, 10), 
+        status: newStatus, // Keep original casing e.g. 'Approved', 'Rejected'
+        remarks: remarks // This must be the actual string from the textarea[cite: 10, 13]
     };
 
     console.log("DEBUG: Sending update to backend with payload:", payload);
+    
     try {
-        const API_URL = 'http://26.209.189.89:5000/api/dcp/global-status';
-
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-            throw new Error(result.error || result.details || result.message || "Request failed");
-        }
+        const result = await API.updateGlobalStatus(payload);
         
-        // Check if the backend explicitly indicates an update occurred
-        if (result.updated_count > 0 || result.message === "Status updated successfully") { // Assuming backend might send a message
-            alert(`Request successfully ${newStatus}!`);
-            window.location.reload();
+        if (result && (result.updated_count > 0 || result.status === "Success")) {
+            if (newStatus === 'Approved') {
+                showToast('Request Approved', 'success', 'Request has been approved successfully.');
+            } else {
+                showToast('Request Rejected', 'error', 'Request has been rejected.');
+            }
+            setTimeout(() => window.location.reload(), 1800);
         } else {
-            // This case handles if response.ok is true, but no rows were affected (e.g., if the record was already in the target status)
-            alert(`No matching request found for Employee ID: ${empId}, Quarter: ${quarter}, Year: ${year} to update. It might already be ${newStatus} or does not exist.`);
+            const errorMsg = result?.error || "No matching records found for this period.";
+            showToast('Update Failed', 'error', errorMsg);
         }
-
     } catch (err) {
+        console.error("Update Error:", err);
         alert(`Failed to ${newStatus}: ${err.message}`);
     }
-}
-
-// Global references for modals and remarks input
-let acceptModal;
-let rejectModal;
-let remarksInput; // Assuming you have an ID for the remarks textarea in your HTML
+}   
 
 // =====================================
-//  MODAL HELPERS
+//  MODAL HELPERS & EVENT LISTENERS
 // =====================================
+let acceptModal, rejectModal;
+
+window.closeAcceptModal = () => { 
+    const modal = document.getElementById('acceptModal');
+    if (modal) modal.style.display = 'none'; 
+};
+
+window.closeRejectModal = () => {
+    const modal = document.getElementById('rejectModal');
+    if (modal) modal.style.display = 'none';
+    const input = document.getElementById('rejectRemarks');
+    if (input) { input.value = ''; input.style.borderColor = ''; }
+};
+
+// Global handler for Reject Confirm button
+window.handleRejectConfirm = () => {
+    const input = document.getElementById('rejectRemarks');
+    const remarks = input ? input.value.trim() : '';
+    if (!remarks) {
+        if (input) input.style.borderColor = 'red';
+        showToast('Please provide a reason for rejection.', 'error');
+        return;
+    }
+    if (input) input.style.borderColor = '';
+    updateGlobalStatus('Rejected', remarks);
+};
+
 function updateModalText(modalId) {
     const name = getRepName();
     const modal = document.getElementById(modalId);
     if (!modal) return;
     const target = modal.querySelector('.dynamic-rep-name');
-    if (target) {
-        target.innerText = `${name}'s`;
-    }
+    if (target) target.innerText = `${name}'s`;
 }
 
-window.closeAcceptModal = () => { if (acceptModal) acceptModal.style.display = 'none'; };
-window.closeRejectModal = () => {
-    if (rejectModal) rejectModal.style.display = 'none';
-    if (remarksInput) remarksInput.value = ''; // Clear remarks on close
-};
-
-// =====================================
-//  EVENT LISTENERS
-// =====================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize modal references
     acceptModal = document.getElementById('acceptModal');
     rejectModal = document.getElementById('rejectModal');
-    remarksInput = document.getElementById('remarksInput'); // Assuming an ID for the remarks textarea
 
-    // 1. Hook into the Green 'Accept' and Red 'Reject' buttons in your main UI
-    const openAcceptBtn = document.querySelector('.btn-accept') || document.getElementById('acceptBtn');
-    const openRejectBtn = document.querySelector('.btn-reject') || document.getElementById('rejectBtn');
+    const openAcceptBtn = document.getElementById('acceptBtn');
+    const openRejectBtn = document.getElementById('rejectBtn');
 
     if (openAcceptBtn) {
         openAcceptBtn.addEventListener('click', () => {
@@ -130,29 +129,45 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Confirm logic inside the modals
-    const confirmAcceptBtn = document.getElementById('confirmAcceptBtn');
-    const confirmRejectBtn = document.querySelector('.btn-confirm-reject');
-
+    // --- ACCEPT MODAL HANDLERS ---
+    const confirmAcceptBtn = document.querySelector('#acceptModal .btn-confirm');
     if (confirmAcceptBtn) {
-        confirmAcceptBtn.addEventListener('click', () => {
-            updateGlobalStatus('Approved');
-        });
+        confirmAcceptBtn.addEventListener('click', () => updateGlobalStatus('Approved'));
     }
 
+    const reviewBtn = document.querySelector('#acceptModal .btn-review');
+    if (reviewBtn) {
+        reviewBtn.addEventListener('click', window.closeAcceptModal);
+    }
+
+    // --- REJECT MODAL HANDLERS ---
+    const cancelRejectBtn = document.querySelector('#rejectModal .btn-cancel-red');
+    if (cancelRejectBtn) {
+        cancelRejectBtn.addEventListener('click', window.closeRejectModal);
+    }
+
+    const confirmRejectBtn = document.querySelector('#rejectModal .btn-confirm-reject');
     if (confirmRejectBtn) {
         confirmRejectBtn.addEventListener('click', () => {
-            const remarks = remarksInput?.value.trim();
-            if (!remarks) {
-                alert("Please provide a reason for rejection.");
+            const modal = document.getElementById('rejectModal');
+            // Prefer id lookup, fallback to class — works with both modal layouts
+            const remarksInput = document.getElementById('rejectRemarks')
+                || modal.querySelector('.remarks-input');
+            const remarksText = remarksInput ? remarksInput.value.trim() : "";
+
+            if (!remarksText) {
+                showToast("Please provide a reason for rejection.", "error");
+                if (remarksInput) remarksInput.style.borderColor = 'red';
                 return;
             }
-            updateGlobalStatus('Rejected', remarks);
+
+            if (remarksInput) remarksInput.style.borderColor = '';
+            updateGlobalStatus('Rejected', remarksText);
         });
     }
 });
 
-window.switchModal = function(target) { // This function was duplicated and malformed, now corrected.
+window.switchModal = function(target) {
     if (target === 'reject') {
         window.closeAcceptModal();
         updateModalText('rejectModal');
@@ -163,3 +178,36 @@ window.switchModal = function(target) { // This function was duplicated and malf
         if (acceptModal) acceptModal.style.display = 'flex';
     }
 };
+
+function showToast(message, type = "info", subtitle = "") {
+    let toast = document.getElementById('app-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'app-toast';
+        document.body.appendChild(toast);
+    }
+
+    const isSuccess = type === 'success' || type === 'info';
+    const icon = isSuccess ? '&#10003;' : '&#10007;';
+    const title = isSuccess ? 'Request Approved' : 'Request Rejected';
+    const sub = subtitle || message;
+
+    toast.innerHTML = `
+        <div class="toast-body ${isSuccess ? 'success' : 'error'}">
+            <span class="toast-icon-wrap">${icon}</span>
+            <div class="toast-text-wrap">
+                <div class="toast-title">${title}</div>
+                <div class="toast-subtitle">${sub}</div>
+            </div>
+            <button class="toast-close-btn" onclick="this.closest('#app-toast').classList.remove('show')">&times;</button>
+        </div>
+        <div class="toast-progress"></div>
+    `;
+
+    toast.classList.remove('show');
+    void toast.offsetWidth;
+    toast.classList.add('show');
+
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 3200);
+}

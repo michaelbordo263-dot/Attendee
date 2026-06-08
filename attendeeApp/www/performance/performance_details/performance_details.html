@@ -22,6 +22,10 @@
             <div class="rep-loc" id="repLoc">Loading...</div>
         </div>
         <div class="quarter-badge" id="quarterBadge">Q-- · --- 2026</div>
+        <button class="export-btn" id="exportBtn" onclick="exportXlsx()">
+        <i class="fa-solid fa-file-arrow-down"></i>
+        Export Report
+        </button>
     </div>
 
     <!-- page-body fills remaining height; score-card is fixed, mvd-card grows & scrolls internally -->
@@ -41,10 +45,6 @@
                 </div>
             </div>
             <div class="stat-chips">
-                <div class="chip">
-                    <div class="chip-val" id="cvOnTime">—</div>
-                    <div class="chip-label">On-Time Attendance</div>
-                </div>
                 <div class="chip">
                     <div class="chip-val" id="cvAttendance">—</div>
                     <div class="chip-label">Attendance</div>
@@ -70,6 +70,8 @@
 
     </div><!-- end .page-body -->
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="../../common/backend_connection.js"></script>
     <script src="performance_details.js"></script>
 </body>
 </html>

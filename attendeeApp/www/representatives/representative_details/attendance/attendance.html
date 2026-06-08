@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance - MedTrack</title>
+    <link rel="stylesheet" href="attendance.css">
+    <link rel="stylesheet" href="../../../common/global_page_header.css">
+    <script src="../../../common/global_data.js" defer></script>
+</head>
+<body>
+    <div class="schedule-wrapper">
+        <header class="main-header">
+            <h1 class="title">Attendance</h1>
+            <div class="profile-avatar"></div>
+        </header>
+
+        <div class="rep-sub-nav">
+            <div class="rep-left-section">
+                <button class="back-btn" id="goBack" onclick="window.location.href='../representatives.html'"> < </button>
+                <div class="user-info-stack">
+                    <span class="name-label" id="rep-name">Loading...</span>
+                    <span class="area-label" id="rep-location">Loading...</span>
+                </div>
+            </div>
+            </div>
+
+        <section class="calendar-content">
+            <div class="calendar-controls">
+                <div class="controls-right-spacer"></div>
+
+                <div class="month-nav-group">
+                    <button class="btn-pill" id="prevMonth"> < </button>
+                    <div class="date-label">
+                        <span class="m" id="monthName">April</span>
+                        <span class="y" id="yearNumber">2026</span>
+                    </div>
+                    <button class="btn-pill" id="nextMonth"> > </button>
+                </div>
+
+                <div class="status-filter-wrapper">
+                    <label class="status-filter-label" for="statusFilter">Attendance Status</label>
+                    <select id="statusFilter" class="status-filter-select">
+                        <option value="all">All</option>
+                        <option value="on_time">On Time</option>
+                        <option value="late">Late</option>
+                        <option value="absent">Absent</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="calendar-grid" id="calendarGrid">
+                <div class="day-name">SUN</div><div class="day-name">MON</div>
+                <div class="day-name">TUE</div><div class="day-name">WED</div>
+                <div class="day-name">THU</div><div class="day-name">FRI</div>
+                <div class="day-name">SAT</div>
+            </div>
+        </section>
+    </div>
+
+    <div id="dateModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-card-header">
+                <span class="modal-date-title" id="modalDateTitle">Date</span>
+                <button class="modal-close-btn" id="closeModalBtn">✕</button>
+            </div>
+            <div class="modal-card-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Image Expansion Lightbox -->
+    <div id="imageLightbox" class="modal-overlay" style="display: none; z-index: 11000; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);">
+        <button class="modal-close-btn" id="closeLightbox" style="position: absolute; top: 20px; right: 20px; font-size: 44px; color: white; background: rgba(0,0,0,0.3); border: none; border-radius: 50%; width: 64px; height: 64px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 11001;">✕</button>
+        <div style="position:relative; display:inline-block;">
+            <button onclick="attPageRotate()" style="position:absolute; top:10px; right:10px; z-index:11002; background:rgba(0,0,0,0.5); border:none; border-radius:50%; width:40px; height:40px; color:white; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Rotate">↻</button>
+            <img id="expandedImg" src="" alt="Expanded Attendance" style="max-width:90vw; max-height:90vh; border-radius:4px; box-shadow:0 0 50px rgba(0,0,0,0.8); display:block; transition:transform 0.3s ease;">
+        </div>
+    </div>
+
+    <script src="../../../common/backend_connection.js"></script>
+    <script src="attendace.js"></script>
+</body>
+</html>

@@ -12,8 +12,9 @@
                 </p>
                 
                 <div class="modal-actions">
-                    <button class="btn-review" onclick="closeModal()">Review</button>
-                    <button class="btn-confirm" onclick="updateGlobalStatus('Approved')">Confirm</button>
+                    <!-- Closes modal to go back to page -->
+                    <button type="button" class="btn-review" onclick="window.closeAcceptModal()">Review</button>
+                    <button type="button" class="btn-confirm" onclick="updateGlobalStatus('Approved')">Confirm</button>
                 </div>
             </div>
         </div>

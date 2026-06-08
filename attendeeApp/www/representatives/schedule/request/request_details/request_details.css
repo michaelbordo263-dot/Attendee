@@ -41,6 +41,8 @@ body {
     align-items: center;
     border-bottom: 1px solid #E0E0E0;
     flex-shrink: 0;
+    overflow: hidden;
+    min-height: 65px;
 }
 
 .rep-left-section { display: flex; align-items: center; gap: 15px; }
@@ -70,7 +72,7 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    min-width: 300px; /* Adjust based on your header space */
+    flex-shrink: 0;
 }
 
 /* The Label Styling */
@@ -84,23 +86,26 @@ body {
 
 /* Add this to your request_details.css */
 .final-status-badge {
-    padding: 10px 24px;
-    border-radius: 25px;
+    padding: 5px 15px;
+    border-radius: 6px;
     font-weight: 700;
     font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .final-status-badge.approved {
-    background-color: #e8f5e9; /* Soft green */
-    color: #2e7d32;           /* Dark green text */
+    background-color: #e8f5e9;
+    color: #2e7d32;
     border: 1px solid #a5d6a7;
 }
 
 .final-status-badge.rejected {
-    background-color: #ffebee; /* Soft red */
-    color: #c62828;           /* Dark red text */
+    background-color: #ffebee;
+    color: #c62828;
     border: 1px solid #ef9a9a;
 }
 

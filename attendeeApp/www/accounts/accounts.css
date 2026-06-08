@@ -227,6 +227,15 @@ div#list.rep-list-container {
     box-shadow: none;
 }
 
+/* Ensure select dropdowns are never accidentally styled as disabled */
+.field-group select:not(:disabled) {
+    background: #ffffff;
+    color: #333;
+    cursor: pointer;
+    pointer-events: auto;
+    opacity: 1;
+}
+
 /* --- MODAL SYSTEM --- */
 .modal-overlay {
     display: none;
@@ -236,7 +245,7 @@ div#list.rep-list-container {
     width: 100%; 
     height: 100%;
     background: rgba(0, 0, 0, 0.6);
-    z-index: 1000;
+    z-index: 9999;
     justify-content: center;
     align-items: center;
     backdrop-filter: blur(2px);

@@ -13,13 +13,18 @@
 
 .modal-card {
     background-color: #3e627a; 
-    width: 450px;       /* Fixed width */
-    height: 270px;      /* Fixed height to keep them identical */
+    width: 450px;
+    height: 270px;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     display: flex;
-    flex-direction: column; /* Stack header and body */
+    flex-direction: column;
+}
+
+#rejectModal .modal-card {
+    width: 580px;
+    height: 380px;
 }
 
 .modal-header {
@@ -136,6 +141,24 @@
     background: transparent;
 }
 
+#rejectModal .modal-content-box {
+    text-align: left;
+}
+
+#remarksViewModal div::-webkit-scrollbar {
+    width: 8px;
+}
+
+#remarksViewModal div::-webkit-scrollbar-button {
+    display: none;
+    height: 0;
+}
+
+#remarksViewModal div::-webkit-scrollbar-thumb {
+    background-color: #cbd5e0;
+    border-radius: 3px;
+}
+
 .btn-cancel-red {
     background-color: #fca5a5; 
     color: #991b1b; 
@@ -210,3 +233,85 @@
     width: 100%;
 }
 
+#app-toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    z-index: 99999;
+    min-width: 320px;
+    max-width: 440px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+}
+#app-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+.toast-body {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    font-family: 'Inter', sans-serif;
+}
+
+.toast-body.success { 
+    background: #166534; 
+    color: #dcfce7; 
+}
+
+.toast-body.error { 
+    background: #991b1b; 
+    color: #fee2e2; 
+}
+
+.toast-icon-wrap { 
+    font-size: 20px; 
+    flex-shrink: 0; 
+}
+
+.toast-text-wrap {
+     flex: 1; 
+}
+
+.toast-title { 
+    font-size: 14px; 
+    font-weight: 600; 
+    margin-bottom: 2px; 
+}
+
+.toast-subtitle { 
+    font-size: 12px; 
+    opacity: 0.75; 
+}
+
+.toast-close-btn {
+    background: none; 
+    border: none; 
+    cursor: pointer;
+    color: inherit; 
+    opacity: 0.6; 
+    font-size: 16px; 
+    padding: 0;
+}
+
+.toast-close-btn:hover { 
+    opacity: 1; 
+}
+
+.toast-progress {
+    height: 3px;
+    width: 100%;
+    animation: toastShrink 3s linear forwards;
+}
+
+.toast-body.success + .toast-progress { background: #4ade80; }
+.toast-body.error   + .toast-progress { background: #fca5a5; }
+
+@keyframes toastShrink { from { width: 100%; } to { width: 0%; } }

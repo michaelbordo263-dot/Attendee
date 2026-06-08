@@ -1,12 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8"> 
     <link rel="stylesheet" href="dashboard.css">
     <link rel="stylesheet" href="../common/global.css">
+    <link rel="stylesheet" href="../representatives/schedule/request/request_details/components/modal.css">
+    <link rel="stylesheet" href="attendance_card/attendance_card.css">
     <script src="../common/navigation.js"></script>
     <style>
         * { scrollbar-width: none !important; -ms-overflow-style: none !important; }
         *::-webkit-scrollbar { display: none !important; }
+
+        /* ── Re-enable scrollbars inside Request Detail Modal ── */
+        .rd-doctor-list { scrollbar-width: thin !important; }
+        .rd-doctor-list::-webkit-scrollbar { display: block !important; width: 6px !important; }
+        .rd-doctor-list::-webkit-scrollbar-thumb { background: #cbd5e0 !important; border-radius: 3px !important; display: block !important; }
+        .rd-table-scroll { scrollbar-width: thin !important; }
+        .rd-table-scroll::-webkit-scrollbar { display: block !important; width: 6px !important; height: 6px !important; }
+        .rd-table-scroll::-webkit-scrollbar-thumb { background: #cbd5e0 !important; border-radius: 3px !important; display: block !important; }
+
+        /* ── Re-enable scrollbar in unusual detail modal ── */
+        #detailDoctorsList { scrollbar-width: thin !important; }
+        #detailDoctorsList::-webkit-scrollbar { display: block !important; width: 6px !important; }
+        #detailDoctorsList::-webkit-scrollbar-thumb { background: #cbd5e0 !important; border-radius: 3px !important; display: block !important; }
+
+        /* ── Hard color reset so doctor card text is always visible ── */
+        .rd-body { color: #333 !important; }
+        .rd-doc-name { color: #1e2d3d !important; }
+        .rd-doc-sub  { color: #888 !important; }
+        .rd-doc-init { color: #1976d2 !important; background: #e3f2fd !important; }
+        .rd-toggle-icon { color: #aab0be !important; transition: transform 0.3s; font-size: 10px; margin-left: auto; }
+        
+        .rd-doc-item { border-bottom: 1px solid #edf2f7; background: #fff; }
+        .rd-doc-header { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; gap: 12px; }
+        .rd-doc-init { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+        .rd-doc-info { flex: 1; min-width: 0; }
+        .rd-doc-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rd-doc-sub { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .rd-doc-inner { padding: 0 16px 16px 64px; }
+        .rd-detail-item { display: flex; flex-direction: column; margin-bottom: 8px; }
+        .rd-detail-item label { font-size: 10px; font-weight: 700; color: #aab0be; letter-spacing: 0.5px; margin-bottom: 2px; text-transform: uppercase; }
+        .rd-detail-item span { font-size: 13px; color: #333; }
+        .rd-detail-divider { height: 1px; background: #eee; margin: 12px 0; }
+        
+        .rd-visit-container { margin-top: 4px; }
+        .rd-visit-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .rd-visit-month { font-size: 11px; font-weight: 700; color: #666; width: 60px; flex-shrink: 0; }
+        .rd-chip-wrap { display: flex; flex-wrap: wrap; gap: 4px; }
+        .rd-chip { background: #f0f4f8; color: #475569; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        
+        /* ── Card Expansion Transitions ── */
+        .rd-doc-details { 
+            max-height: 0; 
+            overflow: hidden; 
+            transition: max-height 0.3s ease-out; 
+        }
+        .rd-doc-item.active .rd-doc-details { max-height: 400px; }
+        .rd-doc-item.active .rd-toggle-icon { transform: rotate(180deg); }
+
+        .rd-dcp-table, .rd-dcp-table td { color: #333 !important; }
+        .rd-dcp-table th { color: #999 !important; }
     </style>
 </head>
 
@@ -46,12 +100,22 @@
                 <div class="stat-value" id="totalProductsValue">0</div>
             </div>
 
-            <div class="stat-card stat-card--date">
-                <div class="stat-date-day" id="clock-day">--</div>
-                <div class="stat-date-month" id="clock-month">--</div>
-                <div class="stat-date-time" id="clock-time">--</div>
+            <div class="stat-card" id="attendance-card" onclick="openAttendanceModal()">
+                <div>
+                    <div class="stat-label">Attendance Today</div>
+                    <div class="stat-sub" id="attendance-sub-label">--</div>
+                </div>
+                <div id="attendance-card-counts" style="display:flex; gap:16px; margin-top:8px;">
+                    <div style="text-align:center;">
+                        <div class="stat-value" id="att-present-count" style="color:#166534;">--</div>
+                        <div style="font-size:11px; color:#888;">Present</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div class="stat-value" id="att-absent-count" style="color:#991b1b;">--</div>
+                        <div style="font-size:11px; color:#888;">Absent</div>
+                    </div>
+                </div>
             </div>
-
         </div>
 
         <!-- PANELS -->
@@ -68,10 +132,10 @@
                 </div>
             </div>
 
-            <!-- UNUSUAL REPORT (EMPTY - API ONLY) -->
+            <!-- MISSED CALL REPORTS (EMPTY - API ONLY) -->
             <div class="panel">
                 <div class="panel-header">
-                    <span class="panel-title">Unusual Report</span>
+                    <span class="panel-title">Missed Call Reports</span>
                     <a href="#" class="panel-viewall" onclick="openUnusualModal(); return false;">View all ↗</a>
                 </div>
                 <div class="panel-body" id="unusualPanelBody">
@@ -86,12 +150,12 @@
 
 <!-- SCHEDULE MODAL -->
 <div class="modal-overlay" id="scheduleModal">
-    <div class="modal-box">
+    <div class="modal-box" style="position:relative;">
 
         <div class="modal-header">
             <h2>Schedule Request</h2>
-            <button class="modal-close" onclick="closeModal('scheduleModal')">✕</button>
         </div>
+        <button class="modal-close sched-float-close" onclick="closeModal('scheduleModal')">✕</button>
 
         <div class="schedule-controls">
 
@@ -108,6 +172,7 @@
                 <div class="tab-group">
                     <button class="tab-btn active" onclick="setSchedTab('Pending', this)">Pending</button>
                     <button class="tab-btn" onclick="setSchedTab('Approved', this)">Approved</button>
+                    <button class="tab-btn" onclick="setSchedTab('Rejected', this)">Rejected</button>
                     <button class="tab-btn" onclick="setSchedTab('Missing', this)">Missing</button>
                 </div>
 
@@ -143,43 +208,71 @@
     </div>
 </div>
 
-<!-- UNUSUAL MODAL -->
+<!-- MISSED CALL REPORTS MODAL -->
 <div class="modal-overlay" id="unusualModal">
-    <div class="modal-box">
+    <div class="modal-box" style="position:relative;">
         <div class="modal-header">
-            <h2>Unusual Report</h2>
-            <button class="modal-close" onclick="closeModal('unusualModal')">✕</button>
+            <h2>Missed Call Reports</h2>
         </div>
+        <button class="sched-float-close" onclick="closeModal('unusualModal')">✕</button>
+
+        <!-- Month / Year navigation -->
+        <div style="display:flex; align-items:center; gap:12px; padding:14px 24px 14px; border-bottom: 1px solid #e2e8f0;">
+            <div class="quarter-nav" style="min-width:unset;">
+                <button class="nav-btn" onclick="missedChangeMonth(-1)">&#8249;</button>
+                <div class="nav-label">
+                    <span class="nav-label-main" id="missedMonthLabel">--</span>
+                    <span class="nav-label-sub">Month</span>
+                </div>
+                <button class="nav-btn" onclick="missedChangeMonth(1)">&#8250;</button>
+            </div>
+            <div class="quarter-nav" style="min-width:unset;">
+                <button class="nav-btn" onclick="missedChangeYear(-1)">&#8249;</button>
+                <div class="nav-label">
+                    <span class="nav-label-main" id="missedYearLabel">--</span>
+                    <span class="nav-label-sub">Year</span>
+                </div>
+                <button class="nav-btn" onclick="missedChangeYear(1)">&#8250;</button>
+            </div>
+        </div>
+
+        <div id="unusualCount" style="padding:12px 24px 2px; font-size:13px; color:#64748b;"></div>
         <div class="unusual-list" id="unusualList"></div>
     </div>
 </div>
 
-<!-- DETAIL MODAL -->
+<!-- THE SPECIFIC DETAIL MODAL -->
 <div class="modal-overlay" id="unusualDetailModal">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h2>Unusual Report</h2>
-            <button class="modal-close" onclick="backToUnusualList()">✕</button>
+    <div class="modal-box modal-box--unusual-detail" style="height: 85vh; max-height: 700px; overflow: hidden; display: flex; flex-direction: column; border-radius: 16px;">
+        
+        <!-- Header -->
+        <div class="modal-header" style="display: flex; align-items: center; padding: 20px 24px; background: #2c4e68; color: white; position: relative;">
+            <button onclick="backToUnusualList()" 
+                    style="cursor:pointer; background:rgba(255,255,255,0.15); border:none; color:white; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-size:18px; pointer-events:auto; margin-right:12px; flex-shrink:0;">
+                &#8249;
+            </button>
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600; flex:1;">Missed Call Report Details</h2>
         </div>
 
-        <div id="detailRepHeader"></div>
-        <div id="detailIssueBar"></div>
-        <div id="detailDoctorsList"></div>
-
-        <div class="detail-footer">
-            <button class="notify-btn">Notify</button>
+        <!-- Content Area -->
+        <div style="flex: 1; overflow-y: auto; background: #f8fafc; padding-bottom: 20px;">
+            <div id="detailRepHeader"></div>
+            <div id="detailIssueBar"></div>
+            <div id="detailDoctorsList" style="padding: 0 24px;">
+                <!-- Real-time data from logic above injects here -->
+            </div>
         </div>
     </div>
 </div>
 
 <!-- PRODUCTS MODAL -->
 <div class="modal-overlay" id="productsModal">
-    <div class="modal-box modal-box--wide">
+    <div class="modal-box modal-box--wide" style="position:relative;">
 
         <div class="modal-header">
             <h2>Products</h2>
-            <button class="modal-close" onclick="closeModal('productsModal')">✕</button>
         </div>
+        <button class="sched-float-close" onclick="closeModal('productsModal')">✕</button>
 
         <div class="products-controls">
             <div class="products-search-row">
@@ -204,12 +297,12 @@
 
 <!-- ADD PRODUCT MODAL -->
 <div class="modal-overlay" id="addProductModal">
-    <div class="modal-box modal-box--sm">
+    <div class="modal-box modal-box--sm" style="position:relative;">
 
         <div class="modal-header">
             <h2>Add Product</h2>
-            <button class="modal-close" onclick="closeModal('addProductModal')">✕</button>
         </div>
+        <button class="sched-float-close" onclick="closeModal('addProductModal')">✕</button>
 
         <div class="add-product-body">
 
@@ -240,6 +333,127 @@
     </div>
 </div>
 
-<script src="dashboard.js"></script>
+<!-- REQUEST DETAIL MODAL (Summary View) -->
+<div class="modal-overlay" id="requestDetailModal">
+    <div class="modal-box modal-box--request-detail" style="height:92vh; display:flex; flex-direction:column;">
+
+        <!-- HEADER -->
+        <div class="modal-header">
+            <div class="rd-header-left">
+                <button class="rd-back-btn" onclick="closeModal('requestDetailModal')">‹</button>
+                <div class="rd-rep-meta">
+                    <div class="rd-name-row">
+                        <span class="rd-name" id="rdRepName">---</span>
+                    </div>
+                    <span class="rd-area" id="rdArea">---</span>
+                </div>
+            </div>
+            <div class="rd-header-right">
+                <div id="rdStatusBadge"></div>
+                <div class="rd-period-pill" id="rdPeriodPill"></div>
+                <div class="rd-actions" id="rdActions">
+                    <button class="rd-btn-reject" id="rdRejectBtn">Reject</button>
+                    <button class="rd-btn-accept" id="rdAcceptBtn">Accept</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BODY -->   
+        <div class="rd-body" id="rdBody">
+
+            <!-- LOADING -->
+            <div class="rd-loading" id="rdLoading">
+                <div class="rd-spinner"></div>
+                <span>Loading summary...</span>
+            </div>
+
+            <!-- SUMMARY CONTENT -->
+            <div id="rdSummaryContent" style="display:none; flex:1; overflow:hidden; display:none; flex-direction:column;">
+
+                <!-- STAT CARDS -->
+                <div class="rd-stat-row">
+                    <div class="rd-stat-card">
+                        <label>TOTAL DOCTORS</label>
+                        <div class="rd-stat-value" id="rdStatDoctors">0</div>
+                        <span class="rd-stat-sub">Coverage</span>
+                    </div>
+                    <div class="rd-stat-card">
+                        <label>TOTAL VISITS</label>
+                        <div class="rd-stat-value" id="rdStatVisits">0</div>
+                        <span class="rd-stat-sub">Across Quarter</span>
+                    </div>
+                    <div class="rd-stat-card">
+                        <label>PHARMACIES</label>
+                        <div class="rd-stat-value" id="rdStatPharmacies">0</div>
+                        <span class="rd-stat-sub">Coverage</span>
+                    </div>
+                </div>
+
+                <!-- BREAKDOWN + CALENDAR -->
+                <div class="rd-main-grid">
+
+                    <!-- LEFT: Accordion Breakdown -->
+                    <div class="rd-breakdown-card">
+                        <h3 class="rd-section-title">Doctor/Pharmacy Breakdown</h3>
+                        <div class="rd-accordion-scroll" id="rdAccordionContainer">
+                            <p style="color:#999;font-size:13px;">Loading...</p>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Calendar -->
+                    <div class="rd-calendar-card" id="rdCalendarContainer">
+                        <div class="rd-cal-empty" id="rdCalEmpty">
+                            <div style="font-size:32px;opacity:0.25;margin-bottom:12px;">📅</div>
+                            <p style="color:#bbb;font-size:14px;">Click a doctor to see schedule</p>
+                        </div>
+                        <div class="rd-cal-active hidden" id="rdCalActive">
+                            <div class="rd-cal-nav">
+                                <button class="rd-cal-nav-btn" onclick="rdChangeMonth(-1)">&#8249;</button>
+                                <span class="rd-cal-month-label" id="rdCalMonthLabel">Month 2026</span>
+                                <button class="rd-cal-nav-btn" onclick="rdChangeMonth(1)">&#8250;</button>
+                            </div>
+                            <div class="rd-cal-weekdays">
+                                <div>S</div><div>M</div><div>T</div><div>W</div><div>TH</div><div>F</div><div>S</div>
+                            </div>
+                            <div class="rd-cal-grid" id="rdCalGrid"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+    <script src="../common/backend_connection.js"></script>
+    <script src="dashboard.js"></script>
+
+
+<!-- Rejection Remarks Modal -->
+<div id="rejectionRemarksModal" class="modal-overlay" style="display:none; position:fixed; z-index:99999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.4); justify-content:center; align-items:center;">
+    <div style="background:#3e627a; width:580px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.3); overflow:hidden; display:flex; flex-direction:column;">
+        <div style="padding:15px 20px; display:flex; align-items:center; gap:10px; color:white;">
+            <h3 style="margin:0; font-size:1.1rem; font-weight:500;">Reject Remarks</h3>
+        </div>
+        <div style="padding:16px; background:#f1f5f9; display:flex; flex-direction:column; gap:12px;">
+            <div style="background:white; border:2px solid #3b82f6; border-radius:10px; padding:20px; display:flex; flex-direction:column; gap:14px;">
+                <p style="margin:0; color:#334155; font-size:14px;">
+                    Remarks for <strong class="rrm-rep-name"></strong>'s rejected request:
+                </p>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0 14px 14px 14px; min-height:140px; max-height:300px; overflow-y:auto; color:#334155; font-size:14px; line-height:1.6; word-break:break-word; white-space:pre-wrap; text-align:left;">
+                    <span class="rrm-remarks-text" style="display:block; text-align:left; margin-top:-15px;"></span>
+                </div>
+                <div style="display:flex; justify-content:center;">
+                    <button onclick="closeRejectionRemarksModal()" style="background:#b8b8b8; color:#444; border:none; padding:8px 50px; border-radius:20px; font-weight:600; cursor:pointer;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <div id="dash-app-toast"></div>
+        <script src="attendance_card/attendance_card.js"></script>
+
 </body>
 </html>

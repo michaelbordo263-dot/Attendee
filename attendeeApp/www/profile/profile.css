@@ -3,199 +3,173 @@
 /* ── OVERLAY BACKDROP ── */
 .profile-overlay {
     position: fixed;
-    inset: 0;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 9999;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     animation: overlayFadeIn 0.2s ease;
+    pointer-events: none;
 }
-
+.profile-overlay[style*="display: flex"],
+.profile-overlay[style*="display:flex"] {
+    pointer-events: all;
+}
 @keyframes overlayFadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from { opacity: 0; } to { opacity: 1; }
 }
 
 /* ── MODAL CARD ── */
-.profile-modal {
+#profileOverlay .profile-modal,
+#changePasswordOverlay .profile-modal {
     background: #ffffff;
     border-radius: 20px;
     width: 480px;
     max-width: 94vw;
     padding: 40px 36px 36px;
     position: relative;
-    box-shadow: 0 24px 64px rgba(53, 88, 114, 0.22), 0 4px 16px rgba(0,0,0,0.08);
+    box-shadow: 0 24px 64px rgba(53, 88, 114, 0.22);
     animation: modalSlideUp 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
     box-sizing: border-box;
 }
-
 @keyframes modalSlideUp {
     from { opacity: 0; transform: translateY(30px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0)    scale(1);    }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ── CLOSE BUTTON ── */
-.modal-close {
+.profile-modal-close {
     position: absolute;
-    top: 16px;
-    right: 20px;
-    background: none;
-    border: none;
-    font-size: 26px;
-    color: #aab4bc;
-    cursor: pointer;
-    line-height: 1;
-    padding: 2px 6px;
-    border-radius: 6px;
-    transition: color 0.2s, background 0.2s;
+    top: 16px; right: 20px;
+    background: none; border: none;
+    font-size: 26px; color: #aab4bc;
+    cursor: pointer; line-height: 1;
+    padding: 2px 6px; border-radius: 6px;
+    transition: all 0.2s; z-index: 100;
 }
-.modal-close:hover {
-    color: #355872;
-    background: #eef6fb;
-}
+.profile-modal-close:hover { color: #355872; background: #eef6fb; }
 
 /* ── AVATAR ── */
 .profile-avatar-wrap {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 14px;
+    display: flex; justify-content: center; margin-bottom: 14px;
 }
-
 .profile-avatar {
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    background: #e8f4f8;
+    width: 88px; height: 88px;
+    border-radius: 50%; background: #e8f4f8;
     border: 4px solid #80cbc4;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     overflow: hidden;
     box-shadow: 0 4px 18px rgba(128, 203, 196, 0.35);
 }
 
-/* ── TITLE ── */
-.profile-title {
+/* ── TITLE & ROLE ── */
+#profileOverlay .profile-title,
+#changePasswordOverlay .profile-title {
     font-family: 'Inter', sans-serif;
-    font-size: 22px;
-    font-weight: 800;
-    color: #355872;
-    text-align: center;
-    margin-bottom: 24px;
+    font-size: 22px; font-weight: 800;
+    color: #355872; text-align: center;
+    margin: 0 0 24px 0;
+}
+.profile-role {
+    color: #7f8c8d; text-align: center;
+    font-size: 14px; margin: 0 0 24px 0;
 }
 
-/* ── FIELDS GRID ── */
-.profile-grid {
+/* ── INFO GRID ── */
+.profile-info-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 28px;
+    gap: 14px; /* Adjust this value to change the horizontal and vertical gap between the fields */
+    margin-bottom: 24px; /* Adjust this value to change the space below the entire fields section */
 }
-
-.profile-field {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.field-label {
+.info-item { display: flex; flex-direction: column; gap: 5px; }
+.info-label {
     font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
     color: #80cbc4;
 }
-
-.field-value {
+.info-value {
     font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    color: #1a2e3d;
+    font-size: 15px; font-weight: 600;
+    color: #1a2e3d !important;
     background: #f8fbfc;
     border: 1.5px solid #e2edf3;
     border-radius: 10px;
-    padding: 9px 14px;
-    min-height: 40px;
+    padding: 9px 14px; min-height: 40px;
+    display: flex; align-items: center;
 }
 
-/* ── CHANGE PASSWORD BUTTON ── */
-.change-password-btn {
-    width: 100%;
-    background: #355872;
-    color: #ffffff;
+/* ── BUTTON ROW ── */
+.button-row {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    margin-top: 8px;
+}
+.btn-change-pw,
+.btn-logout {
+    flex: 1;
     border: none;
     border-radius: 12px;
-    padding: 13px 20px;
+    padding: 13px 16px;
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 13px; font-weight: 700;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    letter-spacing: 0.3px;
-    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    display: flex; align-items: center;
+    justify-content: center; gap: 7px;
+    transition: all 0.2s;
+}
+.btn-change-pw {
+    background: #355872; color: #ffffff;
     box-shadow: 0 4px 14px rgba(53, 88, 114, 0.25);
 }
-.change-password-btn:hover {
-    background: #2a4760;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(53, 88, 114, 0.32);
+.btn-change-pw:hover { background: #2a4760; transform: translateY(-1px); }
+.btn-logout {
+    background: #e74c3c; color: #ffffff;
+    box-shadow: 0 4px 14px rgba(231, 76, 60, 0.25);
 }
-.change-password-btn:active {
-    transform: translateY(0);
-}
+.btn-logout:hover { background: #c0392b; transform: translateY(-1px); }
 
-/* ── CHANGE PASSWORD MODAL ── */
-.change-pw-modal {
-    width: 420px;
-}
-
+/* ── CHANGE PASSWORD FORM ── */
 .pw-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    display: flex; flex-direction: column;
+    gap: 16px; margin-top: 20px;
 }
-
-.pw-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
+.pw-field { display: flex; flex-direction: column; gap: 6px; }
 .pw-field label {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-    color: #80cbc4;
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; color: #80cbc4;
 }
-
 .pw-field input {
     background: #f8fbfc;
     border: 1.5px solid #e2edf3;
     border-radius: 10px;
-    padding: 10px 14px;
+    padding: 10px 14px; outline: none;
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    color: #1a2e3d;
-    outline: none;
-    transition: border-color 0.2s;
 }
-.pw-field input:focus {
-    border-color: #80cbc4;
+.pw-error {
+    font-size: 13px;
+    text-align: center;
+    min-height: 20px;
+    padding: 8px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
-.pw-error {
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
+/* Red style for errors */
+.pw-error.active {
     color: #e74c3c;
-    min-height: 18px;
-    text-align: center;
+    background: #fdf2f2;
+}
+
+/* Green style for success[cite: 18] */
+.pw-error.success {
+    color: #27ae60;
+    background: #f2fdf5;
 }

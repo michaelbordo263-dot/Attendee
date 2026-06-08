@@ -167,6 +167,10 @@ body {
 .quarter-card.approved { border-left: 6px solid #2E7D32; }
 .status-badge.approved { background-color: #E8F5E9; color: #2E7D32; }
 
+/* State: Rejected */
+.quarter-card.rejected { border-left: 6px solid #C62828; }
+.status-badge.rejected { background-color: #FDECEA; color: #C62828; }
+
 /* State: Pending */
 .quarter-card.pending { border-left: 6px solid #EF6C00; }
 .status-badge.pending { background-color: #FFF3E0; color: #EF6C00; }

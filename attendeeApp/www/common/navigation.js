@@ -34,9 +34,14 @@
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Define the HTML for your shared header
+    // 1. Inject shared header
     const headerHTML = `
         <header class="top-nav-bar">
+            <div class="nav-logo-section">
+                <div class="nav-logo-link">
+                    <img src="../common/assets/premier_logo_clean.png" alt="Premier Pharmaceuticals Marketing Corp." class="nav-logo-img" />
+                </div>
+            </div>
             <nav class="nav-container">
                 <a href="../dashboard/dashboard.html" class="nav-item">Dashboard</a>
                 <a href="../representatives/representatives.html" class="nav-item">Representatives</a>
@@ -48,21 +53,45 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </header>
     `;
-
-    // 2. Inject it at the very top of the body
     document.body.insertAdjacentHTML('afterbegin', headerHTML);
 
-    // 3. Highlight the current active tab
+    // 2. Load profile CSS
+    const profileStyles = document.createElement('link');
+    profileStyles.rel = 'stylesheet';
+    profileStyles.href = '../profile/profile.css';
+    document.head.appendChild(profileStyles);
+
+    // 3. Load profile JS (it injects its own modal HTML + listeners)
+    const profileScript = document.createElement('script');
+    profileScript.src = '../profile/profile.js';
+    profileScript.onload = () => {
+        if (typeof initProfile === 'function') initProfile();
+    };
+    document.head.appendChild(profileScript);
+
+    // 4. Connect profile circle click with DYNAMIC DATA
+    const profileSection = document.querySelector('.profile-section');
+    if (profileSection) {
+        profileSection.style.cursor = 'pointer';
+        profileSection.addEventListener('click', () => {
+            if (typeof openProfileModal === 'function') {
+                // Open the modal container
+                openProfileModal();
+            }
+        });
+    }
+
+    // 5. Highlight active tab
     const navItems = document.querySelectorAll('.nav-item');
     const currentPath = window.location.pathname.toLowerCase();
-
     navItems.forEach(item => {
-        // Get the filename from the href (e.g., 'dashboard.html')
-        const linkPath = item.getAttribute('href').split('/').pop().toLowerCase();
-        
-        // If the current URL includes this link's filename, make it active
-        if (currentPath.includes(linkPath)) {
-            item.classList.add('active');
+        const href = item.getAttribute('href');
+        if (href) {
+            const linkPath = href.split('/').pop().toLowerCase();
+            if (currentPath.includes(linkPath)) {
+                item.classList.add('active');
+            }
         }
     });
+
 });

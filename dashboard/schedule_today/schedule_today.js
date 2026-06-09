@@ -371,6 +371,12 @@ function slRenderBody(date) {
                     subExtra = ` <span class="sl-call-sub-link">~ from ${ST_MONTHS_SHORT[docDate.getMonth()]} ${docDate.getDate()} Calls</span>`;
                 }
             }
+            if (c.status === 'makeup' && c.document_date) {
+                const docDate = new Date(c.document_date);
+                if (!isNaN(docDate)) {
+                    subExtra = ` <span class="sl-call-sub-link">~ from ${ST_MONTHS_SHORT[docDate.getMonth()]} ${docDate.getDate()} Calls</span>`;
+                }
+            }
 
             return `
             <div class="sl-call-card">

@@ -14,8 +14,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log("🔍 [DEBUG] URL Parameters:", { identifier, returnDate, repId });
 
     // ── BACK BUTTON ─────────────────────────────
+    const fromModal = params.get('from') === 'modal';
+
     document.getElementById('goBack')?.addEventListener('click', () => {
-        if (repId && returnDate) {
+        if (fromModal) {
+            window.parent.stCloseDocument();
+        } else if (repId && returnDate) {
             window.location.href =
                 `../schedule.html?user_id=${repId}&date=${encodeURIComponent(returnDate)}`;
         } else {

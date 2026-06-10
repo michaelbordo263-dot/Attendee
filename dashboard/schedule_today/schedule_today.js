@@ -125,6 +125,12 @@ function stInjectModals() {
             <div class="sl-body" id="slBody"></div>
         </div>
     </div>
+
+    <!-- SCREEN 3: DOCUMENT IFRAME -->
+    <div class="modal-overlay" id="scheduleDocModal" style="align-items:flex-start; justify-content:center; padding-top:11vh;">        <div style="width:900px; max-width:calc(100vw - 48px); max-height:90vh; background:transparent; border-radius:16px; overflow:hidden; display:flex; flex-direction:column;">
+            <iframe id="scheduleDocIframe" src="" scrolling="yes" style="border:none; width:111%; height:600px; transform:scale(0.9); transform-origin:top left; border-radius:16px;"></iframe>
+        </div>
+    </div>
     `;
     document.body.insertAdjacentHTML('beforeend', html);
 }
@@ -329,15 +335,12 @@ function slRenderBody(date) {
         ? `Today's Calls`
         : `Calls — ${ST_MONTHS_SHORT[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 
-    // All calls for selected date (dcp_date = dk)
     const allForDate = stCurrentRep.allCalls
         .filter(c => (c.date || '').slice(0,10) === dk)
         .map(c => ({ ...c, status: stNormalizeStatus(c.visit_status) }));
 
-    // TODAY'S CALLS: all calls scheduled for this date, sorted
     const regularCalls = stSortCalls(allForDate);
 
-    // MAKE UP CALLS — signed today (document_date = dk) but from a past date
     const makeupCalls = stCurrentRep.allCalls
         .filter(c => {
             const s = stNormalizeStatus(c.visit_status);
@@ -346,7 +349,6 @@ function slRenderBody(date) {
             return s === 'makeup' && docDate === dk && callDate !== dk;
         });
 
-    // ADVANCE CALLS — signed today (document_date = dk) but for a future date
     const advanceCalls = stCurrentRep.allCalls
         .filter(c => {
             const s = stNormalizeStatus(c.visit_status);
@@ -379,7 +381,7 @@ function slRenderBody(date) {
             }
 
             return `
-            <div class="sl-call-card">
+            <div class="sl-call-card" style="cursor:pointer;" onclick="stOpenDocument('${c.cds_id}','${c.dcp_id}','${c.date}','${stCurrentRep.rep.id}')">
                 <div class="sl-call-avatar">${stInitials(name)}</div>
                 <div class="sl-call-info">
                     <div class="sl-call-name">${name}</div>
@@ -401,7 +403,7 @@ function slRenderBody(date) {
                 ? `${ST_MONTHS_SHORT[fromDate.getMonth()]} ${fromDate.getDate()} Calls`
                 : 'another date';
             return `
-            <div class="sl-call-card">
+            <div class="sl-call-card" style="cursor:pointer;" onclick="stOpenDocument('${c.cds_id}','${c.dcp_id}','${c.date}','${stCurrentRep.rep.id}')">
                 <div class="sl-call-avatar">${stInitials(name)}</div>
                 <div class="sl-call-info">
                     <div class="sl-call-name">${name}</div>
@@ -423,7 +425,7 @@ function slRenderBody(date) {
                 ? `${ST_MONTHS_SHORT[toDate.getMonth()]} ${toDate.getDate()} Calls`
                 : 'another date';
             return `
-            <div class="sl-call-card">
+            <div class="sl-call-card" style="cursor:pointer;" onclick="stOpenDocument('${c.cds_id}','${c.dcp_id}','${c.date}','${stCurrentRep.rep.id}')">
                 <div class="sl-call-avatar">${stInitials(name)}</div>
                 <div class="sl-call-info">
                     <div class="sl-call-name">${name}</div>
@@ -457,4 +459,19 @@ window.stBackToList = function () {
 
 window.stCloseModal = function () {
     document.getElementById('scheduleTodayModal').classList.remove('active');
+};
+
+// ── OPEN DOCUMENT ───────────────────────────────────
+window.stOpenDocument = function(cdsId, dcpId, date, repId) {
+    if (!cdsId) return;
+    const url = `../../representatives/schedule/document/document.html?cds_id=${cdsId}&user_id=${repId}&date=${encodeURIComponent(date)}&dcp_id=${dcpId}&from=modal`;
+    document.getElementById('scheduleDocIframe').src = url;
+    document.getElementById('scheduleLogsModal').classList.remove('active');
+    document.getElementById('scheduleDocModal').classList.add('active');
+};
+
+window.stCloseDocument = function() {
+    document.getElementById('scheduleDocModal').classList.remove('active');
+    document.getElementById('scheduleDocIframe').src = '';
+    document.getElementById('scheduleLogsModal').classList.add('active');
 };

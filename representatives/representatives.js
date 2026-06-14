@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // 🔥 THIS is the real backend connection
         const result = await API.fetchMedreps();
 
-        console.log("🌐 RAW RESULT:", result);
+        // console.log("🌐 RAW RESULT:", result); //
 
         let extracted = [];
 
@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
             extracted = result.medreps;
         }
 
-        console.log("📦 EXTRACTED:", extracted);
+        // console.log("📦 EXTRACTED:", extracted); // 
 
         allRepresentatives = extracted.filter(rep => {
             const role = (rep.role || rep.roles || rep.type || '').toLowerCase().trim();
@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return role === 'medrep' && status === 'active';
         });
 
-        console.log("✅ FILTERED REPS:", allRepresentatives);
+        // console.log("✅ FILTERED REPS:", allRepresentatives); //
 
         if (allRepresentatives.length > 0) {
             populateAreaDropdown(allRepresentatives);

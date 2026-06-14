@@ -1,5 +1,3 @@
-// ── STATE ──────────────────────────────────────────
-
 // ── TOAST NOTIFICATION ──────────────────────────────
 function showToast(message, type = 'success') {
     let container = document.getElementById('toastContainer');
@@ -121,6 +119,16 @@ window.openScheduleModal = () => {
     openModal('scheduleModal');
 };
 
+window.closeScheduleModal = () => {
+    closeModal('scheduleModal');
+    const now = new Date();
+    schedQuarter = Math.ceil((now.getMonth() + 1) / 3);
+    schedYear = now.getFullYear();
+    const sub = document.getElementById('scheduleSubLabel');
+    if (sub) sub.textContent = `Q${schedQuarter} - ${schedYear}`;
+    loadDashboardStats();
+};
+
 window.setSchedTab = (tab, btn) => {
     schedTab = tab;
 
@@ -148,8 +156,9 @@ window.changeYear = (dir) => {
     schedYear += dir;
     const yEl = document.getElementById('yLabel');
     if (yEl) yEl.textContent = schedYear;
-    loadSchedulesFromAPI(); // Only reload the schedule list, not the whole dashboard
+    loadSchedulesFromAPI();
 };
+
 window.openProductsModal = () => openModal('productsModal');
 window.openUnusualModal = () => openModal('unusualModal');
 window.openProductsModal = () => openModal('productsModal'); // This is a modal, keeping as is
@@ -285,6 +294,18 @@ window.openUnusualModal = () => {
     _syncMissedLabels();
     _renderMissedList();
     openModal('unusualModal');
+};
+
+window.closeUnusualModal = () => {
+    closeModal('unusualModal');
+    // Reset back to current month/year
+    const now = new Date();
+    missedMonth = now.getMonth() + 1;
+    missedYear = now.getFullYear();
+    // Update the panel
+    loadUnusualReports().then(() => {
+        updateUnusualUI();
+    });
 };
 
 function _syncMissedLabels() {
@@ -441,15 +462,33 @@ function _renderMissedList() {
 
 // ── SUMMARY ────────────────────────────────────────
 async function loadDashboardStats() {
-    // Pass quarter and year to summary to get period-accurate counts
-    const data = await apiFetch(`${BASE_URL}/dashboard/summary?q=${schedQuarter}&year=${schedYear}`);
+    const CACHE_KEY = `stats_${schedQuarter}_${schedYear}`;
+    const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+    let data;
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+            const { d, t } = JSON.parse(cached);
+            if (Date.now() - t < CACHE_TTL) {
+                data = d;
+                console.log('✅ Stats loaded from cache');
+            }
+        }
+    } catch {}
+
+    if (!data) {
+        data = await apiFetch(`${BASE_URL}/dashboard/summary?q=${schedQuarter}&year=${schedYear}`);
+        try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ d: data, t: Date.now() }));
+        } catch {}
+    }
 
     console.log("📊 SUMMARY:", data);
 
     const el = document.getElementById('totalMedRepsValue');
     if (el) el.textContent = data.medreps ?? 0;
 
-    // Update the sub-label for the Schedule Request card to reflect current period
     const sub = document.getElementById('scheduleSubLabel');
     if (sub) sub.textContent = `Q${schedQuarter} - ${schedYear}`;
 
@@ -457,20 +496,51 @@ async function loadDashboardStats() {
     if (prod) {
         prod.textContent = data.products ?? 0;
         const prodCard = prod.closest('.card') || prod.closest('.stat-card') || prod.parentElement;
-        if (prodCard) { // Make the entire card clickable
+        if (prodCard) {
             prodCard.style.cursor = 'pointer'; 
-            prodCard.onclick = () => openModal('productsModal'); // Open the modal
+            prodCard.onclick = () => openModal('productsModal');
         }
     }
 
     const sched = document.getElementById('totalSchedulesValue');
     if (sched) sched.textContent = data.requestedSchedules ?? 0;
+
+    // ── SCHEDULE TODAY ──
+    const schedToday = document.getElementById('schedule-today-count');
+    if (schedToday) schedToday.textContent = data.scheduleTodayCount ?? 0;
+
+    const schedTodaySub = document.getElementById('schedule-today-sub');
+    if (schedTodaySub) schedTodaySub.textContent = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 
 // ── PERFORMANCE ────────────────────────────────────
 async function loadPerformance() {
-    const data = await apiFetch(`${BASE_URL}/dashboard/performance`);
+    const now = new Date();
+    const CACHE_KEY = `perf_${Math.ceil((now.getMonth()+1)/3)}_${now.getFullYear()}`;
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+    let data;
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+            const { d, t } = JSON.parse(cached);
+            if (Date.now() - t < CACHE_TTL) {
+                data = d;
+                console.log('✅ Performance loaded from cache');
+            }
+        }
+    } catch {}
+
+    if (!data) {
+        data = await apiFetch(`${BASE_URL}/dashboard/performance`);
+        // Only cache if we actually got data
+        if (Array.isArray(data) && data.length > 0) {
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ d: data, t: Date.now() }));
+            } catch {}
+        }
+    }
 
     const perfPanel = Array.from(document.querySelectorAll('.panel')).find(p => 
         p.querySelector('.panel-title')?.textContent.toLowerCase().includes('performance')
@@ -497,15 +567,37 @@ async function loadPerformance() {
     `;}).join('');
 }
 
-
-// ── SCHEDULES (FULL FIX) ───────────────────────────
+// ── SCHEDULES REQUEST ───────────────────────────
 async function loadSchedulesFromAPI() {
-    // 🔥 Added status param (THIS is what enables real-time correct tab data)
     const url = `${BASE_URL}/dashboard/schedules?status=${schedTab}&q=${schedQuarter}&year=${schedYear}`;
+    const CACHE_KEY = `sched_${schedTab}_${schedQuarter}_${schedYear}`;
+    const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
     console.log("📡 Fetching schedules:", url);
 
-    const data = await apiFetch(url);
+    let data;
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+            const { d, t } = JSON.parse(cached);
+            if (Date.now() - t < CACHE_TTL) {
+                data = d;
+                console.log('✅ Schedules loaded from cache');
+            }
+        }
+    } catch {}
+
+    if (!data) {
+        data = await apiFetch(url);
+        const extracted = data.data || data.schedules || data;
+        const hasData = Array.isArray(extracted) ? extracted.length > 0 : false;
+        const now = new Date();
+        if (hasData && schedYear === now.getFullYear()) {
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ d: data, t: Date.now() }));
+            } catch {}
+        }
+    }
 
     console.log("📅 RAW RESPONSE:", data);
 
@@ -540,7 +632,38 @@ async function loadSchedulesFromAPI() {
 
 // ── PRODUCTS ───────────────────────────────────────
 async function loadProductsFromAPI() {
-    const data = await apiFetch(`${BASE_URL}/dashboard/products`);
+    const CACHE_KEY = 'products_cache';
+    const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+    let data;
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+            const { d, t } = JSON.parse(cached);
+            if (Date.now() - t < CACHE_TTL) {
+                data = d;
+                console.log('✅ Products loaded from cache');
+            }
+        }
+    } catch {}
+
+    if (!data) {
+        data = await apiFetch(`${BASE_URL}/dashboard/products`);
+        let extracted = data.data || data.products || data;
+        if (!Array.isArray(extracted) && typeof extracted === 'object' && extracted !== null) {
+            extracted = Object.keys(extracted)
+                .filter(key => !isNaN(key))
+                .sort((a, b) => Number(a) - Number(b))
+                .map(key => extracted[key]);
+        }
+        // Only cache if we actually got data
+        if (Array.isArray(extracted) && extracted.length > 0) {
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ d: data, t: Date.now() }));
+            } catch {}
+        }
+    }
+
     let extracted = data.data || data.products || data;
     if (!Array.isArray(extracted) && typeof extracted === 'object' && extracted !== null) {
         extracted = Object.keys(extracted)
@@ -713,11 +836,34 @@ async function loadUnusualReports() {
     const url = `${BASE_URL}/dashboard/unusual?month=${missedMonth}&year=${missedYear}`;
     console.log("🔍 Fetching Month-Specific Reports:", url);
 
+    const CACHE_KEY = `unusual_${missedMonth}_${missedYear}`;
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
     try {
+        // Check cache first
+        try {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                const { d, t } = JSON.parse(cached);
+                if (Date.now() - t < CACHE_TTL) {
+                    unusualReports = d;
+                    console.log('✅ Unusual reports loaded from cache');
+                    if (typeof updateUnusualUI === 'function') updateUnusualUI();
+                    return;
+                }
+            }
+        } catch {}
+
         const response = await fetch(url);
         const data = await response.json();
-
         unusualReports = Array.isArray(data) ? data : [];
+
+        // Only cache if we actually got data
+        if (unusualReports.length > 0) {
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ d: unusualReports, t: Date.now() }));
+            } catch {}
+        }
 
         if (typeof updateUnusualUI === 'function') {
             updateUnusualUI();
@@ -739,16 +885,9 @@ window.missedChangeMonth = async (dir) => {
     _renderMissedList();
 };
 
-// ── UPDATED UNUSUAL UI RENDERER ──────────────────
 // =====================================
 // 3. MISSED CALL REPORTS (UNUSUAL)
 // =====================================
-
-/**
- * Renders the "Missed Call Reports" list on the main dashboard panel.
- * This version syncs with the modal by filtering out the current month (May)
- * and only showing totals for months that have fully completed.
- */
 function updateUnusualUI() {
     const panel = document.getElementById('unusualPanelBody');
     if (!panel) return;
@@ -1145,6 +1284,7 @@ window.missedDetailChangeYear = (dir, rep) => {
 function backToUnusualList() {
     document.getElementById('unusualDetailModal').classList.remove('active');
 }
+
 // ── INIT ───────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     // Redirect "View all" link in the Med Rep Performance panel to the dedicated Performance tab
@@ -1156,14 +1296,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (viewAllLink) viewAllLink.setAttribute('href', '../performance/performance.html');
     }
 
-    loadDashboardStats();
-    loadPerformance();
-    loadSchedulesFromAPI();
-    loadProductsFromAPI();
-    loadUnusualReports();
-
     // Inject modals directly — no fetch needed, no path issues
     injectDashboardModals();
+
+    // Load all data in parallel
+    Promise.all([
+        loadDashboardStats(),
+        loadPerformance(),
+        loadSchedulesFromAPI(),
+        loadProductsFromAPI(),
+        loadUnusualReports()
+    ]);
 });
 
 // ── MODAL INJECTION ────────────────────────────────

@@ -56,8 +56,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- TIMEZONE HELPER ---
     function formatLocalTime(timetz) {
         if (!timetz || timetz === '--:--') return '--:--';
-        // DB stores local time already (e.g. 10:27:33+08 means 10:27 AM local)
-        // Just extract HH:MM and convert to 12-hour — don't re-apply the offset
         const match = String(timetz).match(/^(\d{2}):(\d{2})/);
         if (!match) return timetz;
         let hours = parseInt(match[1]);
@@ -66,6 +64,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const displayHour = hours % 12 === 0 ? 12 : hours % 12;
         const displayMin = String(minutes).padStart(2, '0');
         return `${displayHour}:${displayMin} ${period}`;
+    }
+
+    // --- LOCATION CACHE HELPER ---
+    function getCachedLocation(raw, resolved) {
+        if (!raw) return 'N/A';
+        const key = `geo_${String(raw).replace(/[\s,]/g, '_')}`;
+        if (resolved && !/^\d+\.\d+/.test(resolved.trim()) && resolved !== raw) {
+            localStorage.setItem(key, resolved);
+            return resolved;
+        }
+        return localStorage.getItem(key) || resolved || raw;
     }
 
     // --- DATE NORMALIZATION --- (mirrors schedule.js exactly)
@@ -130,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         notif.className = 'missed-timeout-notif';
         notif.innerHTML = `
             <span class="mt-notif-icon">🔴</span>
-            <span class="mt-notif-text">Unrecorded time-out detected &mdash; <strong>${niceDate}</strong></span>
+            <span class="mt-notif-text">Missing Time-Out &mdash; <strong>${niceDate}</strong></span>
             <span class="mt-notif-arrow">→</span>
         `;
 
@@ -163,13 +172,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            // Use window.BASE_URL from backend_connection.js, fallback to local
-            const _base = (window.BASE_URL || "http://127.0.0.1:5000/api");
-            const logsRes = await fetch(`${_base}/attendance?id=${selectedRepId}`);
-            const logsData = logsRes.ok ? await logsRes.json() : null;
+            const _base = (window.BASE_URL);
+            const CACHE_KEY = `att_logs_${selectedRepId}`;
+            const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
-            console.log("DEBUG: Attendance Logs raw response:", logsData);
-            globalAttendanceLogs = Array.isArray(logsData) ? logsData : (logsData?.data || []);
+            // Check cache first
+            let globalAttendanceLogsTemp = null;
+            try {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    const { data, timestamp } = JSON.parse(cached);
+                    if (Date.now() - timestamp < CACHE_TTL) {
+                        globalAttendanceLogsTemp = data;
+                        console.log('✅ Attendance logs loaded from cache');
+                    }
+                }
+            } catch {}
+
+            if (!globalAttendanceLogsTemp) {
+                const logsRes = await fetch(`${_base}/attendance?id=${selectedRepId}`);
+                const logsData = logsRes.ok ? await logsRes.json() : null;
+                console.log("DEBUG: Attendance Logs raw response:", logsData);
+                globalAttendanceLogsTemp = Array.isArray(logsData) ? logsData : (logsData?.data || []);
+
+                // Save to cache
+                try {
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({
+                        data: globalAttendanceLogsTemp,
+                        timestamp: Date.now()
+                    }));
+                } catch {}
+            }
+
+            globalAttendanceLogs = globalAttendanceLogsTemp;
             console.log("DEBUG: globalAttendanceLogs:", globalAttendanceLogs);
 
             const monthEl = document.getElementById('monthName');
@@ -345,7 +380,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const hasPicture = log?.daily_picture && log.daily_picture !== 'null' && log.daily_picture !== '';
 
         const mapBase = "https://www.google.com/maps/search/?api=1&query=";
-        const taggedLocQuery = log?.tagged_location ? encodeURIComponent(log.tagged_location) : "";
+        const rawLoc = log?.tagged_location || '';
+        const displayLoc = getCachedLocation(rawLoc, rawLoc);
+        const taggedLocQuery = displayLoc ? encodeURIComponent(displayLoc) : "";
         const fallbackLocQuery = log?.location ? encodeURIComponent(log.location) : "";
 
         modalBody.innerHTML = `
@@ -377,10 +414,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="modal-info-row align-top">
                         <span class="modal-info-label">Tagged Location</span>
                         <span class="modal-info-value" style="font-size:12px;">
-                            ${log?.tagged_location
-                                ? `<a href="${mapBase}${taggedLocQuery}" target="_blank" style="color:#007bff;text-decoration:none;">
-                                    📍 ${log.tagged_location}
-                                </a>`
+                            ${displayLoc
+                                ? `<a href="${mapBase}${taggedLocQuery}" target="_blank" style="color:#007bff;text-decoration:none;">📍 ${/^\d+\.\d+/.test((displayLoc || '').trim()) ? 'View Location' : displayLoc}</a>`
                                 : 'N/A'}
                         </span>
                     </div>

@@ -99,6 +99,9 @@ window.API = {
     fetchDashboard: (q, year) =>
         apiFetch(`${BASE_URL}/dashboard/summary?q=${q}&year=${year}`),
 
+    fetchScheduleTodayAll: () =>
+        apiFetch(`${BASE_URL}/dashboard/schedule-today/all`),
+
     fetchPerformance: () =>
         apiFetch(`${BASE_URL}/dashboard/performance`),
 
@@ -293,7 +296,7 @@ function showBootModal() {
                 Your session has been terminated because this account was logged into from another device. For your protection, you have been disconnected.
             </p>
 
-            <button onclick="window.location.replace('../auth/login.html')" 
+            <button onclick="window.location.replace(window.location.origin + '/auth/login.html')" 
                 style="width: 100%; background: #111827; color: #ffffff; border: none; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.2s ease;">
                 Return to Login
             </button>
@@ -344,22 +347,17 @@ async function runSecuritySync() {
     }
 }
 
-// ── MOBILE-FRIENDLY SECURITY TRIGGERS ──
-// Run once on app startup and then only when the app regains focus or resumes.
-// This avoids high-frequency DOM event polling on mobile devices.
-function registerSecurityLifecycle() {
-    window.addEventListener('focus', runSecuritySync);
-
-    if (window.cordova) {
-        document.addEventListener('resume', runSecuritySync);
-    } else {
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') runSecuritySync();
-        });
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    runSecuritySync();
-    registerSecurityLifecycle();
+// ── HIGH-SPEED TRIGGERS ──
+// Trigger on click, move, scroll, and touch for absolute "instant" feel
+['mousedown', 'mousemove', 'wheel', 'touchstart', 'keydown'].forEach(evt => {
+    document.addEventListener(evt, runSecuritySync, { passive: true });
 });
+
+// Trigger the moment the window is focused or tab becomes visible
+window.addEventListener('focus', runSecuritySync);
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') runSecuritySync();
+});
+
+// Light background heartbeat for idle tabs (every 1 minute)
+setInterval(runSecuritySync, 60000);

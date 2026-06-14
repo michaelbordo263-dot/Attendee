@@ -32,6 +32,17 @@ function attFormatTime(timetz) {
     return `${dh}:${String(min).padStart(2,'0')} ${period}`;
 }
 
+// --- LOCATION CACHE HELPER ---
+function getCachedLocation(raw, resolved) {
+    if (!raw) return 'N/A';
+    const key = `geo_${String(raw).replace(/[\s,]/g, '_')}`;
+    if (resolved && !/^\d+\.\d+/.test(resolved.trim()) && resolved !== raw) {
+        localStorage.setItem(key, resolved);
+        return resolved;
+    }
+    return localStorage.getItem(key) || resolved || raw;
+}
+
 function attGetInitials(name = '') {
     return name.trim().split(/\s+/).map(w => w[0]).filter(Boolean).slice(0,2).join('').toUpperCase() || '?';
 }
@@ -48,47 +59,73 @@ function attGetStatus(log) {
 }
 
 // ── LOAD DATA ─────────────────────────────────────────
-
 async function loadAttendanceCard() {
     try {
         const base = window.BASE_URL;
+        const CACHE_KEY = `att_today_${ATT_TODAY}`;
+        const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+        // Check cache first
+        try {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                const { data, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < CACHE_TTL) {
+                    _attAllLogs = data;
+                    _attLoaded = true;
+                    attUpdateCard();
+                    console.log('✅ Attendance loaded from cache');
+                    return;
+                }
+            }
+        } catch {}
 
         // Reset
         _attAllLogs = [];
         attUpdateCard();
 
-        // 1. Get all reps
-        const repsRes = await fetch(`${base}/accounts`);
+        // 1. Get all reps + today's logs in parallel — just 2 API calls!
+        const [repsRes, logsRes] = await Promise.all([
+            fetch(`${base}/accounts`),
+            fetch(`${base}/attendance/today`)
+        ]);
+
         const repsData = repsRes.ok ? await repsRes.json() : [];
         const reps = Array.isArray(repsData) ? repsData : (repsData.data || []);
 
-        // 2. Fetch each rep's attendance — update card as each one comes in
-        await Promise.all(reps.map(async rep => {
-            if ((rep.status || '').toLowerCase() !== 'active') return;
-            if ((rep.roles || '').toLowerCase() !== 'medrep') return;
-            const repId = rep.id;
-            const repName = `${rep.first_name || ''} ${rep.last_name || ''}`.trim() || 'Unknown';
-            const territory = rep.area || 'No Area Assigned';
+        const logsData = logsRes.ok ? await logsRes.json() : [];
+        const todayLogs = Array.isArray(logsData) ? logsData : [];
 
-            try {
-                const res = await fetch(`${base}/attendance?id=${repId}`);
-                const logs = res.ok ? await res.json() : [];
-                const allLogs = Array.isArray(logs) ? logs : (logs.data || []);
-                const todayLog = allLogs.find(l => {
-                    const raw = l.attendance_date || l.date || '';
-                    return String(raw).startsWith(ATT_TODAY);
-                }) || null;
+        // Map logs by rep ID for quick lookup
+        const logsByRepId = {};
+        todayLogs.forEach(log => {
+            logsByRepId[log.id] = log;
+        });
 
-                _attAllLogs.push({ repId, repName, lastName: (rep.last_name || '').trim().toLowerCase(), territory, log: todayLog });
-            } catch {
-                _attAllLogs.push({ repId, repName, lastName: (rep.last_name || '').trim().toLowerCase(), territory, log: null });
-            }
-
-            // Update card counts after every single rep loads
-            attUpdateCard();
-        }));
+        // Build results
+        _attAllLogs = reps
+            .filter(rep => (rep.status || '').toLowerCase() === 'active')
+            .filter(rep => (rep.roles || '').toLowerCase() === 'medrep')
+            .map(rep => {
+                const repId = rep.id;
+                const repName = `${rep.first_name || ''} ${rep.last_name || ''}`.trim() || 'Unknown';
+                const territory = rep.area || 'No Area Assigned';
+                const todayLog = logsByRepId[repId] || null;
+                return { repId, repName, lastName: (rep.last_name || '').trim().toLowerCase(), territory, log: todayLog };
+            });
 
         _attLoaded = true;
+        attUpdateCard();
+
+        // Only save to cache if we actually got rep data
+        if (_attAllLogs.length > 0) {
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    data: _attAllLogs,
+                    timestamp: Date.now()
+                }));
+            } catch {}
+        }
 
     } catch (err) {
         console.error('Attendance card load error:', err);
@@ -116,6 +153,17 @@ function attUpdateCard() {
     const ac = document.getElementById('att-absent-count');
     if (pc) pc.textContent = presentList.length;
     if (ac) ac.textContent = absentList.length;
+
+    // If modal is already open, keep the list updated live
+    const modal = document.getElementById('attModal');
+    const listView = document.getElementById('att-modal-list-view');
+    if (modal && modal.classList.contains('active') && listView && listView.style.display !== 'none') {
+        const tabPresent = document.getElementById('att-tab-present-count');
+        const tabAbsent = document.getElementById('att-tab-absent-count');
+        if (tabPresent) tabPresent.textContent = presentList.length;
+        if (tabAbsent) tabAbsent.textContent = absentList.length;
+        attRenderList();
+    }
 }
 
 // ── MODAL ─────────────────────────────────────────────
@@ -225,7 +273,8 @@ function attOpenDetail(repId, repName) {
     const mapBase = 'https://www.google.com/maps/search/?api=1&query=';
     
     // FIX: Check multiple location keys
-    const locationStr = log?.tagged_location || log?.location || log?.address || '';
+    const rawLocStr = log?.tagged_location || log?.location || log?.address || '';
+    const locationStr = getCachedLocation(rawLocStr, rawLocStr);
     const locQuery = locationStr ? encodeURIComponent(locationStr) : '';
 
     document.getElementById('att-detail-body').innerHTML = `
@@ -372,9 +421,13 @@ function attCloseLightbox() {
 }
 
 // ── INIT ──────────────────────────────────────────────
-
 document.addEventListener('DOMContentLoaded', () => {
     attInjectModal();
-    attInjectLightbox();
     loadAttendanceCard();
+
+    // Auto-refresh every 10 minutes in background
+    setInterval(() => {
+        localStorage.removeItem(`att_today_${ATT_TODAY}`);
+        loadAttendanceCard();
+    }, 1 * 60 * 1000);
 });

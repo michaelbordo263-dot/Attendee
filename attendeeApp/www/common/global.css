@@ -25,7 +25,7 @@ body {
 .top-nav-bar {
     background-color: var(--primary-navy);
     width: 100%;
-    height: 90px; /* Large enough to house the 44px circle with breathing room */
+    height: 90px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -41,9 +41,9 @@ body {
 /* Container for the navigation buttons */
 .nav-container {
     display: flex;
-    gap: 4px; /* Increased slightly for the larger scale */
+    gap: 4px;
     background: rgba(255, 255, 255, 0.1); 
-    padding: 5px; /* Matches the padding(3.dp) + some room for the larger buttons */
+    padding: 5px;
     border-radius: 50px;
     align-items: center;
 }
@@ -52,11 +52,10 @@ body {
 .nav-item {
     color: white;
     font-family: 'Inter', sans-serif;
-    font-weight: 800; /* ExtraBold */
-    /* Increased padding to make the buttons physically larger */
+    font-weight: 800;
     padding: 10px 24px; 
     text-decoration: none;
-    font-size: 13px; /* Slightly larger font to match the larger bar */
+    font-size: 13px;
     letter-spacing: 0.5px;
     border-radius: 50px;
     transition: 0.3s ease;
@@ -75,7 +74,7 @@ body {
 }
 
 .profile-circle {
-    width: 44px; /* size(44.dp) from Kotlin */
+    width: 44px;
     height: 44px;
     background-color: white;
     border-radius: 50%;
@@ -98,7 +97,6 @@ body {
     height: 40px;
     width: auto;
     object-fit: contain;
-    /* Crisp white outline tracing the logo edges */
     filter: drop-shadow(0 0 0px white)
             drop-shadow(1px 0 0 rgba(255,255,255,0.5))
             drop-shadow(-1px 0 0 rgba(255,255,255,0.5))
@@ -108,7 +106,6 @@ body {
 
 /* 4. UNIVERSAL CONTENT SPACING */
 .main-content {
-    /* Pushes content down so the 90px header doesn't cover titles */
     padding-top: 130px; 
     padding-left: 40px;
     padding-right: 40px;
@@ -116,18 +113,18 @@ body {
 
 /* --- global.css --- */
 .page-title {
-    font-size: 30px;        /* ADJUST THIS for text size */
-    font-weight: 900;       /* Keep this for that "ExtraBold" look */
+    font-size: 30px;
+    font-weight: 900;
     color: var(--primary-navy); 
-    margin-top: -10px;       /* Space between header and title */
-    margin-bottom: 30px;    /* Space between title and your content/table */
+    margin-top: -10px;
+    margin-bottom: 30px;
 }
 
 /* --- Sleek Notification Toast (Updated for MedRep Theme) --- */
 .toast-container {
     position: fixed;
-    top: 100px; /* Adjusted to appear below your 90px top-nav-bar */
-    right: 40px; /* Aligned with your profile-section right padding */
+    top: 100px;
+    right: 40px;
     z-index: 9999;
     display: flex;
     flex-direction: column;
@@ -136,21 +133,21 @@ body {
 
 .toast-msg {
     min-width: 320px;
-    background: var(--form-card-bg); /* Clean white background */
+    background: var(--form-card-bg);
     color: var(--text-pure-black);
     padding: 18px 24px;
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); /* Soft shadow */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-family: 'Inter', sans-serif;
-    border-left: 6px solid var(--medical-light-blue); /* Your signature teal */
+    border-left: 6px solid var(--medical-light-blue);
     animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
 .toast-msg.error {
-    border-left-color: #e74c3c; /* Red for high-visibility errors */
+    border-left-color: #e74c3c;
 }
 
 @keyframes slideIn {
@@ -160,4 +157,138 @@ body {
 
 @keyframes fadeOut {
     to { transform: translateX(20px); opacity: 0; }
+}
+
+
+/* ===========================
+   5. RESPONSIVE HEADER
+   =========================== */
+
+/* Hamburger button — hidden on desktop */
+.hamburger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 28px;
+    height: 20px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    position: absolute;
+    right: 74px; 
+    z-index: 1001;
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 100%;
+    height: 2.5px;
+    background: white;
+    border-radius: 2px;
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+/* Animated X when open */
+.hamburger-btn.open span:nth-child(1) { transform: translateY(8.75px) rotate(45deg); }
+.hamburger-btn.open span:nth-child(2) { opacity: 0; }
+.hamburger-btn.open span:nth-child(3) { transform: translateY(-8.75px) rotate(-45deg); }
+
+/* Mobile dropdown nav */
+.mobile-nav-overlay {
+    display: none;
+    position: fixed;
+    top: 90px;
+    left: 0;
+    width: 100%;
+    background: var(--primary-navy);
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 20px 20px;
+    gap: 6px;
+    z-index: 999;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-nav-overlay.open {
+    display: flex;
+}
+
+.mobile-nav-overlay .nav-item {
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    text-align: left;
+}
+
+.profile-circle {
+    width: 44px;
+    height: 44px;
+    background-color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--primary-navy);
+}
+
+.profile-section {
+    position: absolute;
+    right: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%; /* stretches to fill the 90px header so circle centers vertically */
+}
+
+/* ── TABLET: ≤900px ── */
+@media (max-width: 900px) {
+    .top-nav-bar {
+        padding: 0 20px;
+    }
+
+    .nav-logo-section {
+        left: 20px;
+    }
+
+    .profile-section {
+        right: 40px;
+    }
+
+    .nav-container {
+        display: none;
+    }
+
+    .hamburger-btn {
+        display: flex;
+        right: 94px;
+    }
+}
+
+/* ── MOBILE: ≤480px ── */
+@media (max-width: 480px) {
+    .top-nav-bar {
+        height: 70px;
+    }
+
+    .mobile-nav-overlay {
+        top: 70px;
+    }
+
+    .profile-section {
+        right: 40px;
+    }
+
+    .nav-logo-img {
+        height: 30px;
+    }
+
+    .main-content {
+        padding-top: 110px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
 }

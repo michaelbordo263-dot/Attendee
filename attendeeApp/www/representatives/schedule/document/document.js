@@ -14,8 +14,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log("🔍 [DEBUG] URL Parameters:", { identifier, returnDate, repId });
 
     // ── BACK BUTTON ─────────────────────────────
+    const fromModal = params.get('from') === 'modal';
+
     document.getElementById('goBack')?.addEventListener('click', () => {
-        if (repId && returnDate) {
+        if (fromModal) {
+            window.parent.stCloseDocument();
+        } else if (repId && returnDate) {
             window.location.href =
                 `../schedule.html?user_id=${repId}&date=${encodeURIComponent(returnDate)}`;
         } else {
@@ -33,7 +37,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ── FETCH ────────────────────────────────────
     try {
         console.log("📡 [DEBUG] Fetching doctor details for ID:", identifier);
-        const data = await API.fetchDoctorDetails(identifier, dcpId);
+        
+        // 1. Create a timeout race: if fetch takes > 8s, we trigger a timeout error
+        const fetchPromise = API.fetchDoctorDetails(identifier, dcpId);
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Backend Timeout - Server not responding')), 8000)
+        );
+
+        const data = await Promise.race([fetchPromise, timeoutPromise]);
+
+        // 2. Guard: Ensure we actually got data back
+        if (!data) throw new Error("API returned empty data");
 
         console.log("📥 [DEBUG] FULL API RESPONSE:", data);
 
@@ -50,78 +64,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("🏥 [DEBUG] Record Type:", recordType, "| isPharmacy:", isPharmacy);
 
         if (isPharmacy) {
-            // ── PHARMACY LAYOUT ──────────────────────
             document.getElementById('layout-doctor').style.display = 'none';
             document.getElementById('layout-pharmacy').style.display = 'block';
 
             setText('doc-pharmacy-name', cds.Pharmacy_Name || cds.Hospital_Affiliation_Clinic_Name);
             setText('doc-pharmacy-address', cds.City_Address_Province);
 
-            // ── STATUS (pharmacy radio group) ────────
             const status = (doc.document_status || '').toLowerCase().trim();
-            console.log("📊 [DEBUG] Document Status:", status);
             renderVisitLog(status, true);
 
-            // ── ITEMS ────────────────────────────────
-            let actualItems = [];
-            if (status === 'signed' || status === 'approved') {
-                actualItems = doc.items || [];
-            } else {
-                actualItems = (doc.items && doc.items.length > 0) ? doc.items : (data.items || []);
-            }
+            let actualItems = (status === 'signed' || status === 'approved') 
+                ? (doc.items || []) 
+                : ((doc.items && doc.items.length > 0) ? doc.items : (data.items || []));
 
             renderRightPanel({ ...cds, ...doc, items: actualItems, signature_url: doc.signature_url || data.signature_url }, status);
 
         } else {
-            // ── DOCTOR LAYOUT (default) ──────────────
             document.getElementById('layout-doctor').style.display = 'block';
             document.getElementById('layout-pharmacy').style.display = 'none';
 
-            // ── LEFT SIDE (DOCTOR INFO) ─────────────────
             setText('doc-first-name', cds.First_Name);
             setText('doc-last-name', cds.Last_Name);
             setText('doc-mid-name', cds.Middle_Name);
             setText('doc-suffix', cds.Suffix);
-
             setText('doc-md-code', cds.Doctor_Code);
             setText('doc-md-desc', cds.Specialty_MDs_Description);
             setText('doc-hospital', cds.Hospital_Affiliation_Clinic_Name || cds.Pharmacy_Name);
-
             setText('doc-address', cds.City_Address_Province);
 
-            // ── STATUS ──
             const status = (doc.document_status || '').toLowerCase().trim();
-            console.log("📊 [DEBUG] Document Status:", status);
-
             renderVisitLog(status, false);
 
-            // ── ITEM LOGIC ─────────────────────────────
-            let actualItems = [];
-            
-            if (status === 'signed' || status === 'approved') {
-                console.log("✅ [DEBUG] Visit is Complete. Using Document_Logs items.");
-                actualItems = doc.items || [];
-            } else {
-                console.log("💡 [DEBUG] Visit is Pending. Showing Suggested items (CDS_Products).");
-                actualItems = (doc.items && doc.items.length > 0) ? doc.items : (data.items || []);
-            }
+            let actualItems = (status === 'signed' || status === 'approved') 
+                ? (doc.items || []) 
+                : ((doc.items && doc.items.length > 0) ? doc.items : (data.items || []));
 
-            console.log("📦 [DEBUG] Final Items for Grid:", actualItems);
-            console.log("📏 [DEBUG] Item Count:", actualItems.length);
-
-            renderRightPanel(
-                {
-                    ...cds,
-                    ...doc,
-                    items: actualItems,
-                    signature_url: doc.signature_url || data.signature_url
-                },
-                status
-            );
-        } // end isPharmacy else
+            renderRightPanel({ ...cds, ...doc, items: actualItems, signature_url: doc.signature_url || data.signature_url }, status);
+        }
 
     } catch (err) {
         console.error("❌ [DEBUG] Fetch Error:", err);
+        // 3. UI CLEANUP: Clear panels so old data doesn't persist on failure
+        resetPanelState(); 
         showDefaultPanel();
     }
 
@@ -168,6 +152,30 @@ function setText(id, value) {
     const el = document.getElementById(id);
     if (!el) return;
     el.textContent = value ? value : '—';
+}
+
+// NEW: Add this helper function
+function resetPanelState() {
+    console.log("🧹 [DEBUG] Resetting UI to empty state...");
+    
+    // 1. Reset your state variables
+    _visitDateRaw = '';
+    _visitStatus  = '';
+    
+    // 2. Hide all main sections
+    const panelItems   = document.getElementById('panel-items');
+    const panelRemarks = document.getElementById('panel-remarks');
+    const panelDefault = document.getElementById('panel-default');
+    const sigWrapper   = document.getElementById('signature-wrapper');
+
+    if (panelItems)   panelItems.style.display   = 'none';
+    if (panelRemarks) panelRemarks.style.display = 'none';
+    if (panelDefault) panelDefault.style.display = 'none';
+    if (sigWrapper)   sigWrapper.style.display   = 'none';
+    
+    // 3. Clear product list
+    const list = document.getElementById('product-list');
+    if (list) list.innerHTML = '';
 }
 
 window.openProductPreview = (url, name) => {

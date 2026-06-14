@@ -1,5 +1,4 @@
 /* ── ACCOUNTS SYSTEM STYLES ── */
-
 :root {
   --primary-navy: #355872;
   --status-green: #22c55e;
@@ -379,6 +378,9 @@ div#list.rep-list-container {
 
 .toast.show { transform: translateX(-50%) translateY(0); }
 
+.scroll-body::-webkit-scrollbar { display: none; }
+.scroll-body { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* --- RESPONSIVE --- */
 @media (max-width: 768px) {
     .controls-top-row {
@@ -390,7 +392,21 @@ div#list.rep-list-container {
     .location-dropdown { width: 100%; }
     .stats-container { flex-direction: column; }
 
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: calc(100vh - 90px);
+    }
+
+    .scroll-body {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: -20px;
+    }
+
     div#list.rep-list-container {
-        max-height: calc(100vh - 600px) !important;
+        max-height: none !important;
+        overflow-y: visible !important;
     }
 }

@@ -48,10 +48,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 <a href="../performance/performance.html" class="nav-item">Performances</a>
                 <a href="../accounts/accounts.html" class="nav-item">Accounts</a>
             </nav>
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
             <div class="profile-section">
                 <div class="profile-circle"></div>
             </div>
         </header>
+        <div class="mobile-nav-overlay" id="mobileNav">
+            <a href="../dashboard/dashboard.html" class="nav-item">Dashboard</a>
+            <a href="../representatives/representatives.html" class="nav-item">Representatives</a>
+            <a href="../performance/performance.html" class="nav-item">Performances</a>
+            <a href="../accounts/accounts.html" class="nav-item">Accounts</a>
+        </div>
     `;
     document.body.insertAdjacentHTML('afterbegin', headerHTML);
 
@@ -71,6 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. Connect profile circle click with DYNAMIC DATA
     const profileSection = document.querySelector('.profile-section');
+    const profileCircle = document.querySelector('.profile-circle');
+
     if (profileSection) {
         profileSection.style.cursor = 'pointer';
         profileSection.addEventListener('click', () => {
@@ -81,7 +94,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 5. Highlight active tab
+    // Load initials into profile circle
+    // Load initials into profile circle
+    // Load initials into profile circle
+    const empId = localStorage.getItem('current_emp_id');
+    if (empId && profileCircle) {
+        const loadInitials = () => {
+            window.API.fetchAccount(empId)
+                .then(result => {
+                    if (result.data) {
+                        const data = Array.isArray(result.data) ? result.data[0] : result.data;
+                        const first = (data.first_name || '').trim().charAt(0).toUpperCase();
+                        const last = (data.last_name || '').trim().charAt(0).toUpperCase();
+                        profileCircle.textContent = first + last;
+                    }
+                })
+                .catch(() => {
+                    profileCircle.textContent = '?';
+                });
+        };
+
+        if (window.API) {
+            loadInitials();
+        } else {
+            window.addEventListener('load', loadInitials);
+        }
+    }
+
+    // 5. Highlight active tab (desktop + mobile overlay)
     const navItems = document.querySelectorAll('.nav-item');
     const currentPath = window.location.pathname.toLowerCase();
     navItems.forEach(item => {
@@ -93,5 +133,41 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // 6. Hamburger toggle
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileNav = document.getElementById('mobileNav');
+
+    if (hamburgerBtn && mobileNav) {
+        hamburgerBtn.addEventListener('click', () => {
+            hamburgerBtn.classList.toggle('open');
+            mobileNav.classList.toggle('open');
+        });
+
+        // Close when a nav item is clicked
+        mobileNav.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                hamburgerBtn.classList.remove('open');
+                mobileNav.classList.remove('open');
+            });
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            const clickedOutside = !hamburgerBtn.contains(e.target) && !mobileNav.contains(e.target);
+            if (clickedOutside && mobileNav.classList.contains('open')) {
+                hamburgerBtn.classList.remove('open');
+                mobileNav.classList.remove('open');
+            }
+        });
+
+        // Auto-close when resized back to desktop
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 900) {
+                hamburgerBtn.classList.remove('open');
+                mobileNav.classList.remove('open');
+            }
+        });
+    }
 
 });

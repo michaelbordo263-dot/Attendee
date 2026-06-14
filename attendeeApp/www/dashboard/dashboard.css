@@ -29,7 +29,6 @@ html, body {
 /* ── STAT CARDS ROW ── */
 .stat-cards-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     margin-bottom: 20px;
 }
@@ -685,6 +684,10 @@ html, body {
 /* ── 4-CARD STAT ROW ── */
 .stat-cards-row--four {
     grid-template-columns: repeat(4, 1fr);
+}
+
+.stat-cards-row--five {
+    grid-template-columns: repeat(5, 1fr);
 }
 
 /* ── PRODUCTS MODAL ── */

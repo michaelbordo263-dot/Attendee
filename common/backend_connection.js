@@ -102,6 +102,9 @@ window.API = {
     fetchDashboard: (q, year) =>
         apiFetch(`${BASE_URL}/dashboard/summary?q=${q}&year=${year}`),
 
+    fetchScheduleTodayAll: () =>
+        apiFetch(`${BASE_URL}/dashboard/schedule-today/all`),
+
     fetchPerformance: () =>
         apiFetch(`${BASE_URL}/dashboard/performance`),
 

@@ -94,15 +94,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function computePeriodPill(dcpList) {
         const targetLabel = document.getElementById('display-period');
-        if (!dcpList.length) {
-            const qMonths = quarterMonths[quarter];
-            targetLabel.textContent = `Q${quarter} · ${shortMonthNames[qMonths[0]]} – ${shortMonthNames[2]} ${year}`;
-            return;
-        }
-        const dates = dcpList.map(d => new Date(d.dcp_date)).filter(d => !isNaN(d));
-        const minDate = new Date(Math.min(...dates));
-        const maxDate = new Date(Math.max(...dates));
-        targetLabel.textContent = `Q${Math.floor(minDate.getMonth()/3)+1} · ${shortMonthNames[minDate.getMonth()]} – ${shortMonthNames[maxDate.getMonth()]} ${minDate.getFullYear()}`;
+        
+        // Define the month range map for each quarter
+        const qLabels = {
+            1: ["Jan", "Mar"],
+            2: ["Apr", "Jun"],
+            3: ["Jul", "Sep"],
+            4: ["Oct", "Dec"]
+        };
+
+        // Use the quarter/year variables defined at the top of your script
+        // This ensures the UI ALWAYS matches the URL parameters
+        const months = qLabels[quarter] || qLabels[1];
+        
+        targetLabel.textContent = `Q${quarter} · ${months[0]} – ${months[1]} ${year}`;
     }
 
     function updateStats(summary, dcpList) {

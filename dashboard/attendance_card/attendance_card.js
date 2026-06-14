@@ -423,6 +423,7 @@ function attCloseLightbox() {
 // ── INIT ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     attInjectModal();
+    attInjectLightbox();
     loadAttendanceCard();
 
     // Auto-refresh every 10 minutes in background

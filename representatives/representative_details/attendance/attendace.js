@@ -414,8 +414,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="modal-info-row align-top">
                         <span class="modal-info-label">Tagged Location</span>
                         <span class="modal-info-value" style="font-size:12px;">
-                            ${displayLoc
-                                ? `<a href="${mapBase}${taggedLocQuery}" target="_blank" style="color:#007bff;text-decoration:none;">📍 ${/^\d+\.\d+/.test((displayLoc || '').trim()) ? 'View Location' : displayLoc}</a>`
+                            ${displayLoc && displayLoc !== 'N/A'
+                                ? `<a href="${mapBase}${taggedLocQuery}" target="_blank" style="color:#007bff;text-decoration:none;">
+                                    📍 ${displayLoc}
+                                </a>`
                                 : 'N/A'}
                         </span>
                     </div>

@@ -965,7 +965,7 @@ function updateUnusualUI() {
     }
 
     if (allClear.length > 0) {
-        html += `<div style="padding: 8px 16px; font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; background: #f8fafc; border-top: 1px solid #f1f5f9;">ALL CLEAR</div>`;
+        html += `<div style="padding: 8px 16px; font-size: 11px; font-weight: 700; color: #4a4d51; letter-spacing: 0.05em; background: #f8fafc; border-top: 1px solid #f1f5f9;">No misses for this month yet.</div>`;
         html += allClear.map(r => renderCard(r, true)).join('');
     }
     panel.innerHTML = html;

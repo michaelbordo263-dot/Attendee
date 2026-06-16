@@ -54,6 +54,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const cds = data.cds || {};
         const doc = data.document || {};
 
+        console.log("📦 data.items:", data.items);
+        console.log("📦 doc.items:", doc.items);
+        console.log("📦 Full data:", JSON.stringify(data));
+
         // ── DETECT RECORD TYPE ──────────────────────
         const recordType = (
             cds.RecordType || cds.record_type || cds.type ||
@@ -76,6 +80,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             let actualItems = (status === 'signed' || status === 'approved') 
                 ? (doc.items || []) 
                 : ((doc.items && doc.items.length > 0) ? doc.items : (data.items || []));
+
+
 
             renderRightPanel({ ...cds, ...doc, items: actualItems, signature_url: doc.signature_url || data.signature_url }, status);
 

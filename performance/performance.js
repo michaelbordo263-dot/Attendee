@@ -1,5 +1,5 @@
 /* ============================================================
-   performance.js — User Performance Page
+   performance.js — User Performance Page (integer rates)
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -7,28 +7,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. STATE
     let allReps = [];
     const _now = new Date();
-    let currentQuarter = Math.ceil((_now.getMonth() + 1) / 3);
+    let currentMonth = _now.getMonth() + 1;
     let currentYear = _now.getFullYear();
 
-    /*
-    Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('perf_page_data_')) {
-            localStorage.removeItem(key);
-        }
-    });
-    */
+    const MONTH_NAMES = ['January','February','March','April','May','June',
+                         'July','August','September','October','November','December'];
 
     const grid = document.getElementById('performance-grid');
     const searchInput = document.getElementById('perf-search');
     const resultsCount = document.getElementById('results-count');
-    const quarterLabel = document.getElementById('quarter-label');
-    const yearLabel = document.getElementById('year-label');
 
     const SILHOUETTE_SVG = `
         <svg viewBox="0 0 30 34" fill="none" xmlns="http://www.w3.org/2000/svg">
             <ellipse cx="15" cy="10" rx="7" ry="8" fill="rgba(255,255,255,0.75)"/>
             <path d="M0 34 Q0 22 15 22 Q30 22 30 34Z" fill="rgba(255,255,255,0.75)"/>
         </svg>`;
+
+    function updateMonthLabel() {
+        document.getElementById('quarter-label').textContent = MONTH_NAMES[currentMonth - 1];
+        document.getElementById('year-label').textContent = currentYear;
+    }
 
     function renderSkeletons() {
         grid.innerHTML = Array(6).fill(0).map(() => `
@@ -83,11 +81,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         list.forEach(rep => {
-            const successPct  = rep.success_rate ?? 0;
-            // MIA is calculated as the inverse of success rate for individual cards
-            const miaPct      = 100 - successPct;
+            // Coerce to integer to match detail view
+            const successPct  = Math.round(Number(rep.success_rate || 0));
             const barColor    = getBarColor(successPct);
-            // The status label now reflects performance quality while the filter ensures they are 'active'
             const statusLabel = getStatusLabel(successPct);
             const statusClass = `status-${statusLabel.toLowerCase()}`;
 
@@ -96,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.style.cursor = 'pointer';
 
             card.onclick = () => {
-                const url = `performance_details/performance_details.html?name=${encodeURIComponent(rep.name)}&area=${encodeURIComponent(rep.location || '')}&id=${encodeURIComponent(rep.id || '')}&q=Q${currentQuarter}&year=${currentYear}`;
+                const url = `performance_details/performance_details.html?name=${encodeURIComponent(rep.name)}&area=${encodeURIComponent(rep.location || '')}&id=${encodeURIComponent(rep.id || '')}&month=${currentMonth}&year=${currentYear}`;
                 window.location.href = url;
             };
 
@@ -127,15 +123,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="lbl">Rate</span>
                     </div>
                     <div class="stat">
-                        <span class="val">${rep.signed ?? 0}</span>
+                        <span class="val">${Math.round(Number(rep.signed || 0))}</span>
                         <span class="lbl">Signed & Selfie</span>
                     </div>
                     <div class="stat">
-                        <span class="val">${rep.mia ?? 0}</span>
+                        <span class="val">${Math.round(Number(rep.mia || 0))}</span>
                         <span class="lbl">MIA</span>
                     </div>
                     <div class="stat stat-missing">
-                        <span class="val">${rep.rejected ?? 0}</span>
+                        <span class="val">${Math.round(Number(rep.rejected || 0))}</span>
                         <span class="lbl">Rejected</span>
                     </div>
                 </div>
@@ -148,10 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateKPIs(list) {
-        const totalSigned = list.reduce((sum, r) => sum + (r.signed ?? 0), 0);
-        const totalRejected = list.reduce((sum, r) => sum + (r.rejected ?? 0), 0);
-        const totalMIA = list.reduce((sum, r) => sum + (r.mia ?? 0), 0);
-        
+        const totalSigned   = list.reduce((sum, r) => sum + Math.round(Number(r.signed || 0)), 0);
+        const totalRejected = list.reduce((sum, r) => sum + Math.round(Number(r.rejected || 0)), 0);
+        const totalMIA      = list.reduce((sum, r) => sum + Math.round(Number(r.mia || 0)), 0);
+
         document.getElementById('kpi-total').textContent  = list.length;
         document.getElementById('kpi-signed').textContent = totalSigned;
         document.getElementById('kpi-missed').textContent = totalRejected;
@@ -169,19 +165,17 @@ document.addEventListener('DOMContentLoaded', () => {
         render(filtered);
     }
 
-    async function loadData(q, year, force = false) {
-        // 1. Clear UI immediately
-        document.getElementById('quarter-label').textContent = `Q${q}`;
-        document.getElementById('year-label').textContent = year;
+    async function loadData(month, year, force = false) {
+        updateMonthLabel();
         const grid = document.getElementById('performance-grid');
         grid.innerHTML = '';
         updateKPIs([]);
         resultsCount.textContent = 'Loading...';
 
-        const CACHE_KEY = `perf_page_data_${q}_${year}`;
+        const CACHE_KEY = `perf_page_data_${month}_${year}`;
         const CACHE_TTL = 3 * 60 * 1000;
 
-        // 2. Nuke corrupted cache entries
+        // Nuke corrupted cache
         try {
             const raw = localStorage.getItem(CACHE_KEY);
             if (raw) {
@@ -194,55 +188,53 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem(CACHE_KEY);
         }
 
-        // 3. Stale-while-revalidate cache logic
+        // Stale-while-revalidate
         if (!force) {
             const cached = localStorage.getItem(CACHE_KEY);
             if (cached) {
                 try {
                     const { d, t } = JSON.parse(cached);
                     if (Date.now() - t < CACHE_TTL) {
-                        // Serve cache immediately
-                        processAndRenderData(d, q, year);
-                        // Background refresh
-                        API.fetchPerformanceByPeriod(q, year).then(result => {
+                        processAndRenderData(d, month, year);
+                        API.fetchPerformanceByPeriod(month, year).then(result => {
                             if (Array.isArray(result)) {
-                                localStorage.setItem(CACHE_KEY, JSON.stringify({ d: result, t: Date.now() }));
-                                processAndRenderData(result, q, year);
+                                // coerce rates to integers before cache
+                                const normalized = result.map(r => ({ ...r, success_rate: Math.round(Number(r.success_rate || 0)), signed: Math.round(Number(r.signed || 0)), mia: Math.round(Number(r.mia || 0)), rejected: Math.round(Number(r.rejected || 0)) }));
+                                localStorage.setItem(CACHE_KEY, JSON.stringify({ d: normalized, t: Date.now() }));
+                                processAndRenderData(normalized, month, year);
                             }
                         }).catch(() => {});
                         return;
                     } else {
-                        // Expired — remove it
                         localStorage.removeItem(CACHE_KEY);
                     }
                 } catch (e) {
-                    // Corrupted — remove it
                     localStorage.removeItem(CACHE_KEY);
                 }
             }
         }
 
-        // 4. No cache or forced — full fetch with overlay
+        // Full fetch
         const overlay = document.getElementById('sync-overlay');
         overlay.style.display = 'flex';
         renderSkeletons();
 
         try {
-            const result = await API.fetchPerformanceByPeriod(q, year);
+            const result = await API.fetchPerformanceByPeriod(month, year);
             if (Array.isArray(result)) {
-                localStorage.setItem(CACHE_KEY, JSON.stringify({ d: result, t: Date.now() }));
-                processAndRenderData(result, q, year);
+                const normalized = result.map(r => ({ ...r, success_rate: Math.round(Number(r.success_rate || 0)), signed: Math.round(Number(r.signed || 0)), mia: Math.round(Number(r.mia || 0)), rejected: Math.round(Number(r.rejected || 0)) }));
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ d: normalized, t: Date.now() }));
+                processAndRenderData(normalized, month, year);
             } else {
-                grid.innerHTML = `<div class="empty-state">No records found for Q${q} ${year}.</div>`;
+                grid.innerHTML = `<div class="empty-state">No records found for ${MONTH_NAMES[month - 1]} ${year}.</div>`;
                 resultsCount.textContent = 'Showing (0) Records';
             }
         } catch (error) {
-            // Last resort — try expired cache
             try {
                 const cached = localStorage.getItem(CACHE_KEY);
                 if (cached) {
                     const { d } = JSON.parse(cached);
-                    processAndRenderData(d, q, year);
+                    processAndRenderData(d, month, year);
                     return;
                 }
             } catch {}
@@ -252,66 +244,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Update the function signature
-    function processAndRenderData(rawList, q, year) {
-        // Update global state so buttons know what the "current" view is
-        currentQuarter = q;
+    function processAndRenderData(rawList, month, year) {
+        currentMonth = month;
         currentYear = year;
 
-        allReps = rawList.filter(rep => {
-            const roleNormalized = (rep.roles || '').toLowerCase().trim();
+        // ensure all rates are integers
+        allReps = rawList.map(rep => ({ ...rep, success_rate: Math.round(Number(rep.success_rate || 0)), signed: Math.round(Number(rep.signed || 0)), mia: Math.round(Number(rep.mia || 0)), rejected: Math.round(Number(rep.rejected || 0)) }));
+
+        allReps = allReps.filter(rep => {
+            const roleNormalized   = (rep.roles || '').toLowerCase().trim();
             const statusNormalized = (rep.status || '').toLowerCase().trim();
             return roleNormalized === 'medrep' && statusNormalized === 'active';
         });
 
-        // Explicitly update labels
-        document.getElementById('quarter-label').textContent = `Q${q}`;
-        document.getElementById('year-label').textContent = year;
-        
+        updateMonthLabel();
         applyFilters();
     }
 
-    function updateNavButtons() {
-        // Navigation is now dynamic; buttons remain enabled for all periods.
-    }
-
     /* --- Navigation Listeners --- */
-
-    // ADD THIS NEW BLOCK HERE:
     document.getElementById('refresh-btn').addEventListener('click', () => {
-        loadData(currentQuarter, currentYear, true);
+        loadData(currentMonth, currentYear, true);
     });
-    
+
     document.getElementById('q-prev').addEventListener('click', () => {
-        currentQuarter--;
-        if (currentQuarter < 1) {
-            currentQuarter = 4;
-            currentYear--;
-        }
-        loadData(currentQuarter, currentYear);
+        currentMonth--;
+        if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+        loadData(currentMonth, currentYear);
     });
 
     document.getElementById('q-next').addEventListener('click', () => {
-        currentQuarter++;
-        if (currentQuarter > 4) {
-            currentQuarter = 1;
-            currentYear++;
-        }
-        loadData(currentQuarter, currentYear);
+        currentMonth++;
+        if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+        loadData(currentMonth, currentYear);
     });
 
     document.getElementById('y-prev').addEventListener('click', () => {
         currentYear--;
-        loadData(currentQuarter, currentYear);
+        loadData(currentMonth, currentYear);
     });
 
     document.getElementById('y-next').addEventListener('click', () => {
         currentYear++;
-        loadData(currentQuarter, currentYear);
+        loadData(currentMonth, currentYear);
     });
 
     searchInput.addEventListener('input', applyFilters);
 
     // Initial Load
-    loadData(currentQuarter, currentYear);
+    loadData(currentMonth, currentYear);
 });

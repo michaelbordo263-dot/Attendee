@@ -13,6 +13,11 @@
 </head>
 <body>
 
+    <div id="sync-overlay">
+        <div class="spinner"></div>
+        <p>Syncing Performance Data...</p>
+    </div>
+
     <main class="main-content">
         <div class="summary-grid">
             <div class="summary-card">
@@ -21,7 +26,7 @@
             </div>
             <div class="summary-card">
                 <span class="val" id="kpi-signed">0</span>
-                <span class="lbl">Signed Documents</span>
+                <span class="lbl">Signed & Selfie Documents</span>
             </div>
             <div class="summary-card">
                 <span class="val" id="kpi-missed">0</span>
@@ -44,11 +49,15 @@
                 </div>
 
                 <div class="nav-selectors">
+                    <button id="refresh-btn" class="btn-refresh" title="Refresh Data">
+                        &#x21bb; <span>Refresh</span>
+                    </button>
+
                     <div class="selector-box">
                         <button class="nav-arrow" id="q-prev">&lt;</button>
                         <div class="selector-content">
                             <span class="main-val" id="quarter-label">Q1</span>
-                            <span class="sub-lbl">Current Quarter</span>
+                            <span class="sub-lbl">Current Month</span>
                         </div>
                         <button class="nav-arrow" id="q-next">&gt;</button>
                     </div>

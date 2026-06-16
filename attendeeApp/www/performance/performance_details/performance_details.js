@@ -1,39 +1,34 @@
 /* ============================================================
-   performance_details.js — WHOLE NUMBER ROUNDING VERSION (Refactored)
+   performance_details.js — Integer display version
    ============================================================ */
 
 function goBack() {
     history.back();
 }
 
-/* ============================================================
-   MODULE-LEVEL STATE (used by export)
-   ============================================================ */
+/* MODULE-LEVEL STATE (used by export) */
 let _repData    = null;
 let _scoreData  = null;
 let _doctorData = null;
 
-/* ============================================================
-   INIT
-   ============================================================ */
+/* INIT */
 document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const now = new Date();
 
-    const urlQ = params.get('q') || params.get('quarter');
-    const currentRealQuarter = urlQ ? parseInt(urlQ.replace('Q', '')) : getCurrentQuarter();
-
     _repData = {
-        name:    params.get('name') || 'Medical Representative',
-        loc:     params.get('location') || params.get('area') || 'Assignment Area',
-        id:      params.get('user_id') || params.get('id'),
-        quarter: currentRealQuarter,
-        year:    params.get('year') || now.getFullYear().toString()
+        name:  params.get('name') || 'Medical Representative',
+        loc:   params.get('location') || params.get('area') || 'Assignment Area',
+        id:    params.get('user_id') || params.get('id'),
+        month: parseInt(params.get('month')) || (now.getMonth() + 1),
+        year:  params.get('year') || now.getFullYear().toString()
     };
 
     document.getElementById('repName').textContent    = _repData.name;
     document.getElementById('repLoc').textContent     = _repData.loc;
-    document.getElementById('quarterBadge').textContent = `Q${_repData.quarter} · ${_repData.year}`;
+    const MONTH_NAMES = ['January','February','March','April','May','June',
+                        'July','August','September','October','November','December'];
+    document.getElementById('quarterBadge').textContent = `${MONTH_NAMES[_repData.month - 1]} · ${_repData.year}`;
 
     if (_repData.id) {
         fetchPerformanceData(_repData);
@@ -43,9 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-/* ============================================================
-   HELPERS
-   ============================================================ */
+/* HELPERS */
 function getCurrentQuarter() {
     const m = new Date().getMonth();
     if (m <= 2) return 1;
@@ -54,12 +47,10 @@ function getCurrentQuarter() {
     return 4;
 }
 
-/* ============================================================
-   FETCH DATA
-   ============================================================ */
+/* FETCH DATA */
 async function fetchPerformanceData(rep) {
     try {
-        const data = await API.fetchMedrepPerformanceDetails(rep.id, `Q${rep.quarter}`, rep.year);
+        const data = await API.fetchMedrepPerformanceDetails(rep.id, rep.month, rep.year);
 
         if (data.error) {
             console.error("API Error:", data.error);
@@ -77,17 +68,20 @@ async function fetchPerformanceData(rep) {
     }
 }
 
-/* ============================================================
-   UPDATE SCORE UI (ROUNDED TO WHOLE NUMBERS)
-   ============================================================ */
+/* UPDATE SCORE UI (INTEGER DISPLAY) */
 function updateScore(s) {
     if (!s) return;
 
-    document.getElementById('cvAttendance').textContent = `${Math.floor(s.attendance ?? 0)}%`;
-    document.getElementById('cvVisits').textContent     = `${Math.floor(s.visits_done ?? 0)}%`;
-    document.getElementById('cvMissing').textContent    = `${Math.floor(s.missed_visits ?? 0)}%`;
+    // ensure integers (backend should also return integer, but coerce here)
+    const att = Math.round(Number(s.attendance ?? 0));
+    const vis = Math.round(Number(s.visits_done ?? 0));
+    const mis = Math.round(Number(s.missed_visits ?? 0));
+    const pct = Math.round(Number(s.overall_average ?? 0));
 
-    const pct  = Math.floor(s.overall_average || 0);
+    document.getElementById('cvAttendance').textContent = `${att}%`;
+    document.getElementById('cvVisits').textContent     = `${vis}%`;
+    document.getElementById('cvMissing').textContent    = `${mis}%`;
+
     const ring = document.getElementById('ring');
     const circ = 2 * Math.PI * 66;
 
@@ -105,9 +99,7 @@ function updateScore(s) {
     });
 }
 
-/* ============================================================
-   SIGNATURE LEADER (TOP DOCTORS)
-   ============================================================ */
+/* SIGNATURE LEADER (TOP DOCTORS) */
 function renderMostVisited(doctors) {
     const container = document.getElementById('mvdList');
     if (!container) return;
@@ -131,9 +123,9 @@ function renderMostVisited(doctors) {
             ? doc.location
             : (doc.city_address_province || 'Location N/A');
 
-        const total = doc.total_visits_planned || 0;
-        const signed = doc.signed_visits || 0;
-        const pct = total > 0 ? Math.floor((signed / total) * 100) : 0;
+        const total = Math.round(Number(doc.total_visits_planned || 0));
+        const signed = Math.round(Number(doc.signed_visits || 0));
+        const pct = total > 0 ? Math.round((signed / total) * 100) : 0;
         const isComplete = signed === total;
         const barColor = isComplete ? '#3ecf5a' : '#1e6fa8';
         const initials = displayName.charAt(0).toUpperCase();
@@ -167,10 +159,7 @@ function renderMostVisited(doctors) {
     }, 300);
 }
 
-/* ============================================================
-   EXPORT REPORT — generates an .xlsx file via SheetJS
-   ============================================================ */
-
+/* EXPORT REPORT — generates an .xlsx file via SheetJS */
 const exportXlsx = async () => {
   try {
     const response = await fetch(`${window.BASE_URL}/export_xlsx`, {
@@ -205,17 +194,6 @@ const exportXlsx = async () => {
     }
 
     const blob = await response.blob();
-
-    if (window.cordova) {
-      console.warn("Cordova detected: exportXlsx should use a native file plugin for safe device download.");
-      if (typeof showNotification === 'function') {
-          showNotification("Download is unavailable in Cordova without a native file plugin. Please integrate Cordova File or File Opener plugin.", "error");
-      } else {
-          alert("Download is unavailable in Cordova without a native file plugin. Please integrate Cordova File or File Opener plugin.");
-      }
-      return;
-    }
-
     const url  = window.URL.createObjectURL(blob);
     const a    = document.createElement("a");
     a.href     = url;

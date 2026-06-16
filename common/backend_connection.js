@@ -40,14 +40,22 @@ function showNotification(message, type = 'success') {
     }, 4500);
 }
 
-/* ── CORE FETCH ── */
+/* ── MODIFIED CORE FETCH ── */
 async function apiFetch(url, method = "GET", body = null) {
     console.log(`🌐 API CALL → [${method}]`, url);
+
+    // 1. Retrieve current credentials from storage
+    const userId = localStorage.getItem('user_id');
+    const deviceId = localStorage.getItem('device_id');
 
     try {
         const options = {
             method,
-            headers: {}
+            headers: {
+                // 2. Attach security headers
+                "X-User-ID": userId || "",
+                "X-Device-ID": deviceId || ""
+            }
         };
 
         if (body) {
@@ -108,11 +116,11 @@ window.API = {
     fetchPerformance: () =>
         apiFetch(`${BASE_URL}/dashboard/performance`),
 
-    fetchPerformanceByPeriod: (q, year) =>
-        apiFetch(`${BASE_URL}/performance?q=${q}&year=${year}`),
+    fetchPerformanceByPeriod: (month, year) =>
+        apiFetch(`${BASE_URL}/performance?month=${month}&year=${year}`),
 
-    fetchMedrepPerformanceDetails: (userId, quarter, year) =>
-        apiFetch(`${BASE_URL}/medrep/performance?user_id=${userId}&quarter=${quarter}&year=${year}`),
+    fetchMedrepPerformanceDetails: (userId, month, year) =>
+        apiFetch(`${BASE_URL}/medrep/performance?user_id=${userId}&month=${month}&year=${year}`),
 
     fetchSchedules: (status, q, year) =>
         apiFetch(`${BASE_URL}/dashboard/schedules?status=${status}&q=${q}&year=${year}`),

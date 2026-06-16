@@ -526,8 +526,16 @@ window.stCloseModal = function () {
 // ── OPEN DOCUMENT ───────────────────────────────────
 window.stOpenDocument = function(cdsId, dcpId, date, repId) {
     if (!cdsId) return;
-    const url = `../../representatives/schedule/document/document.html?cds_id=${cdsId}&user_id=${repId}&date=${encodeURIComponent(date)}&dcp_id=${dcpId}&from=modal`;
-    document.getElementById('scheduleDocIframe').src = url;
+    const base = window.location.origin;
+    const url = `${base}/representatives/schedule/document/document.html?cds_id=${cdsId}&user_id=${repId}&date=${encodeURIComponent(date)}&dcp_id=${dcpId}&from=modal`;
+    const iframe = document.getElementById('scheduleDocIframe');
+    iframe.src = url;
+    iframe.onload = function() {
+        try {
+            const height = iframe.contentWindow.document.body.scrollHeight;
+            iframe.style.height = height + 'px';
+        } catch(e) {}
+    };
     document.getElementById('scheduleLogsModal').classList.remove('active');
     document.getElementById('scheduleDocModal').classList.add('active');
 };

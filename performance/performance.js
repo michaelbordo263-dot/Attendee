@@ -4,11 +4,19 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // STATE
+    // 1. STATE
     let allReps = [];
     const _now = new Date();
     let currentQuarter = Math.ceil((_now.getMonth() + 1) / 3);
     let currentYear = _now.getFullYear();
+
+    /*
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('perf_page_data_')) {
+            localStorage.removeItem(key);
+        }
+    });
+    */
 
     const grid = document.getElementById('performance-grid');
     const searchInput = document.getElementById('perf-search');
@@ -120,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="stat">
                         <span class="val">${rep.signed ?? 0}</span>
-                        <span class="lbl">Signed</span>
+                        <span class="lbl">Signed & Selfie</span>
                     </div>
                     <div class="stat">
                         <span class="val">${rep.mia ?? 0}</span>
@@ -161,43 +169,106 @@ document.addEventListener('DOMContentLoaded', () => {
         render(filtered);
     }
 
-    async function loadData(q, year) {
+    async function loadData(q, year, force = false) {
+        // 1. Clear UI immediately
+        document.getElementById('quarter-label').textContent = `Q${q}`;
+        document.getElementById('year-label').textContent = year;
+        const grid = document.getElementById('performance-grid');
+        grid.innerHTML = '';
+        updateKPIs([]);
+        resultsCount.textContent = 'Loading...';
+
+        const CACHE_KEY = `perf_page_data_${q}_${year}`;
+        const CACHE_TTL = 3 * 60 * 1000;
+
+        // 2. Nuke corrupted cache entries
+        try {
+            const raw = localStorage.getItem(CACHE_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (!parsed.d || !Array.isArray(parsed.d)) {
+                    localStorage.removeItem(CACHE_KEY);
+                }
+            }
+        } catch {
+            localStorage.removeItem(CACHE_KEY);
+        }
+
+        // 3. Stale-while-revalidate cache logic
+        if (!force) {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                try {
+                    const { d, t } = JSON.parse(cached);
+                    if (Date.now() - t < CACHE_TTL) {
+                        // Serve cache immediately
+                        processAndRenderData(d, q, year);
+                        // Background refresh
+                        API.fetchPerformanceByPeriod(q, year).then(result => {
+                            if (Array.isArray(result)) {
+                                localStorage.setItem(CACHE_KEY, JSON.stringify({ d: result, t: Date.now() }));
+                                processAndRenderData(result, q, year);
+                            }
+                        }).catch(() => {});
+                        return;
+                    } else {
+                        // Expired — remove it
+                        localStorage.removeItem(CACHE_KEY);
+                    }
+                } catch (e) {
+                    // Corrupted — remove it
+                    localStorage.removeItem(CACHE_KEY);
+                }
+            }
+        }
+
+        // 4. No cache or forced — full fetch with overlay
+        const overlay = document.getElementById('sync-overlay');
+        overlay.style.display = 'flex';
         renderSkeletons();
+
         try {
             const result = await API.fetchPerformanceByPeriod(q, year);
-
-            const rawList = Array.isArray(result) ? result : [];
-            console.log("DEBUG: Raw data received from /api/performance:", rawList);
-
-            allReps = rawList.filter(rep => {
-                // Strictly checking 'roles' and 'status' keys as requested
-                const rawRoleValue = rep.roles; 
-                const rawStatusValue = rep.status;
-
-                const roleNormalized = (rawRoleValue || '').toLowerCase().trim();
-                const statusNormalized = (rawStatusValue || '').toLowerCase().trim();
-
-                const isMedrep = roleNormalized === 'medrep';
-                const isActive = statusNormalized === 'active';
-
-                console.groupCollapsed(`Filtering Rep: ${rep.name || 'ID: ' + rep.id}`);
-                console.log("Target Criteria: roles='medrep', status='active'");
-                console.log("Received Values: roles=", rawRoleValue, ", status=", rawStatusValue);
-                console.log("Final Decision:", isMedrep && isActive ? "✅ ACCEPTED" : "❌ REJECTED");
-                console.groupEnd();
-
-                return isMedrep && isActive;
-            });
-
-            quarterLabel.textContent = `Q${currentQuarter}`;
-            yearLabel.textContent    = currentYear;
-            
-            updateNavButtons();
-            applyFilters();
+            if (Array.isArray(result)) {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ d: result, t: Date.now() }));
+                processAndRenderData(result, q, year);
+            } else {
+                grid.innerHTML = `<div class="empty-state">No records found for Q${q} ${year}.</div>`;
+                resultsCount.textContent = 'Showing (0) Records';
+            }
         } catch (error) {
-            console.error('Fetch failed:', error);
+            // Last resort — try expired cache
+            try {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    const { d } = JSON.parse(cached);
+                    processAndRenderData(d, q, year);
+                    return;
+                }
+            } catch {}
             renderOffline();
+        } finally {
+            overlay.style.display = 'none';
         }
+    }
+
+    // Update the function signature
+    function processAndRenderData(rawList, q, year) {
+        // Update global state so buttons know what the "current" view is
+        currentQuarter = q;
+        currentYear = year;
+
+        allReps = rawList.filter(rep => {
+            const roleNormalized = (rep.roles || '').toLowerCase().trim();
+            const statusNormalized = (rep.status || '').toLowerCase().trim();
+            return roleNormalized === 'medrep' && statusNormalized === 'active';
+        });
+
+        // Explicitly update labels
+        document.getElementById('quarter-label').textContent = `Q${q}`;
+        document.getElementById('year-label').textContent = year;
+        
+        applyFilters();
     }
 
     function updateNavButtons() {
@@ -205,6 +276,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* --- Navigation Listeners --- */
+
+    // ADD THIS NEW BLOCK HERE:
+    document.getElementById('refresh-btn').addEventListener('click', () => {
+        loadData(currentQuarter, currentYear, true);
+    });
+    
     document.getElementById('q-prev').addEventListener('click', () => {
         currentQuarter--;
         if (currentQuarter < 1) {

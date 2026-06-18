@@ -8,7 +8,6 @@
 // const ENV_URL = "http://127.0.0.1:5000/api"; // LOCAL (Development)
 const ENV_URL = "https://api.premierpharmaceuticalsmarketingcorporation.cloud/api"; // COOLIFY (Production)
 
-
 // --- 🔵 STEP 2: GLOBAL ASSIGNMENT ---
 window.BASE_URL = ENV_URL;
 
@@ -261,14 +260,6 @@ window.API = {
         
 };
 
-// ... other code above
-    updateFirstPassword: (userId, newPassword) =>
-        apiFetch(`${BASE_URL}/auth/update-first-password`, "POST", {
-            user_id: userId,
-            new_password: newPassword
-        })
-
-
 /* --- ULTRA-LIGHT BOOTER --- */
 /* --- PRODUCTION-READY LIGHT BOOTER --- */
 // ==========================================
@@ -331,9 +322,6 @@ async function runSecuritySync() {
     
     // If not logged in, also stop
     if (!uid || !did) return;
-
-    // ... rest of your code ...
-
 
     const now = Date.now();
     // Only block if a check happened less than 3 seconds ago

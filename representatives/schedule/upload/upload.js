@@ -1,9 +1,20 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const selectedRepId =
+    let selectedRepId =
         urlParams.get('id') ||
         urlParams.get('user_id') ||
         urlParams.get('rep_id');
+
+    // Restore representative state from session storage when the URL does not provide it
+    if (!selectedRepId) {
+        try {
+            const storedRepJson = sessionStorage.getItem('active_rep_data');
+            const storedRep = storedRepJson ? JSON.parse(storedRepJson) : {};
+            if (storedRep.id) selectedRepId = storedRep.id;
+        } catch (e) {
+            console.warn('Could not restore rep data from sessionStorage', e);
+        }
+    }
 
     let repName = 'Medical Representative';
     let repArea = 'Assignment Area';
@@ -46,6 +57,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Save representative state to session storage
+    if (selectedRepId) {
+        try {
+            sessionStorage.setItem('active_rep_data', JSON.stringify({
+                id: selectedRepId,
+                name: repName,
+                area: repArea
+            }));
+        } catch (e) {
+            console.warn('Could not save active_rep_data to sessionStorage', e);
+        }
+    }
+
+    // Clean the URL after reading params so later navigation uses session state
+    if (window.location.search) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Apply to UI
     ['home', 'masterlist', 'callplan'].forEach(screen => {
         const nameEl = document.getElementById(`rep-name-${screen}`);
@@ -60,13 +89,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     document.getElementById('goBack-home')?.addEventListener('click', () => {
-        const query = new URLSearchParams({
-            id: selectedRepId,
-            name: repName,
-            area: repArea
-        }).toString();
-
-        window.location.href = `../../representative_details/representative_details.html?${query}`;
+        // Navigate back to representative details with clean URL (rep state from sessionStorage)
+        window.location.href = `../../representative_details/representative_details.html`;
     });
 
     updateWarningCount();
@@ -695,6 +719,10 @@ function cancelDCPUpload() {
 // GET USER ID FROM URL
 // ============================
 function getUserId() {
+    try {
+        const stored = JSON.parse(sessionStorage.getItem('active_rep_data') || '{}');
+        if (stored.id) return stored.id;
+    } catch (e) {}
     const urlParams = new URLSearchParams(window.location.search);
     return (
         urlParams.get('id') ||
@@ -702,7 +730,6 @@ function getUserId() {
         urlParams.get('rep_id')
     );
 }
-
 
 // ============================
 // DISPLAY WARNINGS

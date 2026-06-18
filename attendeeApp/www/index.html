@@ -20,7 +20,6 @@
 
     <script>
         function goToApp() {
-            // Checks if a valid user session exists, otherwise sends them straight to login page
             const userId = localStorage.getItem('user_id');
             
             if (userId) {
@@ -30,11 +29,12 @@
             }
         }
 
-        // Fire redirect when Cordova container wraps its native hook arrays
+        // Fire redirect when Cordova is fully ready
         document.addEventListener("deviceready", goToApp, false);
 
-        // Fallback safety route wrapper if tested inside standard PC browser engines
-        if (!window.hasOwnProperty('cordova')) {
+        // Fallback ONLY for PC browser, never on real device
+        const isRealDevice = /Android|iPhone|iPad/i.test(navigator.userAgent);
+        if (!isRealDevice && !window.hasOwnProperty('cordova')) {
             document.addEventListener("DOMContentLoaded", function () {
                 setTimeout(goToApp, 100);
             });

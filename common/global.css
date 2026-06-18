@@ -6,7 +6,7 @@
 }
 
 :root {
-    --primary-navy: #355872;      /* MedicalDarkBlue */
+    --primary-navy: #355872;
     --medical-light-blue: #80cbc4; 
     --highlight-sky: #9CD5FF;     
     --form-card-bg: #FFFFFF;      
@@ -38,7 +38,6 @@ body {
     box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Container for the navigation buttons */
 .nav-container {
     display: flex;
     gap: 4px;
@@ -48,7 +47,6 @@ body {
     align-items: center;
 }
 
-/* Individual links */
 .nav-item {
     color: white;
     font-family: 'Inter', sans-serif;
@@ -67,20 +65,28 @@ body {
     color: var(--primary-navy);
 }
 
-/* 3. PROFILE CIRCLE */
-.profile-section {
-    position: absolute;
-    right: 40px;
-}
-
 .profile-circle {
     width: 44px;
     height: 44px;
     background-color: white;
     border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--primary-navy);
 }
 
-/* LOGO SECTION */
+.profile-section {
+    position: absolute;
+    right: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
 .nav-logo-section {
     position: absolute;
     left: 40px;
@@ -111,7 +117,6 @@ body {
     padding-right: 40px;
 }
 
-/* --- global.css --- */
 .page-title {
     font-size: 30px;
     font-weight: 900;
@@ -120,7 +125,6 @@ body {
     margin-bottom: 30px;
 }
 
-/* --- Sleek Notification Toast (Updated for MedRep Theme) --- */
 .toast-container {
     position: fixed;
     top: 100px;
@@ -164,7 +168,6 @@ body {
    5. RESPONSIVE HEADER
    =========================== */
 
-/* Hamburger button — hidden on desktop */
 .hamburger-btn {
     display: none;
     flex-direction: column;
@@ -189,12 +192,10 @@ body {
     transition: transform 0.3s, opacity 0.3s;
 }
 
-/* Animated X when open */
 .hamburger-btn.open span:nth-child(1) { transform: translateY(8.75px) rotate(45deg); }
 .hamburger-btn.open span:nth-child(2) { opacity: 0; }
 .hamburger-btn.open span:nth-child(3) { transform: translateY(-8.75px) rotate(-45deg); }
 
-/* Mobile dropdown nav */
 .mobile-nav-overlay {
     display: none;
     position: fixed;
@@ -222,30 +223,8 @@ body {
     text-align: left;
 }
 
-.profile-circle {
-    width: 44px;
-    height: 44px;
-    background-color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 900;
-    color: var(--primary-navy);
-}
-
-.profile-section {
-    position: absolute;
-    right: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%; /* stretches to fill the 90px header so circle centers vertically */
-}
-
-/* ── TABLET: ≤900px ── */
-@media (max-width: 900px) {
+/* ── TABLET (12" portrait + landscape) & smaller: ≤1366px ── */
+@media (max-width: 1366px) {
     .top-nav-bar {
         padding: 0 20px;
     }
@@ -255,7 +234,7 @@ body {
     }
 
     .profile-section {
-        right: 40px;
+        right: 20px;
     }
 
     .nav-container {
@@ -264,12 +243,12 @@ body {
 
     .hamburger-btn {
         display: flex;
-        right: 94px;
+        right: 84px; /* increased gap from profile circle */
     }
 }
 
 /* ── MOBILE: ≤480px ── */
-@media (max-width: 480px) {
+@media (max-width: 400px) {
     .top-nav-bar {
         height: 70px;
     }

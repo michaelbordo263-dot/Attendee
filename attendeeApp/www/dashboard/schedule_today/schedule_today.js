@@ -17,6 +17,7 @@ let stTodayData    = [];
 let stCurrentRep   = null;
 let stBaseDate     = null;
 let stSelectedDate = null;
+let stPollTimer    = null;
 
 // ── HELPERS ────────────────────────────────────────
 function stInitials(name = '') {
@@ -155,29 +156,41 @@ window.openScheduleTodayModal = async function () {
 
     document.getElementById('scheduleTodayModal').classList.add('active');
 
-    // Use cache if same day
+    // Use cache if same day — paints instantly while the live fetch below refreshes it
     const cachedDate = localStorage.getItem(ST_CACHE_DATE_KEY) || window._stCacheDate;
     const cachedData = localStorage.getItem(ST_CACHE_KEY);
     if (cachedDate === todayKey) {
         if (cachedData) {
             stTodayData = JSON.parse(cachedData);
             stRenderRepList();
-            return;
         } else if (window._stCache) {
             stTodayData = window._stCache;
             stRenderRepList();
-            return;
         }
     }
 
+    await stFetchLive();
+
+    // Keep the rep list live while the modal stays open
+    clearInterval(stPollTimer);
+    stPollTimer = setInterval(stFetchLive, 5000);
+};
+
+// ── FETCH + RENDER (LIVE) ───────────────────────────
+async function stFetchLive() {
+    const todayKey = stDateKey(stBaseDate);
     const list = document.getElementById('stRepList');
-    list.innerHTML = '<div class="st-loading">Loading schedules...</div>';
+    const isFirstLoad = !stTodayData.length;
+
+    if (list && isFirstLoad) {
+        list.innerHTML = '<div class="st-loading">Loading schedules...</div>';
+    }
 
     try {
         const response = await apiFetch(`${BASE_URL}/dashboard/schedule-today/all`);
 
         if (!response || response.error) {
-            list.innerHTML = '<div class="st-empty">Failed to load schedules.</div>';
+            if (list && isFirstLoad) list.innerHTML = '<div class="st-empty">Failed to load schedules.</div>';
             return;
         }
 
@@ -216,9 +229,9 @@ window.openScheduleTodayModal = async function () {
 
     } catch (err) {
         console.error('Schedule Today Error:', err);
-        list.innerHTML = '<div class="st-empty">Failed to load schedules.</div>';
+        if (list && isFirstLoad) list.innerHTML = '<div class="st-empty">Failed to load schedules.</div>';
     }
-};
+}
 
 // ── RENDER REP LIST ────────────────────────────────
 function stRenderRepList() {
@@ -521,13 +534,25 @@ window.stBackToList = function () {
 
 window.stCloseModal = function () {
     document.getElementById('scheduleTodayModal').classList.remove('active');
+    clearInterval(stPollTimer);
+    stPollTimer = null;
 };
 
 // ── OPEN DOCUMENT ───────────────────────────────────
 window.stOpenDocument = function(cdsId, dcpId, date, repId) {
     if (!cdsId) return;
+    try {
+        sessionStorage.setItem('active_doc_data', JSON.stringify({
+            cds_id: cdsId,
+            date,
+            dcp_id: dcpId,
+            from: 'modal'
+        }));
+    } catch (e) {
+        console.warn('Failed to save active_doc_data for dashboard document modal', e);
+    }
     const base = window.location.origin;
-    const url = `${base}/representatives/schedule/document/document?cds_id=${cdsId}&user_id=${repId}&date=${encodeURIComponent(date)}&dcp_id=${dcpId}&from=modal`;
+    const url = `${base}/representatives/schedule/document/document.html?cds_id=${encodeURIComponent(cdsId)}&user_id=${encodeURIComponent(repId)}&date=${encodeURIComponent(date)}&dcp_id=${encodeURIComponent(dcpId)}&from=modal`;
     const iframe = document.getElementById('scheduleDocIframe');
     iframe.src = url;
     document.getElementById('scheduleLogsModal').classList.remove('active');

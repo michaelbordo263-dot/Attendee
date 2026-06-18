@@ -6,30 +6,66 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const params = new URLSearchParams(window.location.search);
 
-    const identifier = params.get('cds_id') || params.get('id');
-    const dcpId      = params.get('dcp_id');
-    const returnDate = params.get('date');
-    const repId      = params.get('user_id');
+    let identifier = params.get('cds_id') || params.get('id');
+    let dcpId      = params.get('dcp_id');
+    let returnDate = params.get('date');
+    let repId      = params.get('user_id');
 
     console.log("🔍 [DEBUG] URL Parameters:", { identifier, returnDate, repId });
 
     // ── BACK BUTTON ─────────────────────────────
     const fromModal = params.get('from') === 'modal';
 
+    // Restore repId from sessionStorage if URL param was cleaned
+    try {
+        const stored = JSON.parse(sessionStorage.getItem('active_rep_data') || '{}');
+        if (!repId && stored && stored.id) repId = stored.id;
+    } catch (e) {
+        console.warn('Could not parse active_rep_data from sessionStorage', e);
+    }
+
     document.getElementById('goBack')?.addEventListener('click', () => {
         if (fromModal) {
             window.parent.stCloseDocument();
-        } else if (repId && returnDate) {
-            window.location.href =
-                `../schedule.html?user_id=${repId}&date=${encodeURIComponent(returnDate)}`;
-        } else {
+            return;
+        }
+
+        // Prefer navigating back in history for smooth UX
+        if (window.history.length > 1) {
             window.history.back();
+            return;
+        }
+
+        // Fallback: navigate to the schedule page using session-backed state.
+        // Use an absolute path to avoid relative-path duplication issues.
+        try {
+            const target = new URL(window.location.origin + '/representatives/schedule/schedule.html');
+            if (repId) target.searchParams.set('user_id', repId);
+            if (returnDate) target.searchParams.set('date', returnDate);
+            window.location.href = target.toString();
+        } catch (err) {
+            console.error('Failed to navigate to schedule fallback:', err);
+            window.location.href = '../schedule.html';
         }
     });
 
+    // If identifier isn't present in the URL, try sessionStorage (clean navigation flow)
+    try {
+        if (!identifier) {
+            const storedDoc = JSON.parse(sessionStorage.getItem('active_doc_data') || '{}');
+            if (storedDoc && storedDoc.cds_id) {
+                identifier = storedDoc.cds_id;
+                if (!returnDate && storedDoc.date) returnDate = storedDoc.date;
+                if (!dcpId && storedDoc.dcp_id) dcpId = storedDoc.dcp_id;
+            }
+        }
+    } catch (e) {
+        console.warn('Could not parse active_doc_data from sessionStorage', e);
+    }
+
     // ── GUARD ───────────────────────────────────
     if (!identifier || identifier === "undefined") {
-        console.warn("⚠️ [DEBUG] No identifier found in URL.");
+        console.warn("⚠️ [DEBUG] No identifier found in URL or sessionStorage.");
         showDefaultPanel();
         return;
     }

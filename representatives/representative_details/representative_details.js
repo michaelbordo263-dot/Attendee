@@ -4,16 +4,31 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     /* =========================================================
-       🔄 INIT
+       🔄 INIT & URL CLEANING
     ========================================================= */
-    // Extract URL parameters to display the name and location in the header
+    // 1. Get params from URL
     const urlParams = new URLSearchParams(window.location.search);
-    const repId = urlParams.get('id');
-    const repName = urlParams.get('name');
-    const repArea = urlParams.get('area');
+    let repId = urlParams.get('id');
+    let repName = urlParams.get('name');
+    let repArea = urlParams.get('area');
 
+    // 2. If we found data in the URL, save it to session storage so we don't lose it on refresh
+    if (repId) sessionStorage.setItem('active_rep_data', JSON.stringify({id: repId, name: repName, area: repArea}));
+    
+    // 3. If no data in URL, try to pull from session storage
+    const storedData = JSON.parse(sessionStorage.getItem('active_rep_data') || '{}');
+    if (!repId && storedData.id) {
+        repId = storedData.id;
+        repName = storedData.name;
+        repArea = storedData.area;
+    }
+
+    // 4. Update UI
     if (repName) document.getElementById('rep-name').textContent = repName;
     if (repArea) document.getElementById('rep-location').textContent = repArea;
+
+    // 5. Clean the URL bar (remove the ?id=... part)
+    window.history.replaceState({}, document.title, window.location.pathname);
 
     // --- BACK BUTTON LOGIC ---
     const backBtn = document.getElementById('goBack');
@@ -24,20 +39,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* =========================================================
-       🎯 EVENTS
+       🎯 EVENTS (Using stored variables)
     ========================================================= */
+    function getQueryString() {
+        return new URLSearchParams({
+            id: repId || '',
+            name: repName || '',
+            area: repArea || ''
+        }).toString();
+    }
+
     const cardSchedule = document.getElementById('card-schedule');
     if (cardSchedule) {
         cardSchedule.addEventListener('click', () => {
             if (!repId) return;
-
-            const query = new URLSearchParams({
-                id: repId,
-                name: repName || '',
-                area: repArea || ''
-            }).toString();
-
-            window.location.href = `../schedule/schedule.html?${query}`;
+            window.location.href = `../schedule/schedule.html?${getQueryString()}`;
         });
     }
 
@@ -45,35 +61,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (cardAttendance) {
         cardAttendance.addEventListener('click', () => {
             if (!repId) return;
-
-            const query = new URLSearchParams({
-                id: repId,
-                name: repName || '',
-                area: repArea || ''
-            }).toString();
-
-            window.location.href = `attendance/attendance.html?${query}`;
+            window.location.href = `attendance/attendance.html?${getQueryString()}`;
         });
     }
 
     const cardRequest = document.getElementById('card-request');
     if (cardRequest) {
         const userProfile = JSON.parse(localStorage.getItem('user_profile') || '{}');
-        // Hide the Request card if the logged-in user is not a super_admin
         if (userProfile.roles !== 'super_admin') {
             cardRequest.style.display = 'none';
         }
 
         cardRequest.addEventListener('click', () => {
             if (!repId) return;
-
-            const query = new URLSearchParams({
-                id: repId,
-                name: repName || '',
-                area: repArea || ''
-            }).toString();
-
-            window.location.href = `../schedule/request/request.html?${query}`;
+            window.location.href = `../schedule/request/request.html?${getQueryString()}`;
         });
     }
 
@@ -81,13 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (cardUploadSchedule) {
         cardUploadSchedule.addEventListener('click', () => {
             if (!repId) return;
-
-            const query = new URLSearchParams({
-                id: repId,
-                name: repName || '',
-                area: repArea || ''
-            }).toString();
-            window.location.href = `../schedule/upload/upload.html?${query}`;
+            window.location.href = `../schedule/upload/upload.html?${getQueryString()}`;
         });
     }
 });

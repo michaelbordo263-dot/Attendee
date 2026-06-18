@@ -2,12 +2,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- 1. CONFIG & STATE ---
     const urlParams = new URLSearchParams(window.location.search);
     // Accept multiple parameter names to prevent navigation bugs
-    const selectedRepId = urlParams.get('id') || urlParams.get('user_id') || urlParams.get('rep_id'); 
+    const urlRepId = urlParams.get('id') || urlParams.get('user_id') || urlParams.get('rep_id');
+    let selectedRepId = urlRepId;
     let selectedRepName = urlParams.get('name') || "Medical Representative"; // Global for access in modal and header
     let selectedRepArea = urlParams.get('area') || "Assignment Area"; // Global for access in modal and header
     
     // Check for return date from document page (supports both 'returnDate' and 'date' param keys)
-    const returnDateParam = urlParams.get('returnDate') || urlParams.get('date');
+    let returnDateParam = urlParams.get('returnDate') || urlParams.get('date');
+    // Fallback: if URL was cleaned, try sessionStorage (active_doc_data)
+    if (!returnDateParam) {
+        try {
+            const docStored = JSON.parse(sessionStorage.getItem('active_doc_data') || '{}');
+            if (docStored && docStored.date) returnDateParam = docStored.date;
+        } catch (e) {
+            console.warn('Could not parse active_doc_data for return date', e);
+        }
+    }
+
+    // Restore representative state from session storage when the URL does not provide it
+    const storedRepJson = sessionStorage.getItem('active_rep_data');
+    const storedRep = storedRepJson ? JSON.parse(storedRepJson) : {};
+    if (!selectedRepId && storedRep.id) {
+        selectedRepId = storedRep.id;
+        selectedRepName = storedRep.name || selectedRepName;
+        selectedRepArea = storedRep.area || selectedRepArea;
+    }
+
+    if (selectedRepId) {
+        sessionStorage.setItem('active_rep_data', JSON.stringify({
+            id: selectedRepId,
+            name: selectedRepName,
+            area: selectedRepArea
+        }));
+    }
+
+    // Clean the URL after reading params so later navigation uses session state
+    if (window.location.search) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
         
     let globalScheduleData = []; 
     let currentMonthIndex = 3;    // Initial default
@@ -31,19 +63,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const backBtn = document.getElementById('goBack') || document.querySelector('.back-btn');
     if (backBtn) {
         // Remove inline onclick if present to avoid dual triggers
-        backBtn.onclick = null; 
+        backBtn.onclick = null;
         backBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            if (!selectedRepId) {
+            // Let browser history handle the back transition if possible.
+            if (window.history.length > 1) {
                 window.history.back();
                 return;
             }
-            const query = new URLSearchParams({
-                id: selectedRepId,
-                name: selectedRepName,
-                area: selectedRepArea
-            }).toString();
-            window.location.href = `../representative_details/representative_details.html?${query}`;
+            // Fallback to the representative details page with clean session-backed state.
+            window.location.href = `../representative_details/representative_details.html`;
         });
     }
 
@@ -485,6 +514,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             `;
 
+            // attach cds id for later programmatic selection/scroll
+            try {
+                const _cds = item.cds_id || (item.cds && item.cds.id);
+                if (_cds) row.dataset.cdsId = _cds;
+            } catch (e) {}
+
             row.onclick = () => {
                 const targetId = item.cds_id || (item.cds && item.cds.id);
 
@@ -496,12 +531,54 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const dateValue = item.date || item.dcp_date || fullDateString;
                 const dcpId = item.dcp_id || item.DCP_ID || '';
-                window.location.href = `document/document.html?cds_id=${targetId}&user_id=${selectedRepId}&date=${encodeURIComponent(dateValue)}&dcp_id=${dcpId}`;
+
+                // Save visit/document context to sessionStorage and navigate with a clean URL
+                try {
+                    sessionStorage.setItem('active_doc_data', JSON.stringify({
+                        cds_id: targetId,
+                        date: dateValue,
+                        dcp_id: dcpId,
+                        scrollTop: (typeof modalBody !== 'undefined' && modalBody) ? modalBody.scrollTop : 0
+                    }));
+                } catch (e) {
+                    console.warn('Could not write active_doc_data to sessionStorage', e);
+                }
+
+                window.location.href = 'document/document.html';
             };
 
             modalBody.appendChild(row);
         });
     }
+    // If session had an active_doc_data cds_id, highlight and scroll to it
+    try {
+        const stored = JSON.parse(sessionStorage.getItem('active_doc_data') || '{}');
+        if (stored && stored.cds_id) {
+            // Wait a frame so the modal content/layout stabilizes before restoring scroll
+            requestAnimationFrame(() => {
+                try {
+                    if (typeof stored.scrollTop !== 'undefined' && stored.scrollTop !== null) {
+                        modalBody.scrollTop = stored.scrollTop;
+                    }
+                    const targetRow = modalBody.querySelector(`[data-cds-id="${stored.cds_id}"]`);
+                    if (targetRow) {
+                        targetRow.classList.add('selected-visit');
+                        // Only scrollIntoView when no explicit scrollTop was saved
+                        if (typeof stored.scrollTop === 'undefined' || stored.scrollTop === null) {
+                            targetRow.scrollIntoView({ block: 'center', behavior: 'auto' });
+                        }
+                    }
+                } catch (innerErr) {
+                    console.warn('Error applying stored scroll/selection', innerErr);
+                }
+                // Clear the active doc data so it doesn't re-open every time
+                try { sessionStorage.removeItem('active_doc_data'); } catch (e) {}
+            });
+        }
+    } catch (e) {
+        console.warn('Could not apply active_doc_data selection in modal', e);
+    }
+
     modal.style.display = 'flex';
     modal.classList.add('active');
 };

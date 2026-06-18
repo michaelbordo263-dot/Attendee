@@ -1,10 +1,26 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
     // --- 1. CONFIG & STATE ---
+    // Try to get data from SessionStorage first (the "Clean" way)
+    const storedData = JSON.parse(sessionStorage.getItem('active_rep_data') || '{}');
     const urlParams = new URLSearchParams(window.location.search);
-    const selectedRepId = urlParams.get('id') || urlParams.get('user_id') || urlParams.get('rep_id');
-    let selectedRepName = urlParams.get('name') || "Medical Representative";
-    let selectedRepArea = urlParams.get('area') || "Assignment Area";
+
+    // Fallback logic: Storage is primary, URL is backup (handles direct links)
+    const selectedRepId = storedData.id || urlParams.get('id') || urlParams.get('user_id') || urlParams.get('rep_id');
+    let selectedRepName = storedData.name || urlParams.get('name') || "Medical Representative";
+    let selectedRepArea = storedData.area || urlParams.get('area') || "Assignment Area";
+
+    // Clean the URL bar immediately so the messy query string disappears
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    // If we have data, ensure it's saved to SessionStorage for future navigation
+    if (selectedRepId && !storedData.id) {
+        sessionStorage.setItem('active_rep_data', JSON.stringify({
+            id: selectedRepId, 
+            name: selectedRepName, 
+            area: selectedRepArea
+        }));
+    }
 
     const now = new Date();
     let currentMonthIndex = now.getMonth();

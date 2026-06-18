@@ -3,9 +3,62 @@ let currentRepId = null; // This will hold the ID for the confirm button
 
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const empId = urlParams.get('user_id') || urlParams.get('id');
-    const quarter = parseInt(urlParams.get('q')) || 1;
-    const year = urlParams.get('year') || '2026';
+    let empId = urlParams.get('user_id') || urlParams.get('id');
+    let quarter = parseInt(urlParams.get('q')) || 1;
+    let year = urlParams.get('year') || '2026';
+
+    // Restore representative state from session storage when the URL does not provide it
+    if (!empId) {
+        try {
+            const storedRepJson = sessionStorage.getItem('active_rep_data');
+            const storedRep = storedRepJson ? JSON.parse(storedRepJson) : {};
+            if (storedRep.id) empId = storedRep.id;
+        } catch (e) {
+            console.warn('Could not restore rep data from sessionStorage', e);
+        }
+    }
+
+    // Restore view state (quarter/year) from session storage when URL does not provide it
+    if (!urlParams.has('q')) {
+        try {
+            const storedViewState = sessionStorage.getItem('active_request_view');
+            if (storedViewState) {
+                const viewState = JSON.parse(storedViewState);
+                quarter = viewState.quarter || quarter;
+                year = viewState.year || year;
+            }
+        } catch (e) {
+            console.warn('Could not restore view state from sessionStorage', e);
+        }
+    }
+
+    // Save representative state to session storage
+    if (empId) {
+        try {
+            sessionStorage.setItem('active_rep_data', JSON.stringify({
+                id: empId,
+                name: "",
+                area: ""
+            }));
+        } catch (e) {
+            console.warn('Could not save active_rep_data to sessionStorage', e);
+        }
+    }
+
+    // Save view state (quarter/year) to session storage
+    try {
+        sessionStorage.setItem('active_request_view', JSON.stringify({
+            quarter: quarter,
+            year: year
+        }));
+    } catch (e) {
+        console.warn('Could not save view state to sessionStorage', e);
+    }
+
+    // Clean the URL after reading params so later navigation uses session state
+    if (window.location.search) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
 
     if (!empId) {
         document.getElementById('cdsContainer').innerHTML = 
@@ -21,11 +74,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (backBtn) {
         backBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            const query = new URLSearchParams({
-                id: empId
-            }).toString();
-            // Navigate back to the quarter selection (Request) list
-            window.location.href = `../request.html?${query}`;
+            // Navigate back to the quarter selection (Request) list with clean URL
+            window.location.href = `../request.html`;
         });
     }
 

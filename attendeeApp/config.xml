@@ -27,6 +27,11 @@
     <allow-intent href="sms:*" />
     <allow-intent href="mailto:*" />
     <allow-intent href="geo:*" />
+
+    <plugin name="cordova-plugin-file" spec="*" />
+    <plugin name="cordova-plugin-file-opener2" spec="*" />
+
+    <preference name="AndroidPersistentFileLocation" value="Compatibility" />
     
     <platform name="android">
         <preference name="android-minSdkVersion" value="26" />
@@ -52,6 +57,8 @@
         <config-file target="app/src/main/AndroidManifest.xml" parent="/*">
             <uses-permission android:name="android.permission.INTERNET" />
             <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
         </config-file>
     </platform>
 </widget>

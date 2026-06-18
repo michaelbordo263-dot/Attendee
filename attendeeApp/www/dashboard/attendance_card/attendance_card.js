@@ -307,7 +307,7 @@ function attOpenDetail(repId, repName) {
                 <div style="display:flex;align-items:flex-start;gap:16px;margin-top:8px;">
                     <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#8aabb9;width:70px;flex-shrink:0;">Tagged Location</span>
                     <span style="font-size:12px;font-weight:600;color:#2c4a60;">
-                        ${locationStr
+                        ${locationStr && locationStr !== 'N/A'
                             ? `<a href="${mapBase}${locQuery}" target="_blank" style="color:#007bff;text-decoration:none;">📍 ${locationStr}</a>`
                             : 'N/A'}
                     </span>
@@ -431,4 +431,4 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem(`att_today_${ATT_TODAY}`);
         loadAttendanceCard();
     }, 1 * 60 * 1000);
-});
+}); 

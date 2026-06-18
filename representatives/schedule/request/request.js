@@ -15,9 +15,31 @@
 //  CONFIG & URL HANDLING (UUID ONLY)
 // =====================================
 const urlParams = new URLSearchParams(window.location.search);
-const selectedRepId = urlParams.get('id');
+let selectedRepId = urlParams.get('id');
 let repName = urlParams.get('name') || "Medical Representative";
 let repArea = urlParams.get('area') || "Assignment Area";
+
+// Restore representative state from session storage when the URL does not provide it
+const storedRepJson = sessionStorage.getItem('active_rep_data');
+const storedRep = storedRepJson ? JSON.parse(storedRepJson) : {};
+if (!selectedRepId && storedRep.id) {
+    selectedRepId = storedRep.id;
+    repName = storedRep.name || repName;
+    repArea = storedRep.area || repArea;
+}
+
+if (selectedRepId) {
+    sessionStorage.setItem('active_rep_data', JSON.stringify({
+        id: selectedRepId,
+        name: repName,
+        area: repArea
+    }));
+}
+
+// Clean the URL after reading params so later navigation uses session state
+if (window.location.search) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+}
 
 let currentYear = new Date().getFullYear();
 let minYear = currentYear;
@@ -48,13 +70,8 @@ if (backBtn) {
     backBtn.onclick = null;
     backBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        const query = new URLSearchParams({
-            id: selectedRepId,
-            name: repName,
-            area: repArea
-        }).toString();
-        // Navigate back to the medical representative's profile page
-        window.location.href = `../../representative_details/representative_details.html?${query}`;
+        // Navigate back to the medical representative's profile page with clean URL
+        window.location.href = `../../representative_details/representative_details.html`;
     });
 }
 

@@ -1,9 +1,48 @@
 document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
-    const empId = params.get('id') || params.get('user_id') || params.get('employee_id');
+    let empId = params.get('id') || params.get('user_id') || params.get('employee_id');
     const qParam = params.get('quarter') || params.get('q') || "1";
     const quarter = parseInt(qParam.replace('Q', '')) || 1; 
     const year = params.get('year') || "2026";
+
+    // Restore representative state from session storage when the URL does not provide it
+    if (!empId) {
+        try {
+            const storedRepJson = sessionStorage.getItem('active_rep_data');
+            const storedRep = storedRepJson ? JSON.parse(storedRepJson) : {};
+            if (storedRep.id) empId = storedRep.id;
+        } catch (e) {
+            console.warn('Could not restore rep data from sessionStorage', e);
+        }
+    }
+
+    // Save representative state to session storage
+    if (empId) {
+        try {
+            sessionStorage.setItem('active_rep_data', JSON.stringify({
+                id: empId,
+                name: "",
+                area: ""
+            }));
+        } catch (e) {
+            console.warn('Could not save active_rep_data to sessionStorage', e);
+        }
+    }
+
+    // Clean the URL after reading params so later navigation uses session state
+    if (window.location.search) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Save view state (quarter/year) to session storage for restoring when coming back
+    try {
+        sessionStorage.setItem('active_request_view', JSON.stringify({
+            quarter: quarter,
+            year: year
+        }));
+    } catch (e) {
+        console.warn('Could not save view state to sessionStorage', e);
+    }
 
     let activeDoctor = null;
     let calendarMonthIndex = 0;

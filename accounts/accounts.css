@@ -382,6 +382,43 @@ div#list.rep-list-container {
 .scroll-body::-webkit-scrollbar { display: none; }
 .scroll-body { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* --- CRASH REPORTS BUTTON --- */
+.crash-report-btn {
+    margin-left: auto;
+    background-color: #fff5f5;
+    border: 1.5px solid #fcc;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 700;
+    color: var(--status-red);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.crash-report-btn:hover {
+    background-color: var(--status-red);
+    color: white;
+    border-color: var(--status-red);
+}
+
+.crash-badge {
+    background: var(--status-red);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    line-height: 1.4;
+}
+
+.crash-report-btn:hover .crash-badge {
+    background: white;
+    color: var(--status-red);
+}
+
 /* --- RESPONSIVE --- */
 @media (max-width: 768px) {
     .controls-top-row {

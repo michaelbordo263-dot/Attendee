@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
     attInjectLightbox();
     loadAttendanceCard();
 
-    // Auto-refresh every 10 minutes in background
+    // Auto-refresh every 1 minutes in background
     setInterval(() => {
         localStorage.removeItem(`att_today_${ATT_TODAY}`);
         loadAttendanceCard();

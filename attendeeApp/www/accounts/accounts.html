@@ -6,6 +6,7 @@
     <title>Accounts | Attendee</title>
     <link rel="stylesheet" href="../common/global.css">
     <link rel="stylesheet" href="accounts.css">
+    <link rel="stylesheet" href="crash_reports/crash_reports.css">
     <script src="../common/navigation.js" defer></script>
 </head>
 <body>
@@ -52,6 +53,10 @@
                         </select>
                     </div>
                     <button class="add-account-btn" onclick="addAccount()">+ Add account</button>
+                    <button class="crash-report-btn" id="crashReportBtn" onclick="openCrashReports()">
+                        Crash Reports
+                        <span class="crash-badge" id="crashBadge" style="display:none;">0</span>
+                    </button>
                 </div>
                 <div class="controls-bottom-row">
                     <span id="shw" class="rep-count">Showing 0 accounts</span>
@@ -183,5 +188,6 @@
 
     <script src="../common/backend_connection.js"></script>
     <script src="accounts.js"></script>
+    <script src="crash_reports/crash_reports.js"></script>
 </body>
 </html>

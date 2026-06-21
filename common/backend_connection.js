@@ -174,10 +174,18 @@ window.API = {
     updateAccount: (empId, payload) =>
         apiFetch(`${BASE_URL}/accounts/${empId}`, "PUT", payload),
 
-    /**
-     * 🔹 FIXED: Uses UUID (user_id) instead of Employee ID.
-     * Supabase Auth Admin API requires the UUID to update credentials[cite: 7].
-     */
+    /* ── CRASH REPORTS ── */
+    fetchCrashReports: (status) =>
+        apiFetch(`${BASE_URL}/crash-reports${status ? `?status=${status}` : ''}`),
+
+    fetchUnresolvedCrashCount: () =>
+        apiFetch(`${BASE_URL}/crash-reports/unresolved-count`),
+
+    updateCrashReport: (crashId, resolved) =>
+        apiFetch(`${BASE_URL}/crash-reports/${crashId}`, "PATCH", { resolved }),
+
+    /* ── CHANGE PASSWORD ── */
+     
     changePassword: (empId, currentPw, newPw) => {
         const userId = localStorage.getItem('user_id');
         

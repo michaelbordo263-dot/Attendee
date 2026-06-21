@@ -354,11 +354,6 @@ function _isMissed(dateStr) {
 
 /**
  * Renders the list of representatives with missed calls.
- * This version splits the data processing from the HTML generation
- * to ensure that March (and any other month) is correctly calculated.
- */
-/**
- * Renders the list of representatives with missed calls.
  * FILTER: Only counts months that have fully ended. 
  * If it's currently May, May will show 0 results.
  */
@@ -1538,7 +1533,6 @@ window.switchDashboardModal = function(target) {
     }
 };
 
-// ══════════════════════════════════════════════════
 // ══════════════════════════════════════════════════
 // REQUEST DETAIL MODAL — SUMMARY VIEW
 // ══════════════════════════════════════════════════

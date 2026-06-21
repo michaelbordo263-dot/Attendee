@@ -3,7 +3,6 @@
 ========================================================= */
 
 // --- 🟢 STEP 1: CHOOSE YOUR ENVIRONMENT ---
-// UNCOMMENT the one you want to use right now:
 
 const ENV_URL = "https://api.premierpharmaceuticalsmarketingcorporation.cloud/api"; // COOLIFY (Production)
 
@@ -173,10 +172,18 @@ window.API = {
     updateAccount: (empId, payload) =>
         apiFetch(`${BASE_URL}/accounts/${empId}`, "PUT", payload),
 
-    /**
-     * 🔹 FIXED: Uses UUID (user_id) instead of Employee ID.
-     * Supabase Auth Admin API requires the UUID to update credentials[cite: 7].
-     */
+    /* ── CRASH REPORTS ── */
+    fetchCrashReports: (status) =>
+        apiFetch(`${BASE_URL}/crash-reports${status ? `?status=${status}` : ''}`),
+
+    fetchUnresolvedCrashCount: () =>
+        apiFetch(`${BASE_URL}/crash-reports/unresolved-count`),
+
+    updateCrashReport: (crashId, resolved) =>
+        apiFetch(`${BASE_URL}/crash-reports/${crashId}`, "PATCH", { resolved }),
+
+    /* ── CHANGE PASSWORD ── */
+     
     changePassword: (empId, currentPw, newPw) => {
         const userId = localStorage.getItem('user_id');
         
@@ -259,14 +266,6 @@ window.API = {
         
 };
 
-// ... other code above
-    updateFirstPassword: (userId, newPassword) =>
-        apiFetch(`${BASE_URL}/auth/update-first-password`, "POST", {
-            user_id: userId,
-            new_password: newPassword
-        })
-
-
 /* --- ULTRA-LIGHT BOOTER --- */
 /* --- PRODUCTION-READY LIGHT BOOTER --- */
 // ==========================================
@@ -329,9 +328,6 @@ async function runSecuritySync() {
     
     // If not logged in, also stop
     if (!uid || !did) return;
-
-    // ... rest of your code ...
-
 
     const now = Date.now();
     // Only block if a check happened less than 3 seconds ago

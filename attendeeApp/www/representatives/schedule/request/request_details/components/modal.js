@@ -18,13 +18,29 @@ function getRepName() {
 // =====================================
 function getRequestContext() {
     const urlParams = new URLSearchParams(window.location.search);
-    const targetId = urlParams.get('id') || urlParams.get('user_id');
-    const quarterParam = urlParams.get('q');
-    const yearParam = urlParams.get('year');
+    let targetId = urlParams.get('id') || urlParams.get('user_id');
+    let quarterParam = urlParams.get('q');
+    let yearParam = urlParams.get('year');
+
+    // Fallback to sessionStorage if URL was already cleaned
+    if (!targetId) {
+        try {
+            const storedRep = JSON.parse(sessionStorage.getItem('active_rep_data') || '{}');
+            targetId = storedRep.id || null;
+        } catch (e) {}
+    }
+
+    if (!quarterParam || !yearParam) {
+        try {
+            const storedView = JSON.parse(sessionStorage.getItem('active_request_view') || '{}');
+            quarterParam = quarterParam || storedView.quarter;
+            yearParam = yearParam || storedView.year;
+        } catch (e) {}
+    }
 
     return {
-        id: targetId, 
-        quarter: quarterParam || "1", 
+        id: targetId,
+        quarter: quarterParam || "1",
         year: yearParam || "2026"
     };
 }

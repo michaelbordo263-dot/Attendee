@@ -192,7 +192,11 @@ function applyCdsFilters() {
         return;
     }
 
-    container.innerHTML = filtered.map(doc => {
+    container.innerHTML = filtered.sort((a, b) => {
+        const aDcp = a.dcp_upload ? 1 : 0;
+        const bDcp = b.dcp_upload ? 1 : 0;
+        return bDcp - aDcp || (a.name || '').localeCompare(b.name || '');
+    }).map(doc => {
         const isPharmacy = (doc.type || doc.RecordType || doc.record_type || '').toLowerCase() === 'pharmacy';
         const displayName = doc.name || 'Unknown';
         
@@ -211,7 +215,7 @@ function applyCdsFilters() {
                 <div class="doc-content-left">
                     <div class="doc-init">${getInitials(displayName)}</div>
                     <div class="doc-info">
-                        <span class="doc-name">${displayName}</span>
+                        <span class="doc-name">${displayName}${doc.dcp_upload ? ' <span style="background:#3b82f6; color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle;">DCP</span>' : ''}</span>
                         <span class="doc-specialty">${displaySub}</span>
                     </div>
                 </div>

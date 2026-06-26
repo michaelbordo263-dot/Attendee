@@ -1766,7 +1766,7 @@ function rdRenderBreakdown(dcpList) {
             : (entry.display_name || entry.doctor_name || entry.name || 'Unnamed Doctor');
         const id = entry.cds_id || entry.id || name;
         const map = isPharmacy ? pharmacyMap : doctorMap;
-        if (!map[id]) map[id] = { name, dates: [], recordType: rt, frequency: entry.frequency ?? null };
+        if (!map[id]) map[id] = { name, dates: [], recordType: rt, frequency: entry.frequency ?? null, dcpUpload: entry.dcp_upload || false };
         if (entry.dcp_date) map[id].dates.push(entry.dcp_date);
     });
 
@@ -1780,8 +1780,12 @@ function rdRenderBreakdown(dcpList) {
         lbl.textContent = groupLabel;
         container.appendChild(lbl);
 
-        Object.keys(map).sort().forEach(id => {
-            const { name, dates, recordType, frequency } = map[id];
+        Object.keys(map).sort((a, b) => {
+            const aDcp = map[a].dcpUpload ? 1 : 0;
+            const bDcp = map[b].dcpUpload ? 1 : 0;
+            return bDcp - aDcp || a.localeCompare(b);
+        }).forEach(id => {
+            const { name, dates, recordType, frequency, dcpUpload } = map[id];
 
             // Build month buckets (same logic as summary.js)
             const monthBuckets = {};
@@ -1818,7 +1822,7 @@ function rdRenderBreakdown(dcpList) {
                 <div class="rd-acc-header"
                      onclick="rdToggleAccordion(this, '${name.replace(/'/g,"\\'")}', JSON.parse(this.dataset.dates), '${recordType}')"
                      data-dates="${datesEncoded}">
-                    <span class="rd-acc-name">${name}</span>
+                    <span class="rd-acc-name">${name}${dcpUpload ? ' <span style="background:#3b82f6; color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle;">DCP</span>' : ''}</span>
                     <span class="rd-acc-chevron">&#8964;</span>
                 </div>
                 <div class="rd-acc-body">

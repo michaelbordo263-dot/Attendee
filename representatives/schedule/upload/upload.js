@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
-    let selectedRepId =
+    window.selectedRepId =
         urlParams.get('id') ||
         urlParams.get('user_id') ||
         urlParams.get('rep_id');
@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const storedRepJson = sessionStorage.getItem('active_rep_data');
             const storedRep = storedRepJson ? JSON.parse(storedRepJson) : {};
-            if (storedRep.id) selectedRepId = storedRep.id;
+            if (storedRep.id) window.selectedRepId = storedRep.id;
         } catch (e) {
             console.warn('Could not restore rep data from sessionStorage', e);
         }
@@ -181,73 +181,102 @@ async function initQuarterStatus(selectedRepId, year) {
         const currentUIYear = parseInt(getSelectedYear());
 
         for (let q = 1; q <= 4; q++) {
-            const btn = document.getElementById(`quarter-btn-${q}`);
-            if (!btn) continue;
+        const btn = document.getElementById(`quarter-btn-${q}`);
+        if (!btn) continue;
 
-            btn.className = 'quarter-status-btn';
-            btn.innerHTML = `Q${q}`;
-            btn.disabled = false;
-            btn.onclick = () => selectQuarter(q);
+        btn.className = 'quarter-status-btn';
+        btn.innerHTML = `Q${q}`;
+        btn.disabled = false;
+        btn.onclick = () => selectQuarter(q);
 
-            const quarterRecords = dcpData.filter(item => {
-                let itemQ = parseInt(item.Quarter || item.quarter);
-                let itemY = parseInt(item.Year || item.year || item.dcp_year);
+        // ✅ LOCK LOGIC
+        const today = new Date();
+        const realYear = today.getFullYear();
+        const realQuarter = Math.ceil((today.getMonth() + 1) / 3);
+        const isPastYear = currentUIYear < realYear;
+        const isPastQuarter = currentUIYear === realYear && q < realQuarter;
+        const isLocked = isPastYear || isPastQuarter;
 
-                const dateVal = item.dcp_date || item.DCP_DATE || item.DCP_Date || item.date || item.created_at;
-                if (dateVal) {
-                    const dateMatch = String(dateVal).match(/^(\d{4})-(\d{2})-(\d{2})/);
-                    if (dateMatch) {
-                        itemY = parseInt(dateMatch[1], 10);
-                        const month = parseInt(dateMatch[2], 10);
-                        itemQ = Math.ceil(month / 3);
-                    }
+        const quarterRecords = dcpData.filter(item => {
+            let itemQ = parseInt(item.Quarter || item.quarter);
+            let itemY = parseInt(item.Year || item.year || item.dcp_year);
+
+            const dateVal = item.dcp_date || item.DCP_DATE || item.DCP_Date || item.date || item.created_at;
+            if (dateVal) {
+                const dateMatch = String(dateVal).match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (dateMatch) {
+                    itemY = parseInt(dateMatch[1], 10);
+                    const month = parseInt(dateMatch[2], 10);
+                    itemQ = Math.ceil(month / 3);
                 }
-
-                if (isNaN(itemY)) itemY = currentUIYear;
-                if (isNaN(itemQ)) return false;
-
-                return itemQ === q && itemY === currentUIYear;
-            });
-
-            const cleanedStatuses = quarterRecords.map(r => {
-                const raw = (r.status || r.visit_status || '').toString().trim().toLowerCase();
-                if (!raw || raw === 'na' || raw === 'n/a' || raw === 'none' || raw === 'null' || raw === 'undefined') {
-                    return null;
-                }
-                return raw;
-            }).filter(Boolean);
-
-            let finalStatus = 'none';
-            if (cleanedStatuses.includes('rejected')) {
-                finalStatus = 'rejected';
-            } else if (cleanedStatuses.includes('approved')) {
-                finalStatus = 'approved';
-            } else if (cleanedStatuses.includes('pending')) {
-                finalStatus = 'pending';
             }
 
+            if (isNaN(itemY)) itemY = currentUIYear;
+            if (isNaN(itemQ)) return false;
+
+            return itemQ === q && itemY === currentUIYear;
+        });
+
+        const cleanedStatuses = quarterRecords.map(r => {
+            const raw = (r.status || r.visit_status || '').toString().trim().toLowerCase();
+            if (!raw || raw === 'na' || raw === 'n/a' || raw === 'none' || raw === 'null' || raw === 'undefined') {
+                return null;
+            }
+            return raw;
+        }).filter(Boolean);
+
+        let finalStatus = 'none';
+        if (cleanedStatuses.includes('rejected')) {
+            finalStatus = 'rejected';
+        } else if (cleanedStatuses.includes('approved')) {
+            finalStatus = 'approved';
+        } else if (cleanedStatuses.includes('pending')) {
+            finalStatus = 'pending';
+        }
+
+        // ✅ APPLY LOCK — override everything if locked
+        if (isLocked) {
+            btn.disabled = true;
+            btn.onclick = null;
             if (finalStatus === 'none') {
-                btn.disabled = false;
-                btn.onclick = () => selectQuarter(q);
-                continue;
-            }
-
-            if (finalStatus === 'approved') {
+                btn.classList.add('q-done');
+                btn.innerHTML = `Q${q}<br><small>Quarter Done</small>`;
+            } else if (finalStatus === 'approved') {
                 btn.classList.add('q-approved');
                 btn.innerHTML = `Q${q}<br><small>Approved</small>`;
-                btn.disabled = true;
-                btn.onclick = null;
+            } else if (finalStatus === 'pending') {
+                btn.classList.add('q-pending');
+                btn.innerHTML = `Q${q}<br><small>Pending</small>`;
             } else if (finalStatus === 'rejected') {
                 btn.classList.add('q-rejected');
                 btn.innerHTML = `Q${q}<br><small>Rejected</small>`;
-                btn.onclick = () => prepareReupload(q, selectedRepId);
-            } else {
-                btn.classList.add('q-pending');
-                btn.innerHTML = `Q${q}<br><small>Pending</small>`;
-                btn.disabled = true;
-                btn.onclick = null;
             }
+            continue;
         }
+
+        // Normal (unlocked) behavior
+        if (finalStatus === 'none') {
+            btn.disabled = false;
+            btn.onclick = () => selectQuarter(q);
+            continue;
+        }
+
+        if (finalStatus === 'approved') {
+            btn.classList.add('q-approved');
+            btn.innerHTML = `Q${q}<br><small>Approved</small>`;
+            btn.disabled = true;
+            btn.onclick = null;
+        } else if (finalStatus === 'rejected') {
+            btn.classList.add('q-rejected');
+            btn.innerHTML = `Q${q}<br><small>Rejected</small>`;
+            btn.onclick = () => prepareReupload(q, selectedRepId);
+        } else {
+            btn.classList.add('q-pending');
+            btn.innerHTML = `Q${q}<br><small>Pending</small>`;
+            btn.disabled = true;
+            btn.onclick = null;
+        }
+    }
     } catch (err) {
         console.error("❌ Error loading statuses:", err);
     }
@@ -313,22 +342,21 @@ function initDCPYear() {
     setSelectedYear(year);
 }
 
+// ============================
+// CHANGE YEAR
+// ============================
 function changeYear(delta) {
     const currentYear = getSelectedYear();
     const nextYear = currentYear + delta;
 
     setSelectedYear(nextYear);
-    cancelDCPUpload();  // ← changed from resetDCPForm()
+    cancelDCPUpload();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const selectedRepId = urlParams.get('id') || urlParams.get('user_id') || urlParams.get('rep_id');
-
-    if (selectedRepId) {
+    if (window.selectedRepId) {
         console.log(`🔄 Year changed to ${nextYear}. Refreshing data...`);
-        initQuarterStatus(selectedRepId, nextYear);
+        initQuarterStatus(window.selectedRepId, nextYear);
     }
 }
-
 
 // ============================
 // STATUS MODAL HELPERS
@@ -337,7 +365,11 @@ function showStatusModal(title, message, icon = '✅', onClose = null) {
     const modal = document.getElementById('statusModal');
     if (!modal) return;
     document.getElementById('statusTitle').textContent = title;
-    document.getElementById('statusMessage').textContent = message;
+    const msgEl = document.getElementById('statusMessage');
+    msgEl.textContent = message;
+    msgEl.style.maxHeight = '300px';
+    msgEl.style.overflowY = 'auto';
+    msgEl.style.display = 'block';
     document.getElementById('statusIcon').textContent = icon;
     modal.classList.add('active');
 
@@ -476,18 +508,43 @@ async function uploadMasterlist() {
     try {
         const res = await API.uploadCDS(formData);
 
-        if (!res.ok) {
-            const errorBody = await res.text();
-            let cleanMsg = errorBody.length > 100 ? "Server encountered an error (500)" : errorBody;
-            throw new Error(cleanMsg);
-        }
-
         const data = await res.json();
+
+        if (!res.ok && !data.error) {
+            throw new Error("Server encountered an error (500)");
+        }
         console.log("CDS RESULT:", data);
 
         // Handle WrongFile response
         if (data.status === "WrongFile") {
             showStatusModal("Wrong File Detected", data.message, '🚫');
+            addLogEntry(file.name, "Error", data.message);
+            return;
+        }
+
+        // Handle wrong rep file
+        if (data.error === "upload_wrong_rep") {
+            showStatusModal("Upload Blocked", data.message, '🚫');
+            addLogEntry(file.name, "Error", data.message);
+            return;
+        }
+
+        // Handle firewall
+        if (data.error && data.error.startsWith("Firewall")) {
+            showStatusModal("Wrong File Detected", data.error, "🚫");
+            addLogEntry(file.name, "Error", data.error);
+            return;
+        }
+
+        if (data.error === "invalid_columns") {
+            showStatusModal("Invalid Columns Detected", data.message, "🚫");
+            addLogEntry(file.name, "Error", data.message);
+            return;
+        }
+
+        // Handle invalid record type
+        if (data.error === "invalid_record_type") {
+            showStatusModal("Invalid Record Type Detected", data.message, "🚫");
             addLogEntry(file.name, "Error", data.message);
             return;
         }
@@ -557,18 +614,37 @@ async function uploadCallPlan(forceUpload = false) {
     try {
         const res = await API.uploadDCP(formData);
 
-        if (!res.ok) {
-            const errorBody = await res.text();
-            try {
-                const parsedError = JSON.parse(errorBody);
-                throw new Error(parsedError.error || "Server Error");
-            } catch(e) {
-                throw new Error(errorBody || "Server connection failed");
-            }
-        }
-
         const data = await res.json();
         console.log("DCP Upload Result:", data);
+
+        if (!res.ok && !data.error) {
+            throw new Error("Server encountered an error (500)");
+        }
+
+        if (data.error === "invalid_columns") {
+            showStatusModal("Invalid Columns Detected", data.message, "🚫");
+            return;
+        }
+
+        if (data.error === "invalid_record_type") {
+            showStatusModal("Invalid Record Type Detected", data.message, "🚫");
+            return;
+        }
+
+        if (data.error && data.error.startsWith("Firewall")) {
+            showStatusModal("Wrong File Detected", data.error, "🚫");
+            return;
+        }
+
+        if (data.status === "Blocked" && data.error === "upload_blocked") {
+            showStatusModal("Upload Blocked", data.message, "🚫");
+            return;
+        }
+
+        if (data.status === "Blocked" && data.error === "wrong_quarter_date") {
+            showStatusModal("Invalid Date Detected", data.message, "🚫");
+            return;
+        }
 
         // ============================
         // 🚫 WRONG FILE — HARD BLOCK
@@ -578,7 +654,7 @@ async function uploadCallPlan(forceUpload = false) {
                 "Wrong File Detected",
                 data.message,
                 '🚫',
-                () => location.reload()   // reload page when OK is clicked
+                () => location.reload()
             );
             return;
         }
@@ -602,7 +678,7 @@ async function uploadCallPlan(forceUpload = false) {
             resetDCPForm();
 
             if (typeof initQuarterStatus === "function") {
-                await initQuarterStatus(userId);
+                await initQuarterStatus(window.selectedRepId, getSelectedYear());
             }
         } else {
             showStatusModal("No Data Inserted", "The file was processed but no records were added.", '📅');
@@ -610,7 +686,7 @@ async function uploadCallPlan(forceUpload = false) {
 
     } catch (err) {
         console.error("DCP Upload Error:", err);
-        showStatusModal("Upload Failed", err.message, '❌', () => location.reload());  // ← add reload
+        showStatusModal("Upload Failed", err.message, '❌', () => location.reload());
     }   
 }
 
@@ -666,6 +742,11 @@ async function proceedUploadAnyway() {
         const res = await API.uploadDCP(formData);
         const data = await res.json();
 
+        if (data.status === "Blocked" && data.error === "upload_blocked") {
+            showStatusModal("Upload Blocked", data.message, "🚫");
+            return;
+        }
+
         if (data.status === "Success") {
             console.log("Backend processed rows:", data.inserted);
             showStatusModal(
@@ -674,7 +755,7 @@ async function proceedUploadAnyway() {
                 '✅'
             );
             resetDCPForm();
-            if (typeof initQuarterStatus === "function") await initQuarterStatus(userId);
+            if (typeof initQuarterStatus === "function") await initQuarterStatus(window.selectedRepId, getSelectedYear());
             setTimeout(() => location.reload(), 1500);
         } else {
             throw new Error(data.error || "Upload failed");
@@ -684,7 +765,6 @@ async function proceedUploadAnyway() {
         showStatusModal("Upload Failed", err.message, '❌');
     }
 }
-
 
 // ============================
 // RESET DCP FORM
@@ -713,7 +793,6 @@ function cancelDCPUpload() {
     document.getElementById('warningsCount').textContent = 'Showing 0 results';
     document.getElementById('warningsList').innerHTML = '<p>No warnings yet</p>';
 }
-
 
 // ============================
 // GET USER ID FROM URL

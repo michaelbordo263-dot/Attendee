@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const map = isPharma ? pharmacyMap : doctorMap;
 
         if (!map[id]) {
-            map[id] = { name: name, dates: [], recordType: entry.record_type };
+            map[id] = { name: name, dates: [], recordType: entry.record_type, dcpUpload: entry.dcp_upload || false };
         }
         if (entry.dcp_date) map[id].dates.push(entry.dcp_date);
     });
@@ -193,8 +193,12 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(label);
 
         // Sort alphabetically by name
-        keys.sort((a, b) => map[a].name.localeCompare(map[b].name)).forEach(id => {
-            const { name, dates, recordType } = map[id];
+        keys.sort((a, b) => {
+            const aDcp = map[a].dcpUpload ? 1 : 0;
+            const bDcp = map[b].dcpUpload ? 1 : 0;
+            return bDcp - aDcp || map[a].name.localeCompare(map[b].name);
+        }).forEach(id => {
+            const { name, dates, recordType, dcpUpload } = map[id];
             const monthBuckets = {};
             
             // Group dates by month
@@ -225,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
             item.className = 'accordion-item';
             item.innerHTML = `
                 <div class="accordion-header" onclick="toggleAccordion(this, '${name.replace(/'/g, "\\'")}', JSON.parse(this.dataset.dates), '${recordType}')" data-dates='${JSON.stringify(dates)}'>
-                    <span class="doctor-name">${name}</span>
+                    <span class="doctor-name">${name}${dcpUpload ? ' <span style="background:#3b82f6; color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle;">DCP</span>' : ''}</span>
                     <i class="fa fa-chevron-down"></i>
                 </div>
                 <div class="accordion-content">

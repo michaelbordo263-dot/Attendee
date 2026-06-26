@@ -36,11 +36,6 @@ if (selectedRepId) {
     }));
 }
 
-// Clean the URL after reading params so later navigation uses session state
-if (window.location.search) {
-    window.history.replaceState({}, document.title, window.location.pathname);
-}
-
 let currentYear = new Date().getFullYear();
 let minYear = currentYear;
 let maxYear = currentYear;
@@ -97,7 +92,9 @@ async function init() {
         if (yearData && yearData.years && yearData.years.length > 0) {
             minYear = Math.min(...yearData.years);
             maxYear = Math.max(...yearData.years);
-            currentYear = maxYear;
+            currentYear = new Date().getFullYear();  // ← stays on real current year
+            if (currentYear < minYear) currentYear = minYear;
+            if (currentYear > maxYear) currentYear = maxYear;
         }
     } catch (e) {
         console.warn("⚠ Could not fetch year range", e);
@@ -275,6 +272,7 @@ if (nextBtn) {
 //  CARD CLICK → DETAILS
 // =====================================
 window.handleCardClick = function(qNumber) {
+    console.log("selectedRepId at click:", selectedRepId); // add this
     const safeId = encodeURIComponent(String(selectedRepId).trim());
 
     // Pass q, year, and id to the details page

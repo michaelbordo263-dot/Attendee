@@ -644,12 +644,16 @@ body {
     font-weight: 600;
     color: var(--color-text-main);
     margin: 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .warning-detail {
     font-size: 12px;
     color: var(--color-text-muted);
     margin: 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Hidden warning card (filtered out) */
@@ -1469,4 +1473,47 @@ body {
 
 .modal-ok-btn:hover {
     opacity: 0.85;
+}
+
+#statusModal .modal-btn,
+#statusModal button {
+    margin-top: 16px;
+}
+
+.quarter-status-btn.q-done {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background-color: white;
+    color: #0e0e0e;
+}
+
+.quarter-status-btn.q-done {
+    opacity: 0.5;
+    background: #e0e0e0;
+    border-color: #c8c9cc;
+    color: #888;
+    cursor: not-allowed;
+    pointer-events: auto; /* override the :disabled rule */
+    position: relative;
+    overflow: visible;
+}
+
+.quarter-status-btn.q-done::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: 1.4rem;
+    opacity: 0;
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+
+.quarter-status-btn.q-done:hover::after {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.quarter-status-btn.q-done:hover {
+    opacity: 0.75;
 }

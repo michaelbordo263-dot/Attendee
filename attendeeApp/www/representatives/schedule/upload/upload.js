@@ -549,6 +549,23 @@ async function uploadMasterlist() {
             return;
         }
 
+        if (data.error === "missing_doctor_name") {
+            showStatusModal("Missing Doctor Name", data.message, "🚫");
+            addLogEntry(file.name, "Error", data.message);
+            return;
+        }
+
+        if (data.error === "duplicate_doctor" || data.error === "duplicate_pharmacy") {
+            showStatusModal("Duplicate Entry Detected", data.message, "🚫");
+            return;
+        }
+
+        if (data.error === "missing_pharmacy_name") {
+            showStatusModal("Missing Pharmacy Name", data.message, "🚫");
+            addLogEntry(file.name, "Error", data.message);
+            return;
+        }
+
         const hasChanges = (data.inserted_count > 0 || data.updated_count > 0);
 
         if (hasChanges) {
@@ -628,6 +645,16 @@ async function uploadCallPlan(forceUpload = false) {
 
         if (data.error === "invalid_record_type") {
             showStatusModal("Invalid Record Type Detected", data.message, "🚫");
+            return;
+        }
+
+        if (data.error === "missing_doctor_name") {
+            showStatusModal("Missing Doctor Name", data.message, "🚫");
+            return;
+        }
+
+        if (data.error === "missing_pharmacy_name") {
+            showStatusModal("Missing Pharmacy Name", data.message, "🚫");
             return;
         }
 

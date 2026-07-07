@@ -45,6 +45,19 @@
 }
 .st-rep-list::-webkit-scrollbar { display: none; }
 
+.st-section-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #2d6e8e;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    margin-bottom: -2px;
+}
+.st-section-label:first-child {
+    margin-top: 0;
+}
+
 /* Rep card */
 .st-rep-card {
     background: #eef4fc;

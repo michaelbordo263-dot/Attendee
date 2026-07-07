@@ -173,7 +173,7 @@ window.openScheduleTodayModal = async function () {
 
     // Keep the rep list live while the modal stays open
     clearInterval(stPollTimer);
-    stPollTimer = setInterval(stFetchLive, 5000);
+    stPollTimer = setInterval(stFetchLive, 20000);
 };
 
 // ── FETCH + RENDER (LIVE) ───────────────────────────
@@ -203,7 +203,9 @@ async function stFetchLive() {
                 .map(c => ({ ...c, status: stNormalizeStatus(c.visit_status) }))
         }));
 
-        stTodayData = results.filter(r => r.todayCalls.length > 0);
+        const withSchedule = results.filter(r => r.todayCalls.length > 0);
+        const withoutSchedule = results.filter(r => r.todayCalls.length === 0);
+        stTodayData = [...withSchedule, ...withoutSchedule];
 
         if (stTodayData.length > 0) {
             // Only cache todayCalls + rep info — skip allCalls (too large)
@@ -243,10 +245,23 @@ function stRenderRepList() {
     }
 
     const todayKey = stDateKey(stBaseDate);
+    let shownHaveLabel = false;
+    let shownDontLabel = false;
 
     list.innerHTML = stTodayData.map((item, i) => {
         const { rep, todayCalls, allCalls } = item;
         const name = `${rep.first_name || ''} ${rep.last_name || ''}`.trim();
+        const hasSchedule = todayCalls.length > 0;
+
+        let labelHtml = '';
+        if (hasSchedule && !shownHaveLabel) {
+            labelHtml = `<div class="st-section-label">Have Schedule</div>`;
+            shownHaveLabel = true;
+        }
+        if (!hasSchedule && !shownDontLabel) {
+            labelHtml = `<div class="st-section-label">Don't Have Schedule</div>`;
+            shownDontLabel = true;
+        }
 
         // Count statuses from today's scheduled calls
         const counts = {};
@@ -285,6 +300,7 @@ function stRenderRepList() {
             .join('');
 
         return `
+        ${labelHtml}
         <div class="st-rep-card">
             <div class="st-rep-avatar">${stInitials(name)}</div>
             <div class="st-rep-info">
@@ -552,8 +568,7 @@ window.stOpenDocument = function(cdsId, dcpId, date, repId) {
         console.warn('Failed to save active_doc_data for dashboard document modal', e);
     }
     const base = window.location.origin;
-    const url = `${base}/representatives/schedule/document/document.html?cds_id=${encodeURIComponent(cdsId)}&user_id=${encodeURIComponent(repId)}&date=${encodeURIComponent(date)}&dcp_id=${encodeURIComponent(dcpId)}&from=modal`;
-    const iframe = document.getElementById('scheduleDocIframe');
+    const url = `${base}/representatives/schedule/document/document.html?cds_id=${encodeURIComponent(cdsId)}&user_id=${encodeURIComponent(repId)}&date=${encodeURIComponent(date)}&dcp_id=${encodeURIComponent(dcpId)}&from=modal`;    const iframe = document.getElementById('scheduleDocIframe');
     iframe.src = url;
     document.getElementById('scheduleLogsModal').classList.remove('active');
     document.getElementById('scheduleDocModal').classList.add('active');

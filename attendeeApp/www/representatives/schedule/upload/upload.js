@@ -673,6 +673,11 @@ async function uploadCallPlan(forceUpload = false) {
             return;
         }
 
+        if (data.error === "invalid_date_format") {
+            showStatusModal("Invalid Date Format", data.message, "🚫");
+            return;
+        }
+
         // ============================
         // 🚫 WRONG FILE — HARD BLOCK
         // ============================

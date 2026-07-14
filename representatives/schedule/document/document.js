@@ -89,6 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const cds = data.cds || {};
         const doc = data.document || {};
+        const dcp = data.dcp || {};
 
         console.log("📦 data.items:", data.items);
         console.log("📦 doc.items:", doc.items);
@@ -130,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             setText('doc-mid-name', cds.Middle_Name);
             setText('doc-suffix', cds.Suffix);
             setText('doc-md-code', cds.Doctor_Code);
-            setText('doc-md-desc', cds.Specialty_MDs_Description);
+            setText('doc-md-desc', cds.Specialty_MDs_Description || dcp.specs);
             setText('doc-hospital', cds.Hospital_Affiliation_Clinic_Name || cds.Pharmacy_Name);
             setText('doc-address', cds.City_Address_Province);
 

@@ -78,6 +78,13 @@ function getInitials(name = '') {
         .slice(0, 2);
 }
 
+// ── COLOR FOR BAR IN PERFORMANCE ───────────────────────────────────────────
+function getBarColor(pct) {
+    if (pct >= 90) return '#4caf50';
+    if (pct >= 75) return '#ff9800';
+    return '#f44336';
+}
+
 // ── MODAL ──────────────────────────────────────────
 function openModal(id) {
     const modal = document.getElementById(id);
@@ -545,6 +552,7 @@ async function loadPerformance() {
 
     container.innerHTML = (Array.isArray(data) ? data : []).map(rep => {
         const pct = Math.floor(rep.progress || 0);
+        const barColor = getBarColor(pct);
         return `
         <div class="perf-item">
             <div class="perf-avatar">${getInitials(rep.name || '?')}</div>
@@ -554,7 +562,7 @@ async function loadPerformance() {
             </div>
             <div class="perf-bar-wrap">
                 <div class="perf-bar-track">
-                    <div class="perf-bar" style="width:${pct}%"></div>
+                    <div class="perf-bar" style="width:${pct}%; background:${barColor};"></div>
                 </div>
                 <span class="perf-pct">${pct}%</span>
             </div>
